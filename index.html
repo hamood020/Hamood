@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ICV New — منصة متابعة المحتوى المحلي</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{--navy:#0b1f33;--blue:#1565c0;--bg:#f4f7fb;--card:#fff;--muted:#667085;--line:#e5e7eb;--green:#138a52;--red:#c62828;--amber:#b7791f}
@@ -39,7 +39,9 @@
 </main></section><div id="modal" class="modal hidden"></div><div id="toast" class="toast hidden"></div>
 <script>
 const SUPABASE_URL='https://bmwtrnosqosbkezdswcx.supabase.co', SUPABASE_KEY='sb_publishable_Ge88ZuNnqW89l0SMfw_mvQ_nY2BzpPr';
-let db=null, session=null, profile=null, projects=[], reports=[], plans=[], followups=[];\nfunction authReady(){return !!(window.supabase&&window.supabase.createClient)}\nfunction initDb(){if(!authReady()){authMsg.textContent='تعذر تحميل خدمة تسجيل الدخول. أعد تحميل الصفحة.';return false} if(!db) db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY); return true}
+let db=null, session=null, profile=null, projects=[], reports=[], plans=[], followups=[];
+function authReady(){return !!(window.supabase&&window.supabase.createClient)}
+function initDb(){if(!authReady()){authMsg.textContent='تعذر تحميل خدمة تسجيل الدخول. أعد تحميل الصفحة.';return false} if(!db) db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY); return true}
 const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 const money=n=>Number(n||0).toLocaleString('en-US',{maximumFractionDigits:2});
 const pct=n=>(Number(n||0)*100).toFixed(1)+'%';
