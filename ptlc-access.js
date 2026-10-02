@@ -39,8 +39,11 @@ async function loginWithUsername(){
  const {data:p,error:pe}=await client.from('user_profiles').select('*').eq('id',r.data.user.id).single();
  if(pe||!p){await client.auth.signOut();if(msg)msg.textContent='تعذر تحميل صلاحيات الحساب.';return}
  if(!valid(p)){await client.auth.signOut();if(msg)msg.textContent='الحساب غير نشط أو أن فترة الصلاحية غير سارية.';return}
+ profile=p;window.__icvProfile=p;
  if(typeof window.boot==='function') await window.boot(r.data.session);
- applyRoleUI();
+ ensurePageShell();applyRoleUI();
+ if(window.icvStructure?.renderDashboard){window.icvStructure.renderDashboard();window.icvStructure.renderProjects();window.icvStructure.renderLocalContent();}
+
 }
 window.login=loginWithUsername;
 
@@ -161,6 +164,7 @@ async function init(){
  ensurePageShell();
  profile=await getProfile();
  if(profile&&!valid(profile)){await client.auth.signOut();return}
+ if(profile)window.__icvProfile=profile;
  applyRoleUI();
 }
 window.addEventListener('load',()=>setTimeout(init,200));
