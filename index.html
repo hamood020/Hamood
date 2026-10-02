@@ -33,15 +33,14 @@
 <aside class="side">
 <div class="brand"><div class="brand-mark">م</div><div><b>ICV New</b><small>متابعة المشاريع والمحتوى المحلي</small></div></div>
 <div class="nav">
-<button data-page="dashboard" class="active" onclick="showPage('dashboard',this)"><span class="ico">⌂</span><span>الرئيسية</span></button>
+<button data-page="dashboard" class="active" onclick="showPage('dashboard',this)"><span class="ico">⌂</span><span>لوحة المؤشرات</span></button>
 <button data-page="projects" onclick="showPage('projects',this)"><span class="ico">▦</span><span>المشاريع</span></button>
 <button data-page="entities" onclick="showPage('entities',this)"><span class="ico">🏛</span><span>الجهات الحكومية</span></button>
 <button data-page="companies" onclick="showPage('companies',this)"><span class="ico">▣</span><span>الشركات</span></button>
-<button data-page="followups" onclick="showPage('followups',this)"><span class="ico">✓</span><span>متابعة الموظفين</span></button>
-<button data-page="audit" onclick="showPage('audit',this)"><span class="ico">◈</span><span>سجل التدقيق</span></button>
+
 </div><button class="btn logout" onclick="logout()">تسجيل الخروج</button></aside>
 <main class="main"><div class="top"><div class="title"><h1 id="pageTitle">لوحة التحكم</h1><div class="muted">لوحة متابعة تنفيذ المشاريع ومؤشرات المحتوى المحلي</div></div><div><span id="userName" class="pill"></span><span id="userRole" class="pill"></span></div></div>
-<div id="page-dashboard"></div><div id="page-projects" class="hidden"></div><div id="page-entities" class="hidden"></div><div id="page-companies" class="hidden"></div><div id="page-reports" class="hidden"></div><div id="page-plans" class="hidden"></div><div id="page-followups" class="hidden"></div><div id="page-audit" class="hidden"></div><div id="page-profile" class="hidden"></div><div id="page-users" class="hidden"></div>
+<div id="page-dashboard"></div><div id="page-projects" class="hidden"></div><div id="page-entities" class="hidden"></div><div id="page-companies" class="hidden"></div><div id="page-reports" class="hidden"></div><div id="page-plans" class="hidden"></div><div id="page-followups" class="hidden"></div><div id="page-audit" class="hidden"></div><div id="page-profile" class="hidden"></div><div id="page-users" class="hidden"></div><div id="page-local-content" class="hidden"></div><div id="page-settings" class="hidden"></div>
 </main></section><div id="modal" class="modal hidden"></div><div id="toast" class="toast hidden"></div>
 <script>
 const SUPABASE_URL='https://bmwtrnosqosbkezdswcx.supabase.co', SUPABASE_KEY='sb_publishable_Ge88ZuNnqW89l0SMfw_mvQ_nY2BzpPr';
@@ -107,4 +106,4 @@ async function renderAudit(){const e=document.getElementById('page-audit');if(pr
 function exportProjects(){const rows=projects.map(p=>({'م':p.serial_no,'الجهة الحكومية':p.government_entities?.name,'اسم المشروع':p.project_name,'حالة المشروع':p.project_status,'قيمة المشروع الاجمالي':p.total_project_value,'نسبة الانجاز':p.progress_pct,'إجمالي الصرف':p.total_spend,'إجمالي المحتوى المحلي':p.total_local_content,'نسبة المحتوى المحلي إلى إجمالي الصرف':p.local_content_spend_pct,'نسبة المحتوى المحلي إلى قيمة المشروع':p.local_content_project_pct,'نسبة SME':p.sme_pct,'الملاحظات':p.notes}));const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'المشاريع');XLSX.writeFile(wb,'ICV-New-Projects.xlsx')}
 function closeModal(){modal.classList.add('hidden');modal.innerHTML=''}
 db.auth.getSession().then(r=>boot(r.data.session));db.auth.onAuthStateChange((_,s)=>{if(s&&!session)boot(s)})
-</script><script src="ptlc-access.js"></script><script src="ptlc-project-pages.js"></script></body></html>
+</script><script src="ptlc-access.js"></script><script src="ptlc-project-pages.js"></script><script src="icv-structure.js"></script></body></html>
