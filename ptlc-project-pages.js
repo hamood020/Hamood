@@ -1,4 +1,10 @@
-(()=>{const dbx=window.__icvAccessClient||db,E=v=>String(v??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])),N=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2}),P=v=>Number(v||0).toFixed(1)+'%',canEdit=()=>['admin','editor'].includes(window.__icvProfile?.role||'viewer');let pid=null,oldShow=null;
+<style id="icv-project-visual-fix">
+.icv-hero-main{background:linear-gradient(135deg,var(--primary2),var(--primary) 72%,var(--primary2))!important}
+.icv-hbtn.primary{background:var(--primary)!important;color:#fff!important;border-color:var(--primary)!important;padding:8px 12px!important;font-size:12px!important;line-height:1.2!important;height:auto!important;min-height:36px!important;box-sizing:border-box}
+.icv-hbtn.primary:hover{background:var(--primary2)!important;border-color:var(--primary2)!important}
+.detail-item small{font-size:13px!important}
+.detail-item b{font-size:16px!important;line-height:1.5!important}
+</style>(()=>{const dbx=window.__icvAccessClient||db,E=v=>String(v??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])),N=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2}),P=v=>Number(v||0).toFixed(1)+'%',canEdit=()=>['admin','editor'].includes(window.__icvProfile?.role||'viewer');let pid=null,oldShow=null;
 function modal(t,b){document.getElementById('icvV2Modal')?.remove();let d=document.createElement('div');d.id='icvV2Modal';d.style='position:fixed;inset:0;background:#0008;z-index:100;padding:18px;overflow:auto';d.innerHTML='<div class="panel" style="max-width:1150px;margin:auto"><div class="toolbar"><h2>'+t+'</h2><button class="btn" onclick="document.getElementById(\'icvV2Modal\').remove()">إغلاق</button></div>'+b+'</div>';document.body.appendChild(d)}
 function field(l,id,t,v,x){return '<div class="field"><label>'+l+'</label><input id="'+id+'" type="'+(t||'text')+'" value="'+E(v||'')+'" '+(x||'')+'></div>'}
 function sel(l,id,ops,v){return '<div class="field"><label>'+l+'</label><select id="'+id+'">'+ops.map(o=>'<option value="'+E(o)+'" '+(String(o)===String(v||'')?'selected':'')+'>'+E(o)+'</option>').join('')+'</select></div>'}
