@@ -26,7 +26,15 @@ async function projectPage(id){ document.getElementById('pageTitle')?.replaceChi
  const yearNo=(String(p.annual_update||'').match(/\\d+/)||[''])[0], qNo=String(p.current_quarter||'').replace(/\\D/g,'')||'', periodKey=yearNo&&qNo?(yearNo+'_'+qNo):'';
  const planPeriod=(pd.periods&&pd.periods[periodKey])||{};
  const pickPlan=(periodKey?planPeriod:null);
- const planOm=n(pickPlan?.omani||pd.omani_workforce||p.target_omani), planForeign=n(pickPlan?.foreign||pd.foreign_workforce||p.target_non_omani);
+ const planOm=n(pickPlan?.omani||pd.omani_workforce||p.target_omani), planForeign=n(pickPlan?.foreign||pd.foreign_workforce||p.target_non_omani); const catPlan=(cat,who)=>n(pickPlan?.[cat+'_'+who]||pd[cat+'_'+who]||pd.categories?.[cat]?.[who]);
+ const catActual=(cat,who)=>n(p['cat'+cat.replace('cat','')+'_'+who]);
+ const omCat1Plan=catPlan('cat1','omani'), omCat2Plan=catPlan('cat2','omani'), omCat3Plan=catPlan('cat3','omani');
+ const omCat1Actual=n(p.cat1_omani), omCat2Actual=n(p.cat2_omani), omCat3Actual=n(p.cat3_omani);
+ const foreignCat1Plan=catPlan('cat1','foreign')||catPlan('cat1','non_omani'), foreignCat2Plan=catPlan('cat2','foreign')||catPlan('cat2','non_omani'), foreignCat3Plan=catPlan('cat3','foreign')||catPlan('cat3','non_omani');
+ const foreignCat1Actual=n(p.cat1_non_omani), foreignCat2Actual=n(p.cat2_non_omani), foreignCat3Actual=n(p.cat3_non_omani);
+ const subcontractPlan={local:n(pickPlan?.subcontract_local||pd.subcontract_local),foreign:n(pickPlan?.subcontract_foreign||pd.subcontract_foreign),sme:n(pickPlan?.subcontract_sme||pd.subcontract_sme)};
+ const subcontractActual={local:n(p.subcontract_local),foreign:n(p.subcontract_foreign),sme:n(p.subcontract_sme)};
+
  const planOmaniSalary=n(pickPlan?.omani_salary||pd.omani_salary||p.plan_omani_salary), planForeignSalary=n(pickPlan?.foreign_salary||pd.foreign_salary||p.plan_non_omani_salary);
  const actualOmaniSalary=n(ld.omani_salary||p.actual_omani_salary), actualForeignSalary=n(ld.foreign_salary||p.actual_non_omani_salary);
  const actualPurchases=ld.purchases||{}, actualServices=ld.services||{}, actualSubcontracts=n(ld.subcontracts||p.subcontracts_total);
@@ -60,7 +68,7 @@ async function projectPage(id){ document.getElementById('pageTitle')?.replaceChi
  '<section id="overview" class="project-kpis"><div class="project-kpi"><small>إجمالي الصرف</small><b>'+money(p.total_spend)+'</b><span>القيمة الحالية</span></div><div class="project-kpi"><small>إجمالي المحتوى المحلي</small><b>'+money(p.total_local_content)+'</b><span>القيمة المحسوبة</span></div><div class="project-kpi"><small>المحتوى المحلي / الصرف</small><b>'+pct(p.local_content_spend_pct)+'</b><span>نسبة من إجمالي الصرف</span></div><div class="project-kpi"><small>المحتوى المحلي / قيمة المشروع</small><b>'+pct(p.local_content_project_pct)+'</b><span>نسبة من قيمة المشروع</span></div></section>'+
  '<div class="comparison-stack">'+
  cmpCard('العمالة والتعمين والرواتب','قوى عاملة',
-   cmpRow('العمانيون',planOm,om,false)+cmpRow('الأجانب',planForeign,foreign,false)+cmpRow('نسبة التعمين',planOm+planForeign,omPct,false)+cmpRow('رواتب العمانيين',planOmaniSalary,actualOmaniSalary,true)+cmpRow('رواتب الأجانب',planForeignSalary,actualForeignSalary,true),
+   cmpRow('العمانيون',planOm,om,false)+cmpRow('الفئة الأولى — العمانيون',omCat1Plan,omCat1Actual,false)+cmpRow('الفئة الثانية — العمانيون',omCat2Plan,omCat2Actual,false)+cmpRow('الفئة الثالثة — العمانيون',omCat3Plan,omCat3Actual,false)+cmpRow('الأجانب',planForeign,foreign,false)+cmpRow('الفئة الأولى — الأجانب',foreignCat1Plan,foreignCat1Actual,false)+cmpRow('الفئة الثانية — الأجانب',foreignCat2Plan,foreignCat2Actual,false)+cmpRow('الفئة الثالثة — الأجانب',foreignCat3Plan,foreignCat3Actual,false)+cmpRow('نسبة التعمين',planOm+planForeign,omPct,false)+cmpRow('رواتب العمانيين',planOmaniSalary,actualOmaniSalary,true)+cmpRow('رواتب الأجانب',planForeignSalary,actualForeignSalary,true),
    planOm+planForeign,om+foreign,false)+
  cmpCard('المشتريات','السلع',
    cmpRow('صنع في عُمان',planPurchases.made_in_oman,actualPurchaseVals.made_in_oman)+cmpRow('مورد محلي',planPurchases.local_supplier,actualPurchaseVals.local_supplier)+cmpRow('استيراد مباشر',planPurchases.direct_import,actualPurchaseVals.direct_import)+cmpRow('مورد المؤسسات الصغيرة والمتوسطة',planPurchases.sme_purchase,actualPurchaseVals.sme_purchase),
@@ -69,8 +77,8 @@ async function projectPage(id){ document.getElementById('pageTitle')?.replaceChi
    cmpRow('مزود محلي',planServices.local_service,actualServiceVals.local_service)+cmpRow('مزود أجنبي',planServices.foreign_service,actualServiceVals.foreign_service)+cmpRow('مزود المؤسسات الصغيرة والمتوسطة',planServices.sme_service,actualServiceVals.sme_service),
    Object.values(planServices).reduce((a,v)=>a+v,0),Object.values(actualServiceVals).reduce((a,v)=>a+v,0))+
  cmpCard('عقود الباطن','SME',
-   cmpRow('إجمالي عقود الباطن',n(pickPlan?.subcontracts),actualSubcontracts),
-   n(pickPlan?.subcontracts),actualSubcontracts)+
+   cmpRow('مزود محلي',subcontractPlan.local,subcontractActual.local)+cmpRow('مزود أجنبي',subcontractPlan.foreign,subcontractActual.foreign)+cmpRow('مزود المؤسسات الصغيرة والمتوسطة',subcontractPlan.sme,subcontractActual.sme),
+   Object.values(subcontractPlan).reduce((a,v)=>a+v,0),Object.values(subcontractActual).reduce((a,v)=>a+v,0))+
  '</div>'+
  '<section class="section-card comparison-note"><div class="section-card-head"><div><h2>قراءة المقارنة</h2><p>النسبة توضح مستوى تنفيذ الأداء الفعلي مقارنة بالخطة للفترة الحالية.</p></div><span class="section-tag">'+(periodKey?'الفترة '+esc2(periodKey.replace('_',' / ')):'الخطة')+'</span></div><div class="comparison-note-grid"><div><b>طريقة القراءة</b><span>100% فأعلى = محقق أو متجاوز للخطة</span></div><div><b>مصدر الفعلي</b><span>آخر تقرير معتمد، أو آخر تقرير متاح عند عدم وجود تقرير معتمد.</span></div><div><b>مصدر الخطة</b><span>الفترة المقابلة من خطة المحتوى المحلي.</span></div></div></section>'+
  '<section id="plan" class="section-card"><div class="section-card-head"><div><h2>خطة المحتوى المحلي</h2><p>إضافة أو تحديث خطة المشروع من داخل صفحة المشروع</p></div><span class="section-tag">'+(plan?'خطة متوفرة':'لا توجد خطة')+'</span></div><div class="plan-banner"><div><strong>'+(plan?'الخطة الحالية مسجلة لهذا المشروع':'لا توجد خطة مسجلة لهذا المشروع')+'</strong><span>'+(plan?'يمكنك تحديثها من هنا.':'يمكنك إضافة الخطة من هنا.')+'</span></div><div>'+planBtn+'</div></div>'+(plan?'<div class="detail-grid" style="margin-top:12px"><div class="detail-item"><small>مدة الخطة</small><b>'+n(pd.duration_months)+' شهر</b></div><div class="detail-item"><small>عمانيون مستهدفون</small><b>'+n(pd.omani_workforce)+'</b></div><div class="detail-item"><small>أجانب مستهدفون</small><b>'+n(pd.foreign_workforce)+'</b></div><div class="detail-item"><small>رواتب العمانيين</small><b>'+money(pd.omani_salary)+'</b></div><div class="detail-item"><small>رواتب الأجانب</small><b>'+money(pd.foreign_salary)+'</b></div><div class="detail-item"><small>مصدر الخطة</small><b>'+esc2(plan.source_file||'—')+'</b></div></div>':'<div class="notice" style="margin-top:10px">الخطة اختيارية. في حال عدم وجودها تستمر التقارير والنتائج الفعلية.</div>')+'</section>'+
