@@ -32,8 +32,13 @@ async function projectPage(id){ document.getElementById('pageTitle')?.replaceChi
  const omCat1Actual=n(p.cat1_omani), omCat2Actual=n(p.cat2_omani), omCat3Actual=n(p.cat3_omani);
  const foreignCat1Plan=catPlan('cat1','foreign')||catPlan('cat1','non_omani'), foreignCat2Plan=catPlan('cat2','foreign')||catPlan('cat2','non_omani'), foreignCat3Plan=catPlan('cat3','foreign')||catPlan('cat3','non_omani');
  const foreignCat1Actual=n(p.cat1_non_omani), foreignCat2Actual=n(p.cat2_non_omani), foreignCat3Actual=n(p.cat3_non_omani);
- const subcontractPlan={local:n(pickPlan?.subcontract_local||pd.subcontract_local),foreign:n(pickPlan?.subcontract_foreign||pd.subcontract_foreign),sme:n(pickPlan?.subcontract_sme||pd.subcontract_sme)};
- const subcontractActual={local:n(p.subcontract_local),foreign:n(p.subcontract_foreign),sme:n(p.subcontract_sme)};
+ const subcontractPlan={local:n(pickPlan?.subcontract_local||pd.subcontract_local),foreign:n(pickPlan?.subcontract_foreign||pd.subcontract_foreign),sme:n(pickPlan?.subcontract_sme||pd.subcontract_sme)}; const subcontractRaw=ld.subcontracts||{};
+ const subcontractActualFromReport={
+   local:n(typeof subcontractRaw==='object'?(subcontractRaw['مزود محلي']||subcontractRaw.local):0),
+   foreign:n(typeof subcontractRaw==='object'?(subcontractRaw['مزود أجنبي']||subcontractRaw.foreign):0),
+   sme:n(typeof subcontractRaw==='object'?(subcontractRaw['مزود من المؤسسات الصغيرة و المتوسطة']||subcontractRaw.sme):0)
+ };
+ const subcontractActual={local:subcontractActualFromReport.local||n(p.subcontract_local),foreign:subcontractActualFromReport.foreign||n(p.subcontract_foreign),sme:subcontractActualFromReport.sme||n(p.subcontract_sme)};
 
  const planOmaniSalary=n(pickPlan?.omani_salary||pd.omani_salary||p.plan_omani_salary), planForeignSalary=n(pickPlan?.foreign_salary||pd.foreign_salary||p.plan_non_omani_salary);
  const actualOmaniSalary=n(ld.omani_salary||p.actual_omani_salary), actualForeignSalary=n(ld.foreign_salary||p.actual_non_omani_salary);
