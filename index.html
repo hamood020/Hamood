@@ -32,7 +32,39 @@
 .theme-size{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}.theme-size button,#themeFont{height:40px;border:1px solid var(--line);background:#fff;border-radius:10px;color:var(--ink);font-family:inherit;cursor:pointer}.theme-size button:hover{background:var(--soft);color:var(--primary2)}#themeFont{width:100%;padding:0 10px}
 @media(max-width:900px){.theme-panel{right:235px;max-width:calc(100vw - 250px)}}
 @media(max-width:760px){.theme-panel{right:82px;width:330px;max-width:calc(100vw - 95px)}}
-</style></head>
+<style id="readable-fonts">
+/* Readability: enlarge content text without changing header/sidebar */
+.main .panel h2,.main .card h2{font-size:18px}
+.main .panel h3,.main .card h3{font-size:15px}
+.main .desc,.main .muted{font-size:12px}
+.main .card .label,.main .card .sub{font-size:12px}
+.main .metric{font-size:13px}
+.main .metric b{font-size:13px}
+.main .table-wrap th{font-size:12px;padding:13px 11px}
+.main .table-wrap td{font-size:13px;padding:13px 11px}
+.main .table-wrap td b,.main .table-wrap td .project-link{font-size:13px}
+.main .btn{font-size:13px}
+.main .field label{font-size:12px}
+.main .field input,.main .field select,.main .field textarea,.main .search{font-size:13px}
+.main .project-expiry-filter{font-size:12px}
+.main .bar-row,.main .legend{font-size:12px}
+.main .section-head h2{font-size:19px}
+/* Project page */
+.main .comparison-card{font-size:13px}
+.main .compare-row{font-size:13px}
+.main .compare-label{font-size:13px}
+.main .compare-value b{font-size:14px}
+.main .compare-value small,.main .compare-result small{font-size:11px}
+.main .compare-result span{font-size:11px}
+.main .compare-head{font-size:11px}
+.main .workforce-main-card .compare-row,.main .workforce-category-card .compare-row{font-size:13px}
+.main .workforce-main-card .compare-label,.main .workforce-category-card .compare-label{font-size:13px}
+.main .workforce-main-card .compare-value b,.main .workforce-category-card .compare-value b{font-size:14px}
+.main .workforce-main-card .compare-value small,.main .workforce-category-card .compare-value small,
+.main .workforce-main-card .compare-result small,.main .workforce-category-card .compare-result small{font-size:11px}
+.main .workforce-main-card .compare-result span,.main .workforce-category-card .compare-result span{font-size:11px}
+.main .workforce-main-card .compare-head,.main .workforce-category-card .compare-head{font-size:11px}
+</style></style></head>
 <body>
 <section id="login" class="login"><div class="login-card">
 <div class="logo">ICV</div><h1>ICV New</h1><div class="muted">منصة متابعة المشاريع والمحتوى المحلي</div>
