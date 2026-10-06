@@ -130,7 +130,24 @@ uploadBtn?.addEventListener('click',async()=>{if(!selectedFile)return alert('ي�
 };
 
 window.icvEnsurePlanForDocuments=async()=>{if(window.__icvCurrentPlanId)return window.__icvCurrentPlanId;if(!canEdit())return null;const dur=Math.max(1,Number(val('pdu')||48)),pay={project_id:pid,version:val('pv')||'V1',received_at:val('pd')||null,status:val('pst')||'مسودة',created_by:window.__icvProfile?.id,plan_data:{duration_months:dur,notes:val('pn')||null,periods:{}}};const r=await dbx.from('local_content_plans').insert(pay).select('id').single();if(r.error){msg('pmsg',r.error.message);return null}window.__icvCurrentPlanId=r.data.id;await dbx.from('projects').update({local_content_plan:true}).eq('id',pid);return r.data.id};
-window.icvRenderPlanDocuments=async planId=>{const box=document.getElementById('supportDocumentsList');if(!box)return;const r=await dbx.from('project_plan_documents').select('*').eq('plan_id',planId).order('created_at',{ascending:false});if(r.error){box.innerHTML='<tr><td colspan="3" style="text-align:center;color:#dc2626">'+E(r.error.message)+'</td></tr>';return}const docs=r.data||[];box.innerHTML=docs.length?docs.map(doc=>'<tr><td><a href="#" onclick="window.icvOpenPlanDocument(\''+doc.id+'\');return false" style="font-weight:800;text-decoration:underline">'+E(doc.original_file_name)+'</a></td><td>'+E(doc.display_name)+'</td><td><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap"><button type="button" class="btn" style="margin:0" onclick="window.icvRenamePlanDocument(\''+doc.id+'\')">إعادة تسمية</button><button type="button" class="btn" style="margin:0;border-color:#dc2626;color:#dc2626" onclick="window.icvDeletePlanDocument(\''+doc.id+'\')">حذف</button></div></td></tr>').join(''):'<tr><td colspan="3" style="text-align:center;color:var(--muted)">لا توجد مستندات مرفوعة</td></tr>};
+window.icvRenderPlanDocuments=async planId=>{
+const box=document.getElementById('supportDocumentsList');if(!box)return;
+const r=await dbx.from('project_plan_documents').select('*').eq('plan_id',planId).order('created_at',{ascending:false});
+if(r.error){box.innerHTML='<tr><td colspan="3" style="text-align:center;color:#dc2626">'+E(r.error.message)+'</td></tr>';return}
+const docs=r.data||[];
+if(!docs.length){box.innerHTML='<tr><td colspan="3" style="text-align:center;color:var(--muted)">لا توجد مستندات مرفوعة</td></tr>';return}
+box.innerHTML=docs.map(doc=>{
+const row=document.createElement('tr');
+row.innerHTML='<td></td><td></td><td></td>';
+row.children[0].textContent=doc.original_file_name;
+const link=document.createElement('a');link.href='#';link.textContent=doc.display_name;link.style='font-weight:800;text-decoration:underline';link.onclick=e=>{e.preventDefault();window.icvOpenPlanDocument(doc.id)};
+row.children[1].appendChild(link);
+const wrap=document.createElement('div');wrap.style='display:flex;gap:6px;justify-content:center;flex-wrap:wrap';
+const rename=document.createElement('button');rename.type='button';rename.className='btn';rename.textContent='إعادة تسمية';rename.onclick=()=>window.icvRenamePlanDocument(doc.id);
+const del=document.createElement('button');del.type='button';del.className='btn';del.textContent='حذف';del.style='border-color:#dc2626;color:#dc2626';del.onclick=()=>window.icvDeletePlanDocument(doc.id);
+wrap.appendChild(rename);wrap.appendChild(del);row.children[2].appendChild(wrap);return row.outerHTML;
+}).join('');
+};
 window.icvOpenPlanDocument=async documentId=>{const w=window.open('about:blank','_blank');const r=await dbx.from('project_plan_documents').select('storage_path,original_file_name').eq('id',documentId).single();if(r.error){w?.close();return alert(r.error.message)}const s=await dbx.storage.from('project-plan-documents').createSignedUrl(r.data.storage_path,300);const url=s.data?.signedUrl||s.data?.signedURL;if(s.error||!url){w?.close();return alert(s.error?.message||'تعذر فتح المستند.')}if(w)w.location.href=url;else window.location.href=url};
 window.icvRenamePlanDocument=async documentId=>{const r=await dbx.from('project_plan_documents').select('display_name').eq('id',documentId).single();if(r.error)return alert(r.error.message);const name=prompt('اكتب الاسم الجديد للمستند:',r.data.display_name);if(name===null)return;const trimmed=name.trim();if(!trimmed)return alert('يرجى إدخال اسم للمستند.');const u=await dbx.from('project_plan_documents').update({display_name:trimmed}).eq('id',documentId);if(u.error)return alert(u.error.message);await window.icvRenderPlanDocuments(window.__icvCurrentPlanId)};
 window.icvDeletePlanDocument=async documentId=>{const r=await dbx.from('project_plan_documents').select('storage_path,display_name,plan_id').eq('id',documentId).single();if(r.error)return alert(r.error.message);if(!confirm('هل أنت متأكد من حذف المستند "'+r.data.display_name+'"?'))return;const rm=await dbx.storage.from('project-plan-documents').remove([r.data.storage_path]);if(rm.error)return alert(rm.error.message);const d=await dbx.from('project_plan_documents').delete().eq('id',documentId);if(d.error)return alert(d.error.message);await window.icvRenderPlanDocuments(r.data.plan_id||window.__icvCurrentPlanId)};
