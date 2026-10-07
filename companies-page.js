@@ -260,5 +260,9 @@
   }
 
   window.icvCompaniesPage=renderCompaniesSafe;
-  if(new URLSearchParams(location.search).get('page')==='companies') setTimeout(renderCompaniesSafe,0);
+  setTimeout(function(){
+    const page=document.getElementById('page-companies');
+    if(page && !page.classList.contains('hidden')) renderCompaniesSafe();
+  },200);
+  if(new URLSearchParams(location.search).get('page')==='companies') setTimeout(renderCompaniesSafe,250);
 })();
