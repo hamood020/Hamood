@@ -214,4 +214,16 @@ window.logoutFromPlan=async function(){
   await db.auth.signOut();
   window.location.href='index.html';
 };
+</script><script>
+(function(){
+  function cacheSession(s){
+    if(!s)return;
+    try{sessionStorage.setItem('icv-auth-session',JSON.stringify({access_token:s.access_token,refresh_token:s.refresh_token}))}catch(e){}
+  }
+  db.auth.getSession().then(r=>cacheSession(r.data.session));
+  db.auth.onAuthStateChange((event,s)=>{
+    if(s)cacheSession(s);
+    else if(event==='SIGNED_OUT')sessionStorage.removeItem('icv-auth-session');
+  });
+})();
 </script></body></html>
