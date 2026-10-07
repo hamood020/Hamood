@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ICV New — إدارة الجهات الحكومية</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
+:root{--bg:#f5f7fb;--card:#fff;--ink:#162033;--muted:#6b7280;--line:#e8edf4;--primary:#0f766e;--primary2:#0b5f59;--soft:#eef7f5;--shadow:0 8px 24px rgba(15,23,42,.06);--radius:18px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Cairo,Arial,sans-serif}
+.app{display:flex;min-height:100vh}.side{width:250px;background:#172f52;color:#fff;position:fixed;right:0;top:0;bottom:0;padding:22px 14px}.brand{display:flex;align-items:center;gap:10px;padding:8px 10px 24px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:16px}.brand-mark{width:40px;height:40px;border-radius:12px;background:#fff;color:var(--primary);display:grid;place-items:center;font-weight:800}.brand b{font-size:15px}.brand small{display:block;color:#cbd5e1;font-size:10px;margin-top:3px}.nav{display:grid;gap:6px}.nav button{width:100%;border:0;background:transparent;color:#fff;padding:12px 14px;border-radius:12px;font-size:13px;display:flex;align-items:center;gap:10px;text-align:right}.nav button.active,.nav button:hover{background:rgba(255,255,255,.1)}
+.main{margin-right:250px;width:calc(100% - 250px);padding:28px 32px 48px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.top h1{margin:0;font-size:26px}.muted{color:var(--muted);font-size:12px}.pill{display:inline-flex;background:var(--soft);color:var(--primary2);padding:6px 10px;border-radius:999px;font-size:11px;font-weight:700}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.toolbar h2{margin:0 0 5px;font-size:18px}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;padding:9px 14px;font-family:inherit;cursor:pointer;font-weight:700;font-size:13px}.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}.btn.view{background:#f8fafc;color:var(--primary2);border-color:#cfe2df;min-width:82px}.field{margin-top:16px}.field label{display:block;color:var(--muted);font-size:12px;font-weight:700;margin-bottom:5px}.field select,.field input{width:100%;height:42px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:0 10px;font:inherit;font-size:13px;outline:none}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;margin-top:15px}.table-wrap table{width:100%;border-collapse:collapse;min-width:760px;background:#fff}.table-wrap th{background:#f8fafc;color:#667085;font-size:13px;font-weight:800;padding:13px 11px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}.table-wrap td{padding:13px 11px;font-size:13px;border-bottom:1px solid #f0f2f6;vertical-align:middle}.table-wrap tr:last-child td{border-bottom:0}.table-wrap tr:hover td{background:#fbfdfd}.entity-name{font-weight:800}.num{text-align:center}.money{text-align:right;white-space:nowrap}
+.modal{position:fixed;inset:0;background:#0008;display:none;place-items:center;padding:20px;z-index:50}.modal.show{display:grid}.modal-card{background:#fff;border-radius:18px;width:min(720px,100%);max-height:90vh;overflow:auto;padding:22px;box-shadow:0 20px 60px #0004}.modal-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:16px}.modal-head h2{margin:0;font-size:19px}.close{border:0;background:#eef2f7;border-radius:50%;width:34px;height:34px;font-size:20px;cursor:pointer}.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.info-box{border:1px solid var(--line);background:#f8fafc;border-radius:12px;padding:13px}.info-box label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.info-box b{font-size:14px}.contact-title{font-size:15px;font-weight:800;margin:22px 0 10px}.contact{border:1px solid #dce8e6;background:var(--soft);border-radius:12px;padding:12px;margin-bottom:8px}.contact b{display:block;margin-bottom:5px}.contact span{color:var(--muted);font-size:12px}.projects-title{font-size:15px;font-weight:800;margin:22px 0 10px}.empty{color:var(--muted);font-size:12px;padding:10px 0}
+@media(max-width:760px){.side{position:static;width:100%;height:auto}.app{display:block}.main{margin:0;width:100%;padding:18px}.top{align-items:flex-start;flex-direction:column;gap:12px}.info-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+  <div class="brand"><div class="brand-mark">م</div><div><b>ICV New</b><small>متابعة المشاريع والمحتوى المحلي</small></div></div>
+  <div class="nav">
+    <button>⌂ <span>الصفحة الرئيسية</span></button>
+    <button>▦ <span>المشاريع</span></button>
+    <button class="active">🏛 <span>إدارة الجهات الحكومية</span></button>
+    <button>▣ <span>الشركات</span></button>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="top">
+    <div>
+      <h1>إدارة الجهات الحكومية</h1>
+      <div class="muted">عرض الجهات الحكومية وعدد مشاريعها وقيمتها والإنفاق.</div>
+    </div>
+    <div><span class="pill">مدير النظام</span></div>
+  </div>
+
+  <section class="panel">
+    <div class="toolbar">
+      <div>
+        <h2>الجهات الحكومية</h2>
+        <div class="muted">يمكنك فتح بطاقة أي جهة لعرض تفاصيلها ونقاط التواصل.</div>
+      </div>
+      <button class="btn primary">+ إضافة جهة</button>
+    </div>
+
+    <div class="field">
+      <label>فلتر الجهة</label>
+      <select>
+        <option>جميع الجهات</option>
+        <option>هيئة المشاريع والمناقصات والمحتوى المحلي</option>
+        <option>وزارة التربية والتعليم</option>
+        <option>وزارة الإسكان والتخطيط العمراني</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>الجهة الحكومية</th>
+            <th>عدد المشاريع</th>
+            <th>قيمة المشاريع</th>
+            <th>الإنفاق</th>
+            <th>بطاقة الجهة</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="entity-name">هيئة المشاريع والمناقصات والمحتوى المحلي</td>
+            <td class="num">8</td>
+            <td class="money">18,500,000 ر.ع</td>
+            <td class="money">12,750,000 ر.ع</td>
+            <td><button class="btn view" onclick="openCard(1)">عرض</button></td>
+          </tr>
+          <tr>
+            <td class="entity-name">وزارة التربية والتعليم</td>
+            <td class="num">12</td>
+            <td class="money">42,300,000 ر.ع</td>
+            <td class="money">25,480,000 ر.ع</td>
+            <td><button class="btn view" onclick="openCard(2)">عرض</button></td>
+          </tr>
+          <tr>
+            <td class="entity-name">وزارة الإسكان والتخطيط العمراني</td>
+            <td class="num">6</td>
+            <td class="money">21,700,000 ر.ع</td>
+            <td class="money">14,200,000 ر.ع</td>
+            <td><button class="btn view" onclick="openCard(3)">عرض</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+</div>
+
+<div id="entityModal" class="modal" onclick="if(event.target===this)closeCard()">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="modalTitle">بطاقة الجهة</h2>
+      <button class="close" onclick="closeCard()">×</button>
+    </div>
+    <div class="info-grid">
+      <div class="info-box"><label>عدد المشاريع</label><b id="modalProjects">—</b></div>
+      <div class="info-box"><label>قيمة المشاريع</label><b id="modalValue">—</b></div>
+      <div class="info-box"><label>الإنفاق</label><b id="modalSpend">—</b></div>
+      <div class="info-box"><label>حالة البطاقة</label><b>معلومات الجهة</b></div>
+    </div>
+    <div class="contact-title">نقاط التواصل</div>
+    <div id="contacts"></div>
+    <div class="projects-title">تفاصيل الجهة</div>
+    <div class="empty">هذه البطاقة مخصصة لعرض بيانات الجهة ونقاط التواصل، ويمكن ربطها لاحقاً مباشرة ببيانات الجهة في المنصة.</div>
+  </div>
+</div>
+
+<script>
+const data={
+  1:{name:'هيئة المشاريع والمناقصات والمحتوى المحلي',projects:'8',value:'18,500,000 ر.ع',spend:'12,750,000 ر.ع',contacts:[['أحمد محمد','91234567','ahmed@example.om'],['خالد سالم','92345678','khalid@example.om']]},
+  2:{name:'وزارة التربية والتعليم',projects:'12',value:'42,300,000 ر.ع',spend:'25,480,000 ر.ع',contacts:[['سالم علي','93456789','salem@example.om']]},
+  3:{name:'وزارة الإسكان والتخطيط العمراني',projects:'6',value:'21,700,000 ر.ع',spend:'14,200,000 ر.ع',contacts:[]}
+};
+function openCard(id){
+  const x=data[id]; if(!x)return;
+  document.getElementById('modalTitle').textContent='بطاقة الجهة: '+x.name;
+  document.getElementById('modalProjects').textContent=x.projects;
+  document.getElementById('modalValue').textContent=x.value;
+  document.getElementById('modalSpend').textContent=x.spend;
+  document.getElementById('contacts').innerHTML=x.contacts.length
+    ? x.contacts.map(c=>'<div class="contact"><b>'+c[0]+'</b><span>📞 '+c[1]+' &nbsp; | &nbsp; ✉ '+c[2]+'</span></div>').join('')
+    : '<div class="empty">لا توجد نقاط تواصل مضافة.</div>';
+  document.getElementById('entityModal').classList.add('show');
+}
+function closeCard(){document.getElementById('entityModal').classList.remove('show')}
+</script>
+</body>
+</html>
