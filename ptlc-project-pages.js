@@ -231,8 +231,8 @@ async function renderEntityProfiles(){
    const contacts=Array.isArray(e.contact_points)?e.contact_points:[];
    const contactHtml=contacts.length?contacts.map(c=>'<div class="entity-contact"><b>'+E(c.name||'—')+'</b><span>📞 '+E(c.phone||'—')+' &nbsp; | &nbsp; ✉ '+E(c.email||'—')+'</span></div>').join(''):'<div class="entity-profile-empty">لا توجد نقاط تواصل مضافة.</div>';
    const projectsHtml=projectsFor.length?projectsFor.map((p,i)=>'<div class="entity-profile-project"><b>'+String(i+1)+'.</b> <a class="project-link" href="#" data-project-id="'+E(p.id)+'">'+E(p.project_name)+'</a></div>').join(''):'<div class="entity-profile-empty">لا توجد مشاريع تابعة لهذه الجهة.</div>';
-   return '<article class="entity-profile-card"><button class="entity-profile-edit" title="تعديل" onclick="window.icvEditEntityProfile(\\''+E(e.id)+'\\')">✎</button><h3>'+E(e.name)+'</h3>'+contactHtml+
-     '<button class="btn entity-profile-show" onclick="window.icvToggleEntityProjects(\\''+E(e.id)+'\\',this)">إظهار المشاريع ('+projectsFor.length+')</button>'+
+   return '<article class="entity-profile-card"><button class="entity-profile-edit" title="تعديل" onclick="window.icvEditEntityProfile(\''+E(e.id)+'\')">✎</button><h3>'+E(e.name)+'</h3>'+contactHtml+
+     '<button class="btn entity-profile-show" onclick="window.icvToggleEntityProjects(\''+E(e.id)+'\',this)">إظهار المشاريع ('+projectsFor.length+')</button>'+
      '<div id="entity-profile-projects-'+E(e.id)+'" class="entity-profile-projects"><div class="entity-contact-head"><span>المشاريع التابعة للجهة</span><span class="muted">'+projectsFor.length+' مشروع</span></div>'+projectsHtml+'</div></article>';
  }).join('');
 
@@ -248,7 +248,7 @@ async function renderEntityProfiles(){
 window.icvToggleEntityProjects=(id,btn)=>{
  const box=document.getElementById('entity-profile-projects-'+id);if(!box)return;
  const show=!box.classList.contains('show');box.classList.toggle('show',show);
- const count=String(btn.textContent).match(/\\d+/)?.[0]||'0';
+ const count=String(btn.textContent).match(/\d+/)?.[0]||'0';
  btn.textContent=(show?'إخفاء المشاريع (':'إظهار المشاريع (')+count+')';
 };
 
@@ -257,7 +257,7 @@ window.icvEditEntityProfile=async id=>{
  const e=r.data;if(!e)return;
  const contacts=Array.isArray(e.contact_points)?e.contact_points:[];
  const rows=contacts.length?contacts.map(c=>'<div class="entity-contact-edit-row"><input class="ec-name" placeholder="اسم الشخص" value="'+E(c.name||'')+'"><input class="ec-phone" placeholder="رقم الهاتف" value="'+E(c.phone||'')+'"><input class="ec-email" placeholder="البريد الإلكتروني" value="'+E(c.email||'')+'"><button type="button" onclick="this.parentElement.remove()">×</button></div>').join(''):'';
- const html='<div class="entity-profile-modal"><div class="field entity-profile-form"><label>اسم الجهة</label><input id="entityProfileName" value="'+E(e.name||'')+'"></div><div class="entity-profile-form"><label>نقاط التواصل</label><div id="entityProfileContacts">'+rows+'</div><button type="button" class="btn entity-profile-add-contact" onclick="window.icvAddEntityContactRow()">+ إضافة نقطة تواصل</button></div><div id="entityProfileMsg" class="muted" style="margin-top:10px"></div><div class="entity-profile-save-row"><button class="btn primary" onclick="window.icvSaveEntityProfile(\\''+E(e.id)+'\\')">حفظ التعديلات</button><button class="btn" onclick="document.getElementById(\\'icvV2Modal\\')?.remove()">إلغاء</button></div></div>';
+ const html='<div class="entity-profile-modal"><div class="field entity-profile-form"><label>اسم الجهة</label><input id="entityProfileName" value="'+E(e.name||'')+'"></div><div class="entity-profile-form"><label>نقاط التواصل</label><div id="entityProfileContacts">'+rows+'</div><button type="button" class="btn entity-profile-add-contact" onclick="window.icvAddEntityContactRow()">+ إضافة نقطة تواصل</button></div><div id="entityProfileMsg" class="muted" style="margin-top:10px"></div><div class="entity-profile-save-row"><button class="btn primary" onclick="window.icvSaveEntityProfile(\''+E(e.id)+'\')">حفظ التعديلات</button><button class="btn" onclick="document.getElementById(\'icvV2Modal\')?.remove()">إلغاء</button></div></div>';
  modal('تعديل ملف الجهة',html);
  if(!contacts.length)window.icvAddEntityContactRow();
 };
