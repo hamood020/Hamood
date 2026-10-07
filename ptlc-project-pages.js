@@ -347,12 +347,13 @@ oldShow=window.showPage;window.showPage=function(n,b){
  }
  if(n==='companies'){
   document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));
-  document.getElementById('page-companies')?.classList.remove('hidden');
+  const page=document.getElementById('page-companies');
+  page?.classList.remove('hidden');
   document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
   b?.classList.add('active');
   pageTitle.textContent='الشركات';
   if(typeof window.icvCompaniesPage==='function') return window.icvCompaniesPage();
-  return renderCompaniesV2()
+  return;
  }
  return oldShow?.(n,b)
 };window.icvV2={projectPage};})();
