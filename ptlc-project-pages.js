@@ -221,7 +221,7 @@ async function renderEntityProfiles(){
 
  if(!document.getElementById('icvEntityProfilesStyle')){
   const st=document.createElement('style');st.id='icvEntityProfilesStyle';
-  st.textContent='.entity-profile-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.entity-profile-card{position:relative;background:#fff;border:2px solid #b7c0ca;border-radius:16px;padding:20px;box-shadow:0 7px 22px rgba(25,54,93,.10)}.entity-profile-card h3{margin:0 42px 16px 0;font-size:18px;line-height:1.5}.entity-profile-edit{position:absolute;left:14px;top:14px;width:34px;height:34px;border:1px solid var(--line);background:#fff;color:var(--primary);border-radius:9px;cursor:pointer;font-size:17px;display:grid;place-items:center}.entity-profile-edit:hover{background:var(--soft)}.entity-contact{background:var(--soft);border-radius:11px;padding:11px 12px;margin:8px 0}.entity-contact b{display:block;margin-bottom:5px}.entity-contact span{font-size:12px;color:var(--muted)}.entity-profile-projects{border-top:1px solid var(--line);margin-top:16px;padding-top:14px;display:none}.entity-profile-projects.show{display:block}.entity-profile-project{padding:9px 0;border-bottom:1px dashed var(--line);font-size:12px}.entity-profile-project:last-child{border-bottom:0}.entity-profile-show{width:100%;margin-top:15px}.entity-profile-empty{color:var(--muted);font-size:12px;padding:8px 0}.entity-contact-head{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:9px}.entity-contact-actions{display:flex;gap:6px}.entity-contact-actions button{border:0;background:transparent;cursor:pointer;color:var(--muted);font-size:16px}.entity-profile-modal{max-height:75vh;overflow:auto}.entity-contact-edit-row{display:grid;grid-template-columns:1fr 1fr 1fr 34px;gap:7px;margin-top:8px}.entity-contact-edit-row input{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font:inherit}.entity-contact-edit-row button{border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer}.entity-profile-form label{display:block;font-size:12px;font-weight:800;margin-bottom:6px}.entity-profile-form input{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;font:inherit}.entity-profile-form .field{margin-bottom:14px}.entity-profile-add-contact{margin-top:9px}.entity-profile-save-row{display:flex;gap:8px;margin-top:18px}@media(max-width:1050px){.entity-profile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.entity-profile-grid{grid-template-columns:1fr}.entity-contact-edit-row{grid-template-columns:1fr}}';
+  st.textContent='.entity-profile-search{margin:16px 0 18px}.entity-profile-search .field{margin:0}.entity-profile-search input{height:44px}.entity-profile-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.entity-profile-card{position:relative;background:#fff;border:2px solid #b7c0ca;border-radius:16px;padding:20px;box-shadow:0 7px 22px rgba(25,54,93,.10)}.entity-profile-card h3{margin:0 42px 16px 0;font-size:18px;line-height:1.5}.entity-profile-edit{position:absolute;left:14px;top:14px;width:34px;height:34px;border:1px solid var(--line);background:#fff;color:var(--primary);border-radius:9px;cursor:pointer;font-size:17px;display:grid;place-items:center}.entity-profile-edit:hover{background:var(--soft)}.entity-contact{background:var(--soft);border-radius:11px;padding:11px 12px;margin:8px 0}.entity-contact b{display:block;margin-bottom:5px}.entity-contact span{font-size:12px;color:var(--muted)}.entity-profile-projects{border-top:1px solid var(--line);margin-top:16px;padding-top:14px;display:none}.entity-profile-projects.show{display:block}.entity-profile-project{padding:9px 0;border-bottom:1px dashed var(--line);font-size:12px}.entity-profile-project:last-child{border-bottom:0}.entity-profile-show{width:100%;margin-top:15px}.entity-profile-empty{color:var(--muted);font-size:12px;padding:8px 0}.entity-contact-head{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:9px}.entity-contact-actions{display:flex;gap:6px}.entity-contact-actions button{border:0;background:transparent;cursor:pointer;color:var(--muted);font-size:16px}.entity-profile-modal{max-height:75vh;overflow:auto}.entity-contact-edit-row{display:grid;grid-template-columns:1fr 1fr 1fr 34px;gap:7px;margin-top:8px}.entity-contact-edit-row input{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font:inherit}.entity-contact-edit-row button{border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer}.entity-profile-form label{display:block;font-size:12px;font-weight:800;margin-bottom:6px}.entity-profile-form input{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;font:inherit}.entity-profile-form .field{margin-bottom:14px}.entity-profile-add-contact{margin-top:9px}.entity-profile-save-row{display:flex;gap:8px;margin-top:18px}@media(max-width:1050px){.entity-profile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.entity-profile-grid{grid-template-columns:1fr}.entity-contact-edit-row{grid-template-columns:1fr}}';
   document.head.appendChild(st);
  }
 
@@ -236,9 +236,18 @@ async function renderEntityProfiles(){
      '<div id="entity-profile-projects-'+E(e.id)+'" class="entity-profile-projects"><div class="entity-contact-head"><span>المشاريع التابعة للجهة</span><span class="muted">'+projectsFor.length+' مشروع</span></div>'+projectsHtml+'</div></article>';
  }).join('');
 
- b.innerHTML='<div class="panel"><div class="toolbar"><div><h2>ملفات الجهات الحكومية</h2><div class="muted">الملف التعريفي لكل جهة ونقاط التواصل والمشاريع التابعة لها.</div></div></div>'+
-   '<div class="entity-profile-grid">'+(rows||'<div class="entity-profile-empty">لا توجد جهات حكومية.</div>')+'</div></div>';
+ b.innerHTML='<div class="panel"><div class="toolbar"><div><h2>بطاقات الجهات الحكومية</h2><div class="muted">الملف التعريفي لكل جهة ونقاط التواصل والمشاريع التابعة لها.</div></div></div>'+
+   '<div class="entity-profile-search"><div class="field"><label>البحث باسم الجهة</label><input id="entityProfileSearch" type="search" placeholder="اكتب اسم الجهة للبحث..."></div></div>'+
+   '<div id="entityProfileGrid" class="entity-profile-grid">'+(rows||'<div class="entity-profile-empty">لا توجد جهات حكومية.</div>')+'</div></div>';
 
+ const search=document.getElementById('entityProfileSearch');
+ search?.addEventListener('input',e=>{
+   const q=String(e.target.value||'').trim().toLowerCase();
+   document.querySelectorAll('#entityProfileGrid .entity-profile-card').forEach(card=>{
+     const name=String(card.querySelector('h3')?.textContent||'').toLowerCase();
+     card.style.display=!q||name.includes(q)?'':'none';
+   });
+ });
  b.querySelectorAll('.entity-profile-project a[data-project-id]').forEach(a=>a.addEventListener('click',e=>{
    e.preventDefault();
    if(window.openICVProject)window.openICVProject(a.dataset.projectId);else if(window.viewProject)window.viewProject(a.dataset.projectId);
@@ -296,7 +305,7 @@ oldShow=window.showPage;window.showPage=function(n,b){
   document.getElementById('page-entity-profiles')?.classList.remove('hidden');
   document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
   b?.classList.add('active');
-  pageTitle.textContent='ملفات الجهات الحكومية';
+  pageTitle.textContent='بطاقات الجهات الحكومية';
   return renderEntityProfiles();
  }
  if(n==='entities'){
