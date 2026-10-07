@@ -94,6 +94,18 @@
     if(el) el.remove();
   }
 
+  function exportCompanyExcel(company, stats, reports){
+    if(typeof XLSX==='undefined'){alert('مكتبة Excel غير متاحة حالياً.');return;}
+    const rows=[['تقرير متابعة المحتوى المحلي للشركة'],['الشركة',company.name],['تاريخ إصدار التقرير',new Date().toLocaleDateString('ar-OM',{year:'numeric',month:'long',day:'numeric'})],[],['ملخص الشركة','القيمة'],['عدد المشاريع',stats.count],['إجمالي قيمة المشاريع (ر.ع)',stats.value],['المشاريع المستوفية',stats.ok],['المشاريع غير المستوفية',stats.bad],['نسبة الاستيفاء',stats.rate/100],['متوسط السلع',stats.avgGoods==null?'—':stats.avgGoods/100],[],['تفاصيل مشاريع الشركة'],['م','المشروع','الجهة الحكومية','قيمة المشروع (ر.ع)','التعمين (%)','SME (%)','السلع (%)','المحتوى المحلي الكلي (%)','الحالة']];
+    stats.projects.forEach(function(p,i){const m=projectMetrics(p,reports);rows.push([i+1,p.project_name||'—',p.government_entities?.name||'—',Number(p.total_project_value||0),m.oman/100,m.sme/100,m.goods==null?'—':m.goods/100,m.local/100,m.ok?'مستوفٍ':'غير مستوفٍ'])});
+    rows.push([]);rows.push(['ملاحظة','يعرض هذا التقرير نتائج مشاريع الشركة وفق البيانات المسجلة في المنصة.']);
+    const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:7},{wch:34},{wch:26},{wch:20},{wch:14},{wch:12},{wch:12},{wch:22},{wch:16}];ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:8}},{s:{r:12,c:0},e:{r:12,c:8}},{s:{r:14,c:1},e:{r:14,c:8}}];
+    const border={top:{style:'thin',color:{rgb:'D0D7DE'}},bottom:{style:'thin',color:{rgb:'D0D7DE'}},left:{style:'thin',color:{rgb:'D0D7DE'}},right:{style:'thin',color:{rgb:'D0D7DE'}}};
+    for(let r=0;r<rows.length;r++)for(let col=0;col<9;col++){const cell=ws[XLSX.utils.encode_cell({r:r,c:col})];if(!cell)continue;cell.s={alignment:{horizontal:'center',vertical:'center',wrapText:true},border:border};if(r===0)cell.s={font:{bold:true,size:16,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'16734F'}},alignment:{horizontal:'center',vertical:'center'}};if(r===4||r===13)cell.s={font:{bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'355C4A'}},alignment:{horizontal:'center',vertical:'center'},border:border};if(r===14)cell.s={font:{bold:true,color:{rgb:'1F3B31'}},fill:{fgColor:{rgb:'E8F1ED'}},alignment:{horizontal:'center',vertical:'center',wrapText:true},border:border};if(r>=15&&r<15+stats.projects.length&&[4,5,6,7].includes(col)&&typeof cell.v==='number')cell.z='0.0%';if(r>=15&&r<15+stats.projects.length&&col===8)cell.s={font:{bold:true,color:{rgb:cell.v==='مستوفٍ'?'16734F':'B13D35'}},alignment:{horizontal:'center'},border:border}}
+    for(let r=9;r<=10;r++){const cell=ws[XLSX.utils.encode_cell({r:r,c:1})];if(cell&&typeof cell.v==='number')cell.z='0.0%'}
+    const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'تقرير الشركة');const safe=String(company.name||'شركة').replace(/[\\/:*?"<>|]/g,'-').trim()||'شركة';XLSX.writeFile(wb,'تقرير شركة - '+safe+'.xlsx');
+  }
+
   function exportCompanyPDF(company, stats, reports){
     const rows=stats.projects.map(function(p,i){
       const m=projectMetrics(p,reports);
@@ -131,7 +143,7 @@
         '<div><h2 style="margin:0">شركة '+escV(company.name)+'</h2><div class="muted">تقرير متابعة الشركة ومشاريعها</div></div>'+
         '<button type="button" class="btn" id="closeCompanyModalBtn">إغلاق</button>'+
       '</div>'+
-      '<div class="companies-modal-actions"><button type="button" class="btn primary" id="exportCompanyPdfBtn">تصدير تقرير PDF</button></div>'+
+      '<div class="companies-modal-actions"><button type="button" class="btn primary" id="exportCompanyPdfBtn">تصدير تقرير PDF</button><button type="button" class="btn" id="exportCompanyExcelBtn">تصدير Excel</button></div>'+
       '<div class="companies-card-summary">'+
         '<div class="summary-box"><small>عدد المشاريع</small><b>'+stats.count+'</b></div>'+
         '<div class="summary-box"><small>قيمة المشاريع (ر.ع)</small><b>'+moneyV(stats.value)+'</b></div>'+
@@ -150,6 +162,7 @@
     document.body.appendChild(overlay);
     document.getElementById('closeCompanyModalBtn').onclick=closeCompanyModal;
     document.getElementById('exportCompanyPdfBtn').onclick=function(){exportCompanyPDF(company,stats,reports)};
+    document.getElementById('exportCompanyExcelBtn').onclick=function(){exportCompanyExcel(company,stats,reports)};
     overlay.addEventListener('click',function(e){
       if(e.target===overlay) closeCompanyModal();
       const link=e.target.closest('[data-project-id]');
