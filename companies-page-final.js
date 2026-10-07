@@ -216,15 +216,26 @@
     ensureStyles();
     const root=document.getElementById('page-companies');
     if(!root) return;
-
+    root.innerHTML='<div class="panel"><h2>الشركات</h2><p class="muted">جاري تحميل بيانات الشركات...</p></div>';
+    try{
     const dbx=window.__icvDb||window.__icvAccessClient;
     if(!dbx){
       root.innerHTML='<div class="panel"><h2>الشركات</h2><p class="bad">تعذر الاتصال بقاعدة البيانات.</p></div>';
       return;
     }
 
-    const projects=window.projects||[];
-    const reports=window.reports||[];
+    let projects=Array.isArray(window.projects)?window.projects:[];
+    let reports=Array.isArray(window.reports)?window.reports:[];
+    if(!projects.length){
+      const pr=await dbx.from('projects').select('*,government_entities(name),companies(name)').order('project_name');
+      if(pr.error) throw pr.error;
+      projects=pr.data||[];
+    }
+    if(!reports.length){
+      const rr=await dbx.from('quarterly_reports').select('*').order('annual_period').order('quarter');
+      if(rr.error) throw rr.error;
+      reports=rr.data||[];
+    }
     const result=await dbx.from('companies').select('*').order('name');
     if(result.error){
       root.innerHTML='<div class="panel"><h2>الشركات</h2><p class="bad">'+escV(result.error.message)+'</p></div>';
@@ -320,6 +331,12 @@
       if(el){el.addEventListener('input',renderTable);el.addEventListener('change',renderTable);}
     });
     renderTable();
+  }
+    }catch(err){
+      console.error('Companies page error:',err);
+      const root=document.getElementById('page-companies');
+      if(root) root.innerHTML='<div class="panel"><h2>الشركات</h2><p class="bad">تعذر تحميل صفحة الشركات: '+escV(err?.message||err)+'</p></div>';
+    }
   }
 
   window.icvCompaniesPage=renderCompaniesSafe;
