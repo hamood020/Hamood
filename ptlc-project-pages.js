@@ -49,26 +49,25 @@ async function projectPage(id){ document.getElementById('pageTitle')?.replaceChi
    }
    return 0;
  };
- const catActual=(cat,who)=>n(p['cat'+cat.replace('cat','')+'_'+who]);
+ const latestReport=latest||null, latestData=latestReport?.report_data||{};
+ const reportCats=Array.isArray(latestData.workforce_categories)?latestData.workforce_categories:[];
+ const reportCat=(i,who)=>n(reportCats[i]?.[who]);
+ const catActual=(cat,who)=>reportCat(Number(String(cat).replace('cat',''))-1,who);
  const omCat1Plan=catPlan('cat1','omani'), omCat2Plan=catPlan('cat2','omani'), omCat3Plan=catPlan('cat3','omani');
- const omCat1Actual=n(p.cat1_omani), omCat2Actual=n(p.cat2_omani), omCat3Actual=n(p.cat3_omani);
+ const omCat1Actual=reportCat(0,'omani'), omCat2Actual=reportCat(1,'omani'), omCat3Actual=reportCat(2,'omani');
  const foreignCat1Plan=catPlan('cat1','foreign')||catPlan('cat1','non_omani'), foreignCat2Plan=catPlan('cat2','foreign')||catPlan('cat2','non_omani'), foreignCat3Plan=catPlan('cat3','foreign')||catPlan('cat3','non_omani');
- const foreignCat1Actual=n(p.cat1_non_omani), foreignCat2Actual=n(p.cat2_non_omani), foreignCat3Actual=n(p.cat3_non_omani);
- const subcontractPlan={local:planSubTotals.local,foreign:planSubTotals.foreign,sme:planSubTotals.sme}; const subcontractRaw=ld.subcontracts||{};
- const subcontractActualFromReport={
-   local:n(typeof subcontractRaw==='object'?(subcontractRaw['مزود محلي']||subcontractRaw.local):0),
-   foreign:n(typeof subcontractRaw==='object'?(subcontractRaw['مزود أجنبي']||subcontractRaw.foreign):0),
-   sme:n(typeof subcontractRaw==='object'?(subcontractRaw['مزود من المؤسسات الصغيرة و المتوسطة']||subcontractRaw.sme):0)
- };
- const subcontractActual={local:subcontractActualFromReport.local||n(p.subcontract_local),foreign:subcontractActualFromReport.foreign||n(p.subcontract_foreign),sme:subcontractActualFromReport.sme||n(p.subcontract_sme)};
+ const foreignCat1Actual=reportCat(0,'foreign'), foreignCat2Actual=reportCat(1,'foreign'), foreignCat3Actual=reportCat(2,'foreign');
+ const subcontractPlan={local:planSubTotals.local,foreign:planSubTotals.foreign,sme:planSubTotals.sme}; const subcontractRaw=latestData.subcontracts||{};
+ const subcontractActual={local:n(subcontractRaw.local),foreign:n(subcontractRaw.foreign),sme:n(subcontractRaw.sme)};
 
  const planOmaniSalary=planDisplayOmaniSalary, planForeignSalary=planDisplayForeignSalary;
- const actualOmaniSalary=n(ld.omani_salary||p.actual_omani_salary), actualForeignSalary=n(ld.foreign_salary||p.actual_non_omani_salary);
- const actualPurchases=ld.purchases||{}, actualServices=ld.services||{}, actualSubcontracts=n(ld.subcontracts||p.subcontracts_total);
+ const actualOmaniSalary=n(latestData.omani_salary), actualForeignSalary=n(latestData.foreign_salary);
+ const actualPurchases=latestData.purchases||{}, actualServices=latestData.services||{};
+ const actualSubcontracts=Object.values(subcontractActual).reduce((a,v)=>a+v,0);
  const planPurchases=planPurchaseTotals;
  const planServices=planServiceTotals;
- const actualPurchaseVals={made_in_oman:n(actualPurchases['صنع في عمان']||p.actual_made_in_oman),local_supplier:n(actualPurchases['مورد محلي']||p.actual_local_supplier),direct_import:n(actualPurchases['استيراد مباشر']||p.actual_direct_import),sme_purchase:n(actualPurchases['مورد المؤسسات الصغيرة و المتوسطة']||p.actual_sme_supplier)};
- const actualServiceVals={local_service:n(actualServices['خدمة مزود محلي']||p.actual_local_service),foreign_service:n(actualServices['خدمة مزود أجنبي']||p.actual_foreign_service),sme_service:n(actualServices['خدمة مزود من المؤسسات الصغيرة و المتوسطة']||p.actual_sme_service)};
+ const actualPurchaseVals={made_in_oman:n(actualPurchases.made_in_oman),local_supplier:n(actualPurchases.local_supplier),direct_import:n(actualPurchases.direct_import),sme_purchase:n(actualPurchases.sme_purchase)};
+ const actualServiceVals={local_service:n(actualServices.local_service),foreign_service:n(actualServices.foreign_service),sme_service:n(actualServices.sme_service)};
  const hasPlan=Object.values(planPurchases).some(v=>v>0)||Object.values(planServices).some(v=>v>0)||planOm>0||planForeign>0||planOmaniSalary>0||planForeignSalary>0||actualSubcontracts>0;
  const workforceStatus=planOm?(om>=planOm?'مستوفي':'غير مستوفي'):'غير منطبق';
  const goodsActual=Object.values(actualPurchaseVals).reduce((a,v)=>a+v,0), goodsPlan=Object.values(planPurchases).reduce((a,v)=>a+v,0), goodsStatus=goodsPlan?(goodsActual>=goodsPlan?'مستوفي':'غير مستوفي'):'غير منطبق';
