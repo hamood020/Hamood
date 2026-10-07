@@ -209,6 +209,79 @@ async function renderEntitiesV2(){
    });
  });
 }
+
+async function renderEntityProfiles(){
+ const b=document.getElementById('page-entity-profiles');if(!b)return;
+ const [er,pr]=await Promise.all([
+   dbx.from('government_entities').select('*').order('name'),
+   dbx.from('projects').select('*,companies(name)').order('serial_no')
+ ]);
+ const entities=er.data||[], pp=pr.data||[];
+ if(er.error){b.innerHTML='<div class="panel"><div class="empty">تعذر تحميل ملفات الجهات الحكومية.</div></div>';return}
+
+ if(!document.getElementById('icvEntityProfilesStyle')){
+  const st=document.createElement('style');st.id='icvEntityProfilesStyle';
+  st.textContent='.entity-profile-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.entity-profile-card{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 5px 18px rgba(25,54,93,.05)}.entity-profile-card h3{margin:0 42px 16px 0;font-size:18px;line-height:1.5}.entity-profile-edit{position:absolute;left:14px;top:14px;width:34px;height:34px;border:1px solid var(--line);background:#fff;color:var(--primary);border-radius:9px;cursor:pointer;font-size:17px;display:grid;place-items:center}.entity-profile-edit:hover{background:var(--soft)}.entity-contact{background:var(--soft);border-radius:11px;padding:11px 12px;margin:8px 0}.entity-contact b{display:block;margin-bottom:5px}.entity-contact span{font-size:12px;color:var(--muted)}.entity-profile-projects{border-top:1px solid var(--line);margin-top:16px;padding-top:14px;display:none}.entity-profile-projects.show{display:block}.entity-profile-project{padding:9px 0;border-bottom:1px dashed var(--line);font-size:12px}.entity-profile-project:last-child{border-bottom:0}.entity-profile-show{width:100%;margin-top:15px}.entity-profile-empty{color:var(--muted);font-size:12px;padding:8px 0}.entity-contact-head{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:9px}.entity-contact-actions{display:flex;gap:6px}.entity-contact-actions button{border:0;background:transparent;cursor:pointer;color:var(--muted);font-size:16px}.entity-profile-modal{max-height:75vh;overflow:auto}.entity-contact-edit-row{display:grid;grid-template-columns:1fr 1fr 1fr 34px;gap:7px;margin-top:8px}.entity-contact-edit-row input{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font:inherit}.entity-contact-edit-row button{border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer}.entity-profile-form label{display:block;font-size:12px;font-weight:800;margin-bottom:6px}.entity-profile-form input{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;font:inherit}.entity-profile-form .field{margin-bottom:14px}.entity-profile-add-contact{margin-top:9px}.entity-profile-save-row{display:flex;gap:8px;margin-top:18px}@media(max-width:1050px){.entity-profile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.entity-profile-grid{grid-template-columns:1fr}.entity-contact-edit-row{grid-template-columns:1fr}}';
+  document.head.appendChild(st);
+ }
+
+ const cardProjects=id=>pp.filter(p=>String(p.government_entity_id)===String(id));
+ const rows=entities.map(e=>{
+   const projectsFor=cardProjects(e.id);
+   const contacts=Array.isArray(e.contact_points)?e.contact_points:[];
+   const contactHtml=contacts.length?contacts.map(c=>'<div class="entity-contact"><b>'+E(c.name||'—')+'</b><span>📞 '+E(c.phone||'—')+' &nbsp; | &nbsp; ✉ '+E(c.email||'—')+'</span></div>').join(''):'<div class="entity-profile-empty">لا توجد نقاط تواصل مضافة.</div>';
+   const projectsHtml=projectsFor.length?projectsFor.map((p,i)=>'<div class="entity-profile-project"><b>'+String(i+1)+'.</b> <a class="project-link" href="#" data-project-id="'+E(p.id)+'">'+E(p.project_name)+'</a></div>').join(''):'<div class="entity-profile-empty">لا توجد مشاريع تابعة لهذه الجهة.</div>';
+   return '<article class="entity-profile-card"><button class="entity-profile-edit" title="تعديل" onclick="window.icvEditEntityProfile(\\''+E(e.id)+'\\')">✎</button><h3>'+E(e.name)+'</h3>'+contactHtml+
+     '<button class="btn entity-profile-show" onclick="window.icvToggleEntityProjects(\\''+E(e.id)+'\\',this)">إظهار المشاريع ('+projectsFor.length+')</button>'+
+     '<div id="entity-profile-projects-'+E(e.id)+'" class="entity-profile-projects"><div class="entity-contact-head"><span>المشاريع التابعة للجهة</span><span class="muted">'+projectsFor.length+' مشروع</span></div>'+projectsHtml+'</div></article>';
+ }).join('');
+
+ b.innerHTML='<div class="panel"><div class="toolbar"><div><h2>ملفات الجهات الحكومية</h2><div class="muted">الملف التعريفي لكل جهة ونقاط التواصل والمشاريع التابعة لها.</div></div></div>'+
+   '<div class="entity-profile-grid">'+(rows||'<div class="entity-profile-empty">لا توجد جهات حكومية.</div>')+'</div></div>';
+
+ b.querySelectorAll('.entity-profile-project a[data-project-id]').forEach(a=>a.addEventListener('click',e=>{
+   e.preventDefault();
+   if(window.openICVProject)window.openICVProject(a.dataset.projectId);else if(window.viewProject)window.viewProject(a.dataset.projectId);
+ }));
+}
+
+window.icvToggleEntityProjects=(id,btn)=>{
+ const box=document.getElementById('entity-profile-projects-'+id);if(!box)return;
+ const show=!box.classList.contains('show');box.classList.toggle('show',show);
+ const count=String(btn.textContent).match(/\\d+/)?.[0]||'0';
+ btn.textContent=(show?'إخفاء المشاريع (':'إظهار المشاريع (')+count+')';
+};
+
+window.icvEditEntityProfile=async id=>{
+ const r=await dbx.from('government_entities').select('*').eq('id',id).maybeSingle();
+ const e=r.data;if(!e)return;
+ const contacts=Array.isArray(e.contact_points)?e.contact_points:[];
+ const rows=contacts.length?contacts.map(c=>'<div class="entity-contact-edit-row"><input class="ec-name" placeholder="اسم الشخص" value="'+E(c.name||'')+'"><input class="ec-phone" placeholder="رقم الهاتف" value="'+E(c.phone||'')+'"><input class="ec-email" placeholder="البريد الإلكتروني" value="'+E(c.email||'')+'"><button type="button" onclick="this.parentElement.remove()">×</button></div>').join(''):'';
+ const html='<div class="entity-profile-modal"><div class="field entity-profile-form"><label>اسم الجهة</label><input id="entityProfileName" value="'+E(e.name||'')+'"></div><div class="entity-profile-form"><label>نقاط التواصل</label><div id="entityProfileContacts">'+rows+'</div><button type="button" class="btn entity-profile-add-contact" onclick="window.icvAddEntityContactRow()">+ إضافة نقطة تواصل</button></div><div id="entityProfileMsg" class="muted" style="margin-top:10px"></div><div class="entity-profile-save-row"><button class="btn primary" onclick="window.icvSaveEntityProfile(\\''+E(e.id)+'\\')">حفظ التعديلات</button><button class="btn" onclick="document.getElementById(\\'icvV2Modal\\')?.remove()">إلغاء</button></div></div>';
+ modal('تعديل ملف الجهة',html);
+ if(!contacts.length)window.icvAddEntityContactRow();
+};
+
+window.icvAddEntityContactRow=()=>{
+ const box=document.getElementById('entityProfileContacts');if(!box)return;
+ const d=document.createElement('div');d.className='entity-contact-edit-row';
+ d.innerHTML='<input class="ec-name" placeholder="اسم الشخص"><input class="ec-phone" placeholder="رقم الهاتف"><input class="ec-email" placeholder="البريد الإلكتروني"><button type="button" onclick="this.parentElement.remove()">×</button>';
+ box.appendChild(d);
+};
+
+window.icvSaveEntityProfile=async id=>{
+ const name=document.getElementById('entityProfileName')?.value.trim();
+ if(!name)return msg('entityProfileMsg','اسم الجهة مطلوب.');
+ const contacts=[...document.querySelectorAll('#entityProfileContacts .entity-contact-edit-row')].map(r=>({
+   name:r.querySelector('.ec-name')?.value.trim()||'',
+   phone:r.querySelector('.ec-phone')?.value.trim()||'',
+   email:r.querySelector('.ec-email')?.value.trim()||''
+ })).filter(x=>x.name||x.phone||x.email);
+ const r=await dbx.from('government_entities').update({name,contact_points:contacts}).eq('id',id);
+ if(r.error)return msg('entityProfileMsg',r.error.message);
+ document.getElementById('icvV2Modal')?.remove();
+ await renderEntityProfiles();
+};
 window.icvEntityProjects=async id=>{let e=(await dbx.from('government_entities').select('*').eq('id',id).maybeSingle()).data;if(!e)return;let pp=(window.projects||[]).filter(p=>p.government_entity_id===id);let b=document.getElementById('entityProjectsBox');if(!b)return;b.innerHTML='<div class="panel"><div class="toolbar"><div><h2>مشاريع جهة: '+E(e.name)+'</h2><div class="muted">'+pp.length+' مشروع</div></div></div><div class="table-wrap"><table><thead><tr><th>المشروع</th><th>رقم المشروع/المناقصة</th><th>الشركة</th><th>القيمة</th><th>الإنجاز</th><th>الحالة</th><th></th></tr></thead><tbody>'+pp.map(p=>'<tr><td><b>'+E(p.project_name)+'</b></td><td>'+E(p.tender_type||p.serial_no||'—')+'</td><td>'+E(p.companies?.name||'—')+'</td><td>'+N(p.total_project_value)+'</td><td>'+P(p.progress_pct)+'</td><td>'+E(p.project_status||'—')+'</td><td><button class="btn" onclick="viewProject(\''+p.id+'\')">فتح المشروع</button></td></tr>').join('')+'</tbody></table></div></div>'};
 window.icvAddEntityV2=()=>modal('إضافة جهة حكومية',field('اسم الجهة','en2')+field('الرمز','ec2')+'<div id="em2"></div><button class="btn primary" onclick="window.icvSaveEntityV2()">حفظ</button>');
 window.icvSaveEntityV2=async()=>{let r=await dbx.from('government_entities').insert({name:val('en2').trim(),code:val('ec2').trim()||null});if(r.error)return msg('em2',r.error.message);document.getElementById('icvV2Modal')?.remove();renderEntitiesV2()};
