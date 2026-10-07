@@ -27,15 +27,16 @@ function styles(){
 }
 
 function metric(p){
-  var oman=Number(p.omanization_pct||0);
-  var sme=Number(p.sme_pct||0);
-  var local=Number(p.local_content_project_pct||0);
+  var oman=toPercent(p.omanization_pct);
+  var sme=toPercent(p.sme_pct);
+  var local=toPercent(p.local_content_project_pct);
   var ok=(oman>=30&&sme>=10&&local>=70);
   if(String(p.made_in_oman_status||'')==='غير مستوفي'||String(p.sme_10_status||'')==='غير مستوفي')ok=false;
   return {oman:oman,sme:sme,local:local,ok:ok};
 }
 
 
+function toPercent(v){var n=Number(v||0);return n>0&&n<=1?n*100:n;}
 function reportKey(r){return Number(r&&r.annual_period||0)*10+(Number(String(r&&r.quarter||'').replace(/\D/g,''))||0);}
 function sortCompanyReports(rows){return (rows||[]).slice().sort(function(a,b){return reportKey(a)-reportKey(b)||String(a.created_at||'').localeCompare(String(b.created_at||''));});}
 function latestCompanyReport(rows){var a=sortCompanyReports(rows),ok=a.filter(function(r){return String(r.status||'').includes('معتمد');});return ok.length?ok[ok.length-1]:(a.length?a[a.length-1]:null);}
@@ -77,7 +78,7 @@ function exportCompanyExcel(company,projects,allReports){
     (allReports||[]).forEach(function(r){(by[r.project_id]||(by[r.project_id]=[])).push(r);});
     var stats=ps.map(function(p){
       var rr=by[p.id]||[],lr=latestCompanyReport(rr),d=lr&&lr.report_data||{},f=cumulativeCompanyFinancials(rr),wf=Number(d.workforce_total||0),om=Number(d.omani_total||0),fr=Number(d.foreign_total||0);
-      var oman=Number(p.omanization_pct!=null?p.omanization_pct:(wf?om/wf*100:0)),smeVal=f.sub_local+f.sub_foreign+f.sub_sme+f.sme_service,sme=Number(p.sme_pct!=null?p.sme_pct:(Number(p.total_project_value||0)?smeVal/Number(p.total_project_value||0)*100:0)),lc=Number(p.local_content_project_pct||0);
+      var oman=toPercent(p.omanization_pct!=null?p.omanization_pct:(wf?om/wf:0)),smeVal=f.sub_local+f.sub_foreign+f.sub_sme+f.sme_service,sme=toPercent(p.sme_pct!=null?p.sme_pct:(Number(p.total_project_value||0)?smeVal/Number(p.total_project_value||0):0)),lc=toPercent(p.local_content_project_pct);
       return {p:p,rr:rr,latest:lr,d:d,f:f,wf:wf,om:om,fr:fr,oman:oman,sme:sme,lc:lc,ok:oman>=30&&sme>=10&&lc>=70};
     });
     var totalValue=ps.reduce(function(a,p){return a+Number(p.total_project_value||0);},0),okCount=stats.filter(function(x){return x.ok;}).length;
