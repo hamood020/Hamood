@@ -178,15 +178,15 @@ async function renderEntitiesV2(){
      return '<tr><td>'+String(i+1)+'</td><td><a class="project-link entity-project-link" href="#" data-project-id="'+E(p.id)+'">'+E(p.project_name)+'</a></td><td>'+E(p.tender_type||p.serial_no||'—')+'</td><td>'+N(p.total_project_value)+'</td><td>'+Number(p.progress_pct||0).toFixed(1)+'%</td><td>'+E(latest?.annual_period||'—')+' / '+E(latest?.quarter||'—')+'</td><td>'+E(p.project_status||'—')+'</td></tr>';
    }).join('');
 
-   return '<tr class="entity-row" data-target="'+target+'"><td><button type="button" class="entity-toggle"><span class="entity-chevron">⌄</span><b>'+E(x.name)+'</b></button></td><td>'+pp.length+'</td><td>'+N(tv)+'</td><td>'+N(spend)+'</td><td>'+N(lc)+'</td><td>'+om.toFixed(1)+'%</td><td>'+sme.toFixed(1)+'%</td></tr>'+
-   '<tr id="'+target+'" class="entity-projects-row" hidden><td colspan="7"><div class="entity-projects-panel"><div class="entity-projects-head"><strong>مشاريع الجهة</strong><span>'+pp.length+' مشروع</span></div>'+
+   return '<tr class="entity-row" data-target="'+target+'"><td><button type="button" class="entity-toggle"><span class="entity-chevron">⌄</span><b>'+E(x.name)+'</b></button></td><td>'+pp.length+'</td><td>'+N(tv)+'</td><td>'+N(spend)+'</td><td><button type="button" class="btn entity-card-view" onclick="event.stopPropagation();window.icvViewEntityCard(\''+E(x.id)+'\')">عرض</button></td></tr>'+
+   '<tr id="'+target+'" class="entity-projects-row" hidden><td colspan="5"><div class="entity-projects-panel"><div class="entity-projects-head"><strong>مشاريع الجهة</strong><span>'+pp.length+' مشروع</span></div>'+
    (projectRows?'<div class="table-wrap entity-projects-table"><table><thead><tr><th>م</th><th>اسم المشروع</th><th>رقم المشروع/المناقصة</th><th>قيمة المشروع</th><th>نسبة الإنجاز</th><th>السنة / الربع</th><th>الحالة</th></tr></thead><tbody>'+projectRows+'</tbody></table></div>':'<div class="entity-empty">لا توجد مشاريع مرتبطة بهذه الجهة.</div>')+
    '</div></td></tr>';
  }).join('');
 
  b.innerHTML='<div class="panel"><div class="toolbar"><div><h2>الجهات الحكومية</h2><div class="muted">اضغط على اسم الجهة لعرض مشاريعها أو إخفائها.</div></div>'+(canEdit()?'<button class="btn primary" onclick="window.icvAddEntityV2()">+ إضافة جهة</button>':'')+'</div>'+
  '<div class="entities-filter"><div class="field"><label>فلتر الجهة</label><select id="entityFilter"><option value="">جميع الجهات</option>'+entities.map(x=>'<option value="'+E(x.id)+'">'+E(x.name)+'</option>').join('')+'</select></div></div>'+
- '<div class="table-wrap"><table><thead><tr><th>الجهة الحكومية</th><th>عدد المشاريع</th><th>قيمة المشاريع</th><th>الإنفاق</th><th>المحتوى المحلي</th><th>متوسط التعمين</th><th>متوسط SME</th></tr></thead><tbody id="entityRows">'+rows+'</tbody></table></div></div>';
+ '<div class="table-wrap"><table><thead><tr><th>الجهة الحكومية</th><th>عدد المشاريع</th><th>قيمة المشاريع</th><th>الإنفاق</th><th>بطاقة الجهة</th></tr></thead><tbody id="entityRows">'+rows+'</tbody></table></div></div>';
 
  const tbody=document.getElementById('entityRows');
  tbody.querySelectorAll('.entity-row').forEach(row=>row.addEventListener('click',e=>{
@@ -209,6 +209,35 @@ async function renderEntitiesV2(){
    });
  });
 }
+
+window.icvViewEntityCard=async id=>{
+ const r=await dbx.from('government_entities').select('*').eq('id',id).maybeSingle();
+ const e=r.data;if(!e)return;
+ const pp=(window.projects||[]).filter(p=>String(p.government_entity_id)===String(id));
+ const contacts=Array.isArray(e.contact_points)?e.contact_points:[];
+ const contactHtml=contacts.length
+  ? contacts.map(c=>'<div style="background:var(--soft);border-radius:11px;padding:11px 12px;margin:8px 0"><b style="display:block;margin-bottom:5px">'+E(c.name||'—')+'</b><span style="font-size:12px;color:var(--muted)">📞 '+E(c.phone||'—')+' &nbsp; | &nbsp; ✉ '+E(c.email||'—')+'</span></div>').join('')
+  : '<div class="muted" style="padding:8px 0">لا توجد نقاط تواصل مضافة.</div>';
+ const projectsHtml=pp.length
+  ? '<div class="table-wrap"><table><thead><tr><th>م</th><th>اسم المشروع</th><th>رقم المشروع/المناقصة</th><th>قيمة المشروع</th><th>الإنجاز</th><th>الحالة</th></tr></thead><tbody>'+
+    pp.map((p,i)=>'<tr><td>'+String(i+1)+'</td><td><a class="project-link" href="#" data-entity-card-project="'+E(p.id)+'">'+E(p.project_name)+'</a></td><td>'+E(p.tender_type||p.serial_no||'—')+'</td><td>'+N(p.total_project_value)+'</td><td>'+Number(p.progress_pct||0).toFixed(1)+'%</td><td>'+E(p.project_status||'—')+'</td></tr>').join('')+
+    '</tbody></table></div>'
+  : '<div class="muted">لا توجد مشاريع مرتبطة بهذه الجهة.</div>';
+ modal('بطاقة الجهة: '+E(e.name),
+   '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0">'+
+   '<div class="card"><div class="label">عدد المشاريع</div><div class="value">'+pp.length+'</div></div>'+
+   '<div class="card"><div class="label">قيمة المشاريع</div><div class="value">'+N(pp.reduce((a,p)=>a+Number(p.total_project_value||0),0))+'</div></div>'+
+   '<div class="card"><div class="label">الإنفاق</div><div class="value">'+N(pp.reduce((a,p)=>a+Number(p.total_spend||0),0))+'</div></div></div>'+
+   '<div class="section-card" style="margin-top:12px"><div class="section-card-head"><div><h2>نقاط التواصل</h2><p>بيانات التواصل المسجلة للجهة.</p></div></div>'+contactHtml+'</div>'+
+   '<div class="section-card" style="margin-top:12px"><div class="section-card-head"><div><h2>مشاريع الجهة</h2><p>'+pp.length+' مشروع</p></div></div>'+projectsHtml+'</div>'
+ );
+ document.querySelectorAll('[data-entity-card-project]').forEach(a=>a.addEventListener('click',e=>{
+   e.preventDefault();
+   const projectId=a.dataset.entityCardProject;
+   document.getElementById('icvV2Modal')?.remove();
+   if(window.openICVProject)window.openICVProject(projectId);else if(window.viewProject)window.viewProject(projectId);
+ }));
+};
 
 async function renderEntityProfiles(){
  const b=document.getElementById('page-entity-profiles');if(!b)return;
