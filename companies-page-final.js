@@ -331,7 +331,6 @@
       if(el){el.addEventListener('input',renderTable);el.addEventListener('change',renderTable);}
     });
     renderTable();
-  }
     }catch(err){
       console.error('Companies page error:',err);
       const root=document.getElementById('page-companies');
