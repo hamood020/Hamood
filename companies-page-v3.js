@@ -94,6 +94,18 @@
     if(el) el.remove();
   }
 
+  function exportCompanyPDF(company, stats, reports){
+    const rows=stats.projects.map(function(p,i){
+      const m=projectMetrics(p,reports);
+      return '<tr><td>'+String(i+1)+'</td><td>'+escV(p.project_name||'—')+'</td><td>'+escV(p.government_entities?.name||'—')+'</td><td>'+moneyV(p.total_project_value)+'</td><td>'+pctV(m.oman)+'</td><td>'+pctV(m.sme)+'</td><td>'+(m.goods==null?'—':pctV(m.goods))+'</td><td>'+pctV(m.local)+'</td><td><span class="status '+(m.ok?'ok':'bad')+'">'+(m.ok?'مستوفٍ':'غير مستوفٍ')+'</span></td></tr>';
+    }).join('');
+    const generated=new Date().toLocaleDateString('ar-OM',{year:'numeric',month:'long',day:'numeric'});
+    const w=window.open('','_blank','width=1200,height=900');
+    if(!w){alert('يرجى السماح بالنوافذ المنبثقة لتصدير التقرير.');return;}
+    w.document.write('<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير شركة - '+escV(company.name)+'</title><style>\n@page{size:A4 landscape;margin:14mm}*{box-sizing:border-box}body{font-family:Tahoma,Arial,sans-serif;color:#17212b;margin:0;font-size:11px;background:#fff}.header{border-bottom:3px solid #16734f;padding-bottom:12px;margin-bottom:18px}.brand{font-size:18px;font-weight:800;color:#16734f}.title{font-size:21px;font-weight:800;margin:7px 0}.meta{color:#667085}.summary{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:15px 0 20px}.box{border:1px solid #d9e2e8;border-radius:7px;padding:10px;text-align:center;background:#f8fafc}.box small{display:block;color:#667085}.box b{display:block;font-size:16px;margin-top:5px}.ok{color:#16734f;font-weight:800}.bad{color:#b13d35;font-weight:800}h2{font-size:14px;margin:16px 0 8px}table{width:100%;border-collapse:collapse;table-layout:fixed}th{background:#eef5f2;color:#1f3b31;font-weight:800}th,td{border:1px solid #cfd8dc;padding:7px 5px;text-align:center;vertical-align:middle;word-wrap:break-word}th:nth-child(2){width:22%}th:nth-child(3){width:16%}.status{display:inline-block;padding:4px 8px;border-radius:10px}.status.ok{background:#e8f6ef}.status.bad{background:#fdeceb}.note{margin:12px 0;padding:9px 12px;background:#f2f8f6;border-right:4px solid #16734f}.footer{margin-top:18px;color:#667085;font-size:9px;display:flex;justify-content:space-between;border-top:1px solid #ddd;padding-top:8px}@media print{.no-print{display:none}}</style></head><body><div class="header"><div class="brand">منصة متابعة المحتوى المحلي ICV FollowUp</div><div class="title">تقرير متابعة المحتوى المحلي للشركة</div><div><b>الشركة:</b> '+escV(company.name)+'</div><div class="meta">تاريخ إصدار التقرير: '+generated+'</div></div><div class="summary"><div class="box"><small>عدد المشاريع</small><b>'+stats.count+'</b></div><div class="box"><small>قيمة المشاريع (ر.ع)</small><b>'+moneyV(stats.value)+'</b></div><div class="box"><small>مستوفٍ</small><b class="ok">'+stats.ok+'</b></div><div class="box"><small>غير مستوفٍ</small><b class="bad">'+stats.bad+'</b></div><div class="box"><small>نسبة الاستيفاء</small><b>'+pctV(stats.rate)+'</b></div><div class="box"><small>متوسط السلع</small><b>'+(stats.avgGoods==null?'—':pctV(stats.avgGoods))+'</b></div></div><div class="note">يعرض هذا التقرير نتائج مشاريع الشركة وفق البيانات المسجلة في المنصة، ولا يتطلب إعادة إدخال بيانات المحتوى المحلي.</div><h2>تفاصيل مشاريع الشركة ومؤشرات المحتوى المحلي</h2><table><thead><tr><th>م</th><th>المشروع</th><th>الجهة الحكومية</th><th>قيمة المشروع (ر.ع)</th><th>التعمين (%)</th><th>SME (%)</th><th>السلع (%)</th><th>المحتوى المحلي الكلي (%)</th><th>الحالة</th></tr></thead><tbody>'+rows+'</tbody></table><div class="footer"><span>منصة ICV FollowUp</span><span>تقرير شركة — '+escV(company.name)+'</span></div><script>window.onload=function(){setTimeout(function(){window.print()},350)}</script></body></html>');
+    w.document.close();
+  }
+
   function openCompanyModal(company, stats, reports){
     closeCompanyModal();
     const overlay=document.createElement('div');
@@ -119,6 +131,7 @@
         '<div><h2 style="margin:0">شركة '+escV(company.name)+'</h2><div class="muted">تقرير متابعة الشركة ومشاريعها</div></div>'+
         '<button type="button" class="btn" id="closeCompanyModalBtn">إغلاق</button>'+
       '</div>'+
+      '<div class="companies-modal-actions"><button type="button" class="btn primary" id="exportCompanyPdfBtn">تصدير تقرير PDF</button></div>'+
       '<div class="companies-card-summary">'+
         '<div class="summary-box"><small>عدد المشاريع</small><b>'+stats.count+'</b></div>'+
         '<div class="summary-box"><small>قيمة المشاريع (ر.ع)</small><b>'+moneyV(stats.value)+'</b></div>'+
@@ -136,6 +149,7 @@
     '</div>';
     document.body.appendChild(overlay);
     document.getElementById('closeCompanyModalBtn').onclick=closeCompanyModal;
+    document.getElementById('exportCompanyPdfBtn').onclick=function(){exportCompanyPDF(company,stats,reports)};
     overlay.addEventListener('click',function(e){
       if(e.target===overlay) closeCompanyModal();
       const link=e.target.closest('[data-project-id]');
