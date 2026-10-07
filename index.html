@@ -175,7 +175,7 @@ function applySize(){document.documentElement.style.setProperty("--icv-font-scal
     }
   };
   const timer=setInterval(()=>{
-    if(window.session && document.getElementById('app') && !document.getElementById('app').classList.contains('hidden')){
+    if(window.__icvProfile && document.getElementById('app') && !document.getElementById('app').classList.contains('hidden')){
       clearInterval(timer);run();
     }
   },150);
