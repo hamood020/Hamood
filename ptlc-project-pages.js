@@ -279,6 +279,7 @@ window.icvSaveEntityProfile=async id=>{
  })).filter(x=>x.name||x.phone||x.email);
  const r=await dbx.from('government_entities').update({name,contact_points:contacts}).eq('id',id);
  if(r.error)return msg('entityProfileMsg',r.error.message);
+ (window.projects||[]).forEach(p=>{if(String(p.government_entity_id)===String(id))p.government_entities={...(p.government_entities||{}),name};});
  document.getElementById('icvV2Modal')?.remove();
  await renderEntityProfiles();
 };
