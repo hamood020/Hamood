@@ -14,7 +14,15 @@ function fmtProjectDate(v){if(!v)return '—';const d=new Date(v);return isNaN(d
 async function projectPage(id){ document.getElementById('pageTitle')?.replaceChildren(document.createTextNode('صفحة المشروع'));
  ensureProjectReferenceVisual();
  pid=id;window.__icvCurrentProjectId=id;
- const p=(window.projects||[]).find(x=>String(x.id)===String(id)); if(!p)return;
+ let p=(window.projects||[]).find(x=>String(x.id)===String(id));
+ if(!p){
+  const prj=await dbx.from('projects').select('*').eq('id',id).maybeSingle();
+  if(prj.error||!prj.data)return;
+  p=prj.data;
+  window.projects=window.projects||[];
+  const ix=window.projects.findIndex(x=>String(x.id)===String(id));
+  if(ix>=0)window.projects[ix]=p;else window.projects.push(p);
+ }
  document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));
  const root=document.getElementById('page-project-detail'); if(!root)return; root.classList.remove('hidden');
  const [er,cr,pr,rr,hr]=await Promise.all([
