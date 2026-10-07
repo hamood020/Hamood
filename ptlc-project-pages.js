@@ -147,7 +147,68 @@ window.icvV2Plan=async id=>{
  window.location.href=target;
 };
 window.icvV2ViewPlan=async()=>{let r=(await dbx.from('local_content_plans').select('*').eq('project_id',pid).order('created_at',{ascending:false}).limit(1).single()).data,ps=r?.plan_data?.periods||{};modal('عرض خطة المحتوى المحلي','<table><thead><tr><th>الفترة</th><th>عمانيون</th><th>أجانب</th><th>مشتريات</th><th>خدمات</th><th>عقود الباطن</th><th>التدريب</th></tr></thead><tbody>'+Object.entries(ps).map(([k,v])=>'<tr><td>'+k+'</td><td>'+N(v.omani)+'</td><td>'+N(v.foreign)+'</td><td>'+N(Number(v.made_in_oman||0)+Number(v.local_supplier||0)+Number(v.direct_import||0)+Number(v.sme_purchase||0))+'</td><td>'+N(Number(v.local_service||0)+Number(v.foreign_service||0)+Number(v.sme_service||0))+'</td><td>'+N(v.subcontracts)+'</td><td>'+N(Number(v.ojt||0)+Number(v.tfe||0)+Number(v.tfq||0))+'</td></tr>').join('')+'</tbody></table>')}
-async function renderEntitiesV2(){let b=document.getElementById('page-entities'),r=await dbx.from('government_entities').select('*').order('name');if(!b)return;b.innerHTML='<div class="panel"><div class="toolbar"><div><h2>الجهات الحكومية</h2><div class="muted">اضغط على اسم الجهة لعرض جميع المشاريع التابعة لها.</div></div>'+(canEdit()?'<button class="btn primary" onclick="window.icvAddEntityV2()">+ إضافة جهة</button>':'')+'</div><div class="table-wrap"><table><thead><tr><th>الجهة</th><th>الرمز</th><th>عدد المشاريع</th><th>إجمالي قيمة المشاريع</th><th>إجراء</th></tr></thead><tbody>'+(r.data||[]).map(x=>{let pp=(window.projects||[]).filter(p=>p.government_entity_id===x.id),tv=pp.reduce((a,p)=>a+Number(p.total_project_value||0),0);return '<tr><td><a class="project-link" href="javascript:window.icvEntityProjects(\''+x.id+'\')"><b>'+E(x.name)+'</b></a></td><td>'+E(x.code||'—')+'</td><td>'+pp.length+'</td><td>'+N(tv)+'</td><td><button class="btn" onclick="window.icvEntityProjects(\''+x.id+'\')">عرض المشاريع</button></td></tr>'}).join('')+'</tbody></table></div><div id="entityProjectsBox" style="margin-top:18px"></div></div>'}
+async function renderEntitiesV2(){
+ let b=document.getElementById('page-entities');if(!b)return;
+ const r=await dbx.from('government_entities').select('*').order('name');
+ const entities=r.data||[], allProjects=window.projects||[], allReports=window.reports||[];
+
+ if(!document.getElementById('icvEntitiesV2Style')){
+  const st=document.createElement('style');st.id='icvEntitiesV2Style';
+  st.textContent='.entities-filter{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:14px}.entities-filter .field{min-width:320px;margin:0}.entity-row{cursor:pointer}.entity-row:hover td{background:#fbfdfd}.entity-toggle{border:0;background:transparent;font:inherit;color:inherit;display:flex;align-items:center;gap:9px;cursor:pointer;width:100%;text-align:right;padding:0}.entity-chevron{width:24px;height:24px;border-radius:8px;background:#eef7f5;color:var(--primary2);display:inline-grid;place-items:center;font-weight:900;transition:.2s}.entity-row.expanded .entity-chevron{transform:rotate(180deg)}.entity-projects-row>td{padding:0!important;background:#f8fafc}.entity-projects-panel{padding:16px 18px;border-top:1px solid var(--line)}.entity-projects-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.entity-projects-head strong{font-size:14px}.entity-projects-head span{color:var(--muted);font-size:12px}.entity-projects-table{margin-top:0}.entity-projects-table table{min-width:900px}.entity-projects-table th,.entity-projects-table td{font-size:12px}.entity-projects-table .project-link{font-weight:800}.entity-empty{background:#fff;border:1px dashed var(--line);border-radius:10px;padding:12px;color:var(--muted);font-size:11px}';
+  document.head.appendChild(st);
+ }
+
+ const reportsFor=projectId=>allReports.filter(x=>String(x.project_id)===String(projectId)).sort((a,b)=>{
+   const ay=Number(a.annual_period||0),by=Number(b.annual_period||0);
+   const aq=Number(String(a.quarter||'').replace(/\D/g,''))||0,bq=Number(String(b.quarter||'').replace(/\D/g,''))||0;
+   return (ay*10+aq)-(by*10+bq)||String(a.created_at||'').localeCompare(String(b.created_at||''));
+ });
+
+ const rows=entities.map((x,idx)=>{
+   const pp=allProjects.filter(p=>String(p.government_entity_id||'')===String(x.id));
+   const target='entity-projects-'+idx;
+   const tv=pp.reduce((a,p)=>a+Number(p.total_project_value||0),0);
+   const spend=pp.reduce((a,p)=>a+Number(p.total_spend||0),0);
+   const lc=pp.reduce((a,p)=>a+Number(p.total_local_content||0),0);
+   const om=pp.length?pp.reduce((a,p)=>a+Number(p.omanization_pct||0),0)/pp.length:0;
+   const sme=pp.length?pp.reduce((a,p)=>a+Number(p.sme_pct||0),0)/pp.length:0;
+
+   const projectRows=pp.map((p,i)=>{
+     const rr=reportsFor(p.id),latest=rr[rr.length-1];
+     return '<tr><td>'+String(i+1)+'</td><td><a class="project-link entity-project-link" href="#" data-project-id="'+E(p.id)+'">'+E(p.project_name)+'</a></td><td>'+E(p.tender_type||p.serial_no||'—')+'</td><td>'+N(p.total_project_value)+'</td><td>'+Number(p.progress_pct||0).toFixed(1)+'%</td><td>'+E(latest?.annual_period||'—')+' / '+E(latest?.quarter||'—')+'</td><td>'+E(p.project_status||'—')+'</td></tr>';
+   }).join('');
+
+   return '<tr class="entity-row" data-target="'+target+'"><td><button type="button" class="entity-toggle"><span class="entity-chevron">⌄</span><b>'+E(x.name)+'</b></button></td><td>'+pp.length+'</td><td>'+N(tv)+'</td><td>'+N(spend)+'</td><td>'+N(lc)+'</td><td>'+om.toFixed(1)+'%</td><td>'+sme.toFixed(1)+'%</td></tr>'+
+   '<tr id="'+target+'" class="entity-projects-row" hidden><td colspan="7"><div class="entity-projects-panel"><div class="entity-projects-head"><strong>مشاريع الجهة</strong><span>'+pp.length+' مشروع</span></div>'+
+   (projectRows?'<div class="table-wrap entity-projects-table"><table><thead><tr><th>م</th><th>اسم المشروع</th><th>رقم المشروع/المناقصة</th><th>قيمة المشروع</th><th>نسبة الإنجاز</th><th>السنة / الربع</th><th>الحالة</th></tr></thead><tbody>'+projectRows+'</tbody></table></div>':'<div class="entity-empty">لا توجد مشاريع مرتبطة بهذه الجهة.</div>')+
+   '</div></td></tr>';
+ }).join('');
+
+ b.innerHTML='<div class="panel"><div class="toolbar"><div><h2>الجهات الحكومية</h2><div class="muted">اضغط على اسم الجهة لعرض مشاريعها أو إخفائها.</div></div>'+(canEdit()?'<button class="btn primary" onclick="window.icvAddEntityV2()">+ إضافة جهة</button>':'')+'</div>'+
+ '<div class="entities-filter"><div class="field"><label>فلتر الجهة</label><select id="entityFilter"><option value="">جميع الجهات</option>'+entities.map(x=>'<option value="'+E(x.id)+'">'+E(x.name)+'</option>').join('')+'</select></div></div>'+
+ '<div class="table-wrap"><table><thead><tr><th>الجهة الحكومية</th><th>عدد المشاريع</th><th>قيمة المشاريع</th><th>الإنفاق</th><th>المحتوى المحلي</th><th>متوسط التعمين</th><th>متوسط SME</th></tr></thead><tbody id="entityRows">'+rows+'</tbody></table></div></div>';
+
+ const tbody=document.getElementById('entityRows');
+ tbody.querySelectorAll('.entity-row').forEach(row=>row.addEventListener('click',e=>{
+   if(e.target.closest('.entity-project-link'))return;
+   const target=document.getElementById(row.dataset.target);if(!target)return;
+   const opening=target.hidden;target.hidden=!opening;row.classList.toggle('expanded',opening);
+ }));
+ tbody.querySelectorAll('.entity-project-link').forEach(a=>a.addEventListener('click',e=>{
+   e.preventDefault();e.stopPropagation();
+   const id=a.dataset.projectId;
+   if(window.openICVProject)window.openICVProject(id);
+   else if(window.viewProject)window.viewProject(id);
+ }));
+ document.getElementById('entityFilter')?.addEventListener('change',e=>{
+   const v=e.target.value;
+   [...tbody.querySelectorAll('.entity-row')].forEach((row,i)=>{
+     const match=!v||String(entities[i]?.id)===String(v),target=document.getElementById(row.dataset.target);
+     row.style.display=match?'':'none';
+     if(target){target.style.display=match?'':'none';if(!match)target.hidden=true;}
+   });
+ });
+}
 window.icvEntityProjects=async id=>{let e=(await dbx.from('government_entities').select('*').eq('id',id).maybeSingle()).data;if(!e)return;let pp=(window.projects||[]).filter(p=>p.government_entity_id===id);let b=document.getElementById('entityProjectsBox');if(!b)return;b.innerHTML='<div class="panel"><div class="toolbar"><div><h2>مشاريع جهة: '+E(e.name)+'</h2><div class="muted">'+pp.length+' مشروع</div></div></div><div class="table-wrap"><table><thead><tr><th>المشروع</th><th>رقم المشروع/المناقصة</th><th>الشركة</th><th>القيمة</th><th>الإنجاز</th><th>الحالة</th><th></th></tr></thead><tbody>'+pp.map(p=>'<tr><td><b>'+E(p.project_name)+'</b></td><td>'+E(p.tender_type||p.serial_no||'—')+'</td><td>'+E(p.companies?.name||'—')+'</td><td>'+N(p.total_project_value)+'</td><td>'+P(p.progress_pct)+'</td><td>'+E(p.project_status||'—')+'</td><td><button class="btn" onclick="viewProject(\''+p.id+'\')">فتح المشروع</button></td></tr>').join('')+'</tbody></table></div></div>'};
 window.icvAddEntityV2=()=>modal('إضافة جهة حكومية',field('اسم الجهة','en2')+field('الرمز','ec2')+'<div id="em2"></div><button class="btn primary" onclick="window.icvSaveEntityV2()">حفظ</button>');
 window.icvSaveEntityV2=async()=>{let r=await dbx.from('government_entities').insert({name:val('en2').trim(),code:val('ec2').trim()||null});if(r.error)return msg('em2',r.error.message);document.getElementById('icvV2Modal')?.remove();renderEntitiesV2()};
