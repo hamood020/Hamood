@@ -154,7 +154,7 @@
     const root=document.getElementById('page-companies');
     if(!root) return;
 
-    const dbx=window.__icvAccessClient||window.db;
+    const dbx=window.__icvDb||window.__icvAccessClient;
     if(!dbx){
       root.innerHTML='<div class="panel"><h2>الشركات</h2><p class="bad">تعذر الاتصال بقاعدة البيانات.</p></div>';
       return;
@@ -260,4 +260,5 @@
   }
 
   window.icvCompaniesPage=renderCompaniesSafe;
+  if(new URLSearchParams(location.search).get('page')==='companies') setTimeout(renderCompaniesSafe,0);
 })();
