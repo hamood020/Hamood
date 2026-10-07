@@ -15,11 +15,11 @@ async function projectPage(id){ document.getElementById('pageTitle')?.replaceChi
  const [er,cr,pr,rr,hr]=await Promise.all([
   dbx.from('government_entities').select('*').eq('id',p.government_entity_id).maybeSingle(),
   p.implementing_company_id?dbx.from('companies').select('*').eq('id',p.implementing_company_id).maybeSingle():Promise.resolve({data:null}),
-  dbx.from('local_content_plans').select('*').eq('project_id',id).order('created_at',{ascending:false}).limit(1).maybeSingle(),
+  dbx.from('local_content_plans').select('*').eq('project_id',id).order('created_at',{ascending:false}),
   dbx.from('quarterly_reports').select('*').eq('project_id',id).order('annual_period').order('quarter'),
   dbx.from('project_end_date_history').select('*').eq('project_id',id).order('changed_at',{ascending:false})
  ]);
- const e=er.data||{},co=cr.data||{},plan=pr.data,reports=rr.data||[],history=hr.data||[];
+ const e=er.data||{},co=cr.data||{},plan=((pr.data||[]).find(x=>['معتمدة','معتمد'].includes(String(x.status||'').trim()))||null),reports=rr.data||[],history=hr.data||[];
  const pd=plan?.plan_data||{}, latest=(reports.filter(r=>String(r.status||'').includes('معتمد')).slice(-1)[0]||reports.slice(-1)[0]), ld=latest?.report_data||{};
  const n=v=>Number(v||0), money=v=>n(v).toLocaleString('en-US',{maximumFractionDigits:0})+' ر.ع', pct=v=>n(v).toFixed(1)+'%', esc2=E;
  const om=n(p.current_omani||ld.omani_total), foreign=n(p.non_omani||ld.foreign_total), total=om+foreign, omPct=total?om/total*100:n(p.omanization_pct);
