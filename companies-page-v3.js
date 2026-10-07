@@ -96,29 +96,49 @@
 
   function exportCompanyExcel(company, stats, reports){
     if(typeof XLSX==='undefined'){alert('مكتبة Excel غير متاحة حالياً.');return;}
-    const wb=XLSX.utils.book_new();
     const generated=new Date().toLocaleDateString('ar-OM',{year:'numeric',month:'long',day:'numeric'});
-    const detail=[['م','المشروع','الجهة الحكومية','قيمة المشروع (ر.ع)','التعمين','SME','السلع','المحتوى المحلي الكلي','الحالة']];
-    stats.projects.forEach(function(p,i){const m=projectMetrics(p,reports);detail.push([i+1,p.project_name||'—',p.government_entities?.name||'—',Number(p.total_project_value||0),m.oman/100,m.sme/100,m.goods==null?null:m.goods/100,m.local/100,m.ok?'مستوفٍ':'غير مستوفٍ'])});
-    const ws=XLSX.utils.aoa_to_sheet(detail);
-    ws['!cols']=[{wch:6},{wch:38},{wch:28},{wch:20},{wch:13},{wch:12},{wch:12},{wch:22},{wch:16}];
-    ws['!freeze']={xSplit:0,ySplit:1};
-    ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:detail.length-1,c:8}})};
-    const thin={style:'thin',color:{rgb:'D9E2E8'}};
-    for(let col=0;col<9;col++){const cell=ws[XLSX.utils.encode_cell({r:0,c:col})];cell.s={font:{bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'16734F'}},alignment:{horizontal:'center',vertical:'center',wrapText:true},border:{top:thin,bottom:thin,left:thin,right:thin}}}
-    for(let r=1;r<detail.length;r++)for(let col=0;col<9;col++){const cell=ws[XLSX.utils.encode_cell({r:r,c:col})];if(!cell)continue;cell.s={alignment:{horizontal:col===1||col===2?'right':'center',vertical:'center',wrapText:true},border:{bottom:thin}};if([4,5,6,7].includes(col)&&typeof cell.v==='number')cell.z='0.0%';if(col===3&&typeof cell.v==='number')cell.z='#,##0.00';if(col===8){cell.s.font={bold:true,color:{rgb:cell.v==='مستوفٍ'?'16734F':'B13D35'}}}}
-    const summary=[['مؤشرات الشركة','القيمة'],['عدد المشاريع',stats.count],['إجمالي قيمة المشاريع (ر.ع)',stats.value],['المشاريع المستوفية',stats.ok],['المشاريع غير المستوفية',stats.bad],['نسبة الاستيفاء',stats.rate/100],['متوسط السلع',stats.avgGoods==null?null:stats.avgGoods/100]];
-    const sm=XLSX.utils.aoa_to_sheet(summary);sm['!cols']=[{wch:32},{wch:24}];
-    for(let r=0;r<summary.length;r++)for(let col=0;col<2;col++){const cell=sm[XLSX.utils.encode_cell({r:r,c:col})];if(!cell)continue;cell.s={alignment:{horizontal:'right',vertical:'center'},border:{bottom:thin}};if(r===0)cell.s={font:{bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'355C4A'}},alignment:{horizontal:'center'},border:{bottom:thin}}}
-    sm['B2'].z='0';sm['B3'].z='#,##0.00';sm['B6'].z='0.0%';sm['B7'].z='0.0%';
-    const info=[['تقرير متابعة المحتوى المحلي للشركة'],['اسم الشركة',company.name],['تاريخ إصدار التقرير',generated],[],['ملاحظة','يعرض التقرير نتائج مشاريع الشركة وفق البيانات المسجلة في المنصة.']];
-    const inf=XLSX.utils.aoa_to_sheet(info);inf['!cols']=[{wch:22},{wch:70}];
-    inf['A1'].s={font:{bold:true,size:16,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'16734F'}},alignment:{horizontal:'center',vertical:'center'}};inf['!merges']=[{s:{r:0,c:0},e:{r:0,c:1}}];
-    for(let r=1;r<info.length;r++)for(let col=0;col<2;col++){const cell=inf[XLSX.utils.encode_cell({r:r,c:col})];if(cell)cell.s={alignment:{horizontal:'right',vertical:'center',wrapText:true},border:{bottom:thin}}}
-    XLSX.utils.book_append_sheet(wb,inf,'بيانات التقرير');XLSX.utils.book_append_sheet(wb,sm,'ملخص الشركة');XLSX.utils.book_append_sheet(wb,ws,'تفاصيل المشاريع');
+    const projectRows=stats.projects||[];
+    const wb=XLSX.utils.book_new();
+    const C={green:'16734F',dark:'123D32',light:'EAF4F1',pale:'F6F9F8',line:'D7E2DE',white:'FFFFFF',red:'B13D35',amber:'B7791F',ink:'17212B',muted:'667085'};
+    const border={top:{style:'thin',color:{rgb:C.line}},bottom:{style:'thin',color:{rgb:C.line}},left:{style:'thin',color:{rgb:C.line}},right:{style:'thin',color:{rgb:C.line}}};
+    const base={font:{name:'Arial',sz:10,color:{rgb:C.ink}},alignment:{vertical:'center',wrapText:true},border:border};
+    function styleRange(ws,rows,cols,style){for(let r=0;r<rows;r++)for(let col=0;col<cols;col++){const cell=ws[XLSX.utils.encode_cell({r:r,c:col})];if(cell)cell.s=Object.assign({},base,style)}}
+    function title(ws,text,lastCol){ws['A1']={v:text,t:'s',s:{font:{name:'Arial',sz:18,bold:true,color:{rgb:C.white}},fill:{fgColor:{rgb:C.green}},alignment:{horizontal:'center',vertical:'center'}}};ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:lastCol}}];ws['!rows']=[{hpt:32}]}
+    function header(ws,row,count){for(let col=0;col<count;col++){const cell=ws[XLSX.utils.encode_cell({r:row,c:col})];if(cell)cell.s={font:{name:'Arial',sz:10,bold:true,color:{rgb:C.white}},fill:{fgColor:{rgb:C.dark}},alignment:{horizontal:'center',vertical:'center',wrapText:true},border:border}}}
+    function finish(ws,rtl){ws['!sheetView']={rightToLeft:rtl!==false,showGridLines:false};}
+
+    // 1) Executive dashboard
+    const cover=[['تقرير متابعة المحتوى المحلي للشركة'],['اسم الشركة',company.name],['تاريخ الإصدار',generated],[],['ملخص تنفيذي'],['عدد المشاريع',stats.count],['إجمالي قيمة المشاريع (ر.ع)',stats.value],['المشاريع المستوفية',stats.ok],['المشاريع غير المستوفية',stats.bad],['نسبة الاستيفاء',stats.rate/100],['متوسط السلع',stats.avgGoods==null?null:stats.avgGoods/100],[],['مؤشرات التقرير','القيمة','الملاحظة'],['التعمين','بيانات كل مشروع في ورقة التفاصيل','وفق آخر بيانات المشروع'],['SME','بيانات كل مشروع في ورقة التفاصيل','وفق بيانات المشروع'],['السلع','بيانات كل مشروع في ورقة التفاصيل','محسوبة من بيانات التقارير'],['المحتوى المحلي الكلي','بيانات كل مشروع في ورقة التفاصيل','وفق بيانات المشروع']];
+    const ws0=XLSX.utils.aoa_to_sheet(cover);ws0['!cols']=[{wch:30},{wch:36},{wch:34}];title(ws0,'تقرير متابعة المحتوى المحلي للشركة',2);ws0['!rows']=[{hpt:34},{hpt:22},{hpt:22},{hpt:10},{hpt:24}];
+    for(let r=1;r<cover.length;r++)for(let col=0;col<3;col++){const cell=ws0[XLSX.utils.encode_cell({r:r,c:col})];if(cell)cell.s=Object.assign({},base,{alignment:{horizontal:col===0?'right':'center',vertical:'center',wrapText:true}})}
+    [4,12].forEach(r=>{for(let col=0;col<3;col++){const cell=ws0[XLSX.utils.encode_cell({r:r,c:col})];if(cell)cell.s={font:{name:'Arial',sz:11,bold:true,color:{rgb:C.white}},fill:{fgColor:{rgb:C.dark}},alignment:{horizontal:'right',vertical:'center'},border:border}}});
+    ws0['B9'].z='0.0%';ws0['B10'].z='0.0%';ws0['B6'].z='#,##0.00';finish(ws0);XLSX.utils.book_append_sheet(wb,ws0,'الملخص التنفيذي');
+
+    // 2) Project details — complete project record
+    const detail=[['م','اسم المشروع','الجهة الحكومية','الشركة المنفذة','رقم المناقصة','حالة المشروع','قطاع العمل','قيمة المشروع (ر.ع)','نسبة الإنجاز','تاريخ البداية','تاريخ الانتهاء الأصلي','تاريخ الانتهاء الحالي','الاستشاري','التعمين','SME','السلع','المحتوى المحلي الكلي','الحالة']];
+    projectRows.forEach(function(p,i){const m=projectMetrics(p,reports);detail.push([i+1,p.project_name||'—',p.government_entities?.name||'—',company.name||'—',p.tender_type||p.serial_no||'—',p.project_status||'—',p.work_sector||'—',Number(p.total_project_value||0),Number(p.progress_pct||0)/100,p.start_date||p.project_start_date||'—',p.original_end_date||p.end_date||'—',p.end_date||'—',p.consultant||'—',m.oman/100,m.sme/100,m.goods==null?null:m.goods/100,m.local/100,m.ok?'مستوفٍ':'غير مستوفٍ'])});
+    const ws1=XLSX.utils.aoa_to_sheet(detail);ws1['!cols']=[{wch:6},{wch:34},{wch:25},{wch:24},{wch:18},{wch:14},{wch:18},{wch:18},{wch:13},{wch:15},{wch:18},{wch:18},{wch:22},{wch:12},{wch:12},{wch:12},{wch:20},{wch:15}];ws1['!freeze']={xSplit:0,ySplit:1};ws1['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:detail.length-1,c:17}})};header(ws1,0,18);
+    for(let r=1;r<detail.length;r++)for(let col=0;col<18;col++){const cell=ws1[XLSX.utils.encode_cell({r:r,c:col})];if(!cell)continue;cell.s=Object.assign({},base,{alignment:{horizontal:[1,2,3,4,5,6,9,10,11,12].includes(col)?'right':'center',vertical:'center',wrapText:true}});if(col===7)cell.z='#,##0.00';if([8,13,14,15,16].includes(col)&&typeof cell.v==='number')cell.z='0.0%';if(col===17)cell.s.font={name:'Arial',sz:10,bold:true,color:{rgb:cell.v==='مستوفٍ'?C.green:C.red}}}finish(ws1);XLSX.utils.book_append_sheet(wb,ws1,'تفاصيل المشاريع');
+
+    // 3) Current workforce and salary snapshot
+    const workforce=[['م','المشروع','إجمالي القوى العاملة','العمانيون','الأجانب','نسبة التعمين','رواتب العمانيين (ر.ع)','رواتب الأجانب (ر.ع)']];
+    projectRows.forEach(function(p,i){const rs=reports.filter(r=>String(r.project_id)===String(p.id)).sort((a,b)=>(Number(a.annual_period||0)*10+Number(String(a.quarter||'').replace(/\D/g,'')))-(Number(b.annual_period||0)*10+Number(String(b.quarter||'').replace(/\D/g,''))));const latest=rs[rs.length-1],d=latest?.report_data||{},cats=Array.isArray(d.workforce_categories)?d.workforce_categories:[],om=cats.reduce((a,x)=>a+Number(x?.omani||0),0),fo=cats.reduce((a,x)=>a+Number(x?.foreign||0),0),om2=Number(d.omani_total||d.omani_workers||om||0),fo2=Number(d.foreign_total||d.foreign_workers||fo||0),tot=om2+fo2;const sal=cumulativeSalariesLocal(rs);workforce.push([i+1,p.project_name||'—',tot,om2,fo2,tot?om2/tot:0,sal.omani,sal.foreign])});
+    const ws2=XLSX.utils.aoa_to_sheet(workforce);ws2['!cols']=[{wch:6},{wch:38},{wch:20},{wch:14},{wch:14},{wch:14},{wch:23},{wch:22}];ws2['!freeze']={xSplit:0,ySplit:1};header(ws2,0,8);for(let r=1;r<workforce.length;r++)for(let col=0;col<8;col++){const cell=ws2[XLSX.utils.encode_cell({r:r,c:col})];if(!cell)continue;cell.s=base;if([5].includes(col)&&typeof cell.v==='number')cell.z='0.0%';if([6,7].includes(col)&&typeof cell.v==='number')cell.z='#,##0.00'}finish(ws2);XLSX.utils.book_append_sheet(wb,ws2,'القوى العاملة والرواتب');
+
+    // 4) Financial detail from all reports
+    const fin=[['المشروع','السنة','الربع','نوع التقرير','رواتب العمانيين','رواتب الأجانب','صنع في عمان','مورد محلي','استيراد مباشر','مشتريات SME','خدمات محلية','خدمات أجنبية','خدمات SME','مقاولات محلية','مقاولات أجنبية','مقاولات SME']];
+    projectRows.forEach(function(p){reports.filter(r=>String(r.project_id)===String(p.id)).forEach(function(r){const d=r.report_data||{},pg=d.purchases||{},sg=d.services||{},cg=d.subcontracts||{};fin.push([p.project_name||'—',r.annual_period||'—',r.quarter||'—',d.report_type||'—',Number(d.omani_salary||0),Number(d.foreign_salary||0),Number(pg.made_in_oman||0),Number(pg.local_supplier||0),Number(pg.direct_import||0),Number(pg.sme_purchase||0),Number(sg.local_service||0),Number(sg.foreign_service||0),Number(sg.sme_service||0),Number(cg.local||0),Number(cg.foreign||0),Number(cg.sme||0)])})});
+    const ws3=XLSX.utils.aoa_to_sheet(fin);ws3['!cols']=[{wch:34},{wch:10},{wch:10},{wch:18},{wch:18},{wch:18},{wch:18},{wch:16},{wch:17},{wch:15},{wch:17},{wch:17},{wch:15},{wch:17},{wch:17},{wch:15}];ws3['!freeze']={xSplit:0,ySplit:1};ws3['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:fin.length-1,c:15}})};header(ws3,0,16);for(let r=1;r<fin.length;r++)for(let col=0;col<16;col++){const cell=ws3[XLSX.utils.encode_cell({r:r,c:col})];if(!cell)continue;cell.s=base;if(col>=4&&typeof cell.v==='number')cell.z='#,##0.00'}finish(ws3);XLSX.utils.book_append_sheet(wb,ws3,'تفاصيل التقارير');
+
+    // 5) Clean company/project status view
+    const status=[['م','المشروع','الجهة الحكومية','قيمة المشروع (ر.ع)','التعمين','SME','السلع','المحتوى المحلي الكلي','الحالة']];
+    projectRows.forEach(function(p,i){const m=projectMetrics(p,reports);status.push([i+1,p.project_name||'—',p.government_entities?.name||'—',Number(p.total_project_value||0),m.oman/100,m.sme/100,m.goods==null?null:m.goods/100,m.local/100,m.ok?'مستوفٍ':'غير مستوفٍ'])});
+    const ws4=XLSX.utils.aoa_to_sheet(status);ws4['!cols']=[{wch:6},{wch:40},{wch:28},{wch:20},{wch:13},{wch:12},{wch:12},{wch:22},{wch:16}];ws4['!freeze']={xSplit:0,ySplit:1};ws4['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:status.length-1,c:8}})};header(ws4,0,9);for(let r=1;r<status.length;r++)for(let col=0;col<9;col++){const cell=ws4[XLSX.utils.encode_cell({r:r,c:col})];if(!cell)continue;cell.s=base;if(col===3&&typeof cell.v==='number')cell.z='#,##0.00';if([4,5,6,7].includes(col)&&typeof cell.v==='number')cell.z='0.0%';if(col===8)cell.s.font={name:'Arial',sz:10,bold:true,color:{rgb:cell.v==='مستوفٍ'?C.green:C.red}}}finish(ws4);XLSX.utils.book_append_sheet(wb,ws4,'المؤشرات المختصرة');
+
     const safe=String(company.name||'شركة').replace(/[\\/:*?"<>|]/g,'-').trim()||'شركة';
     XLSX.writeFile(wb,'تقرير شركة - '+safe+'.xlsx');
   }
+  function cumulativeSalariesLocal(rows){let om=0,fo=0;for(const r of (rows||[]).sort((a,b)=>(Number(a.annual_period||0)*10+Number(String(a.quarter||'').replace(/\D/g,'')))-(Number(b.annual_period||0)*10+Number(String(b.quarter||'').replace(/\D/g,'')))){const d=r.report_data||{},cum=String(d.salary_input_type||'رواتب الربع').includes('تراكمية'),a=Number(d.omani_salary||0),b=Number(d.foreign_salary||0);if(cum){om=a;fo=b}else{om+=a;fo+=b}}return{omani:om,foreign:fo}}
 
   function exportCompanyPDF(company, stats, reports){
     const rows=stats.projects.map(function(p,i){
