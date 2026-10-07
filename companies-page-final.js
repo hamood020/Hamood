@@ -107,7 +107,7 @@ function exportCompanyExcel(company,projects,allReports){
     for(i=4;i<=rows.length;i++){ws['B'+i].z='0.0%';ws['C'+i].z='0.0%';var st3=ws['E'+i];if(st3)st3.s=st3.v==='مستوفٍ'?S.ok:S.bad;}XLSX.utils.book_append_sheet(wb,ws,'المؤشرات');
 
     wb.Props={Title:'تقرير الشركة - '+(company.name||'شركة'),Subject:'متابعة المحتوى المحلي',Author:'ICV FollowUp'};
-    XLSX.writeFile(wb,'تقرير شركة - '+String(company.name||'شركة').replace(/[\\/:*?"<>|]/g,'-')+'.xlsx');
+    XLSX.writeFile(wb,'ICV - تقرير الشركة الكامل - '+String(company.name||'شركة').replace(/[\\/:*?"<>|]/g,'-')+'.xlsx');
   }catch(err){console.error(err);alert('تعذر إنشاء ملف Excel: '+(err.message||err));}
 }
 
@@ -121,7 +121,7 @@ function openModal(company,projects,allReports){
     return '<tr><td>'+String(i+1)+'</td><td>'+esc(p.project_name||'—')+'</td><td>'+esc(p.government_entities&&p.government_entities.name||'—')+'</td><td>'+money(p.total_project_value)+'</td><td>'+pct(m.oman)+'</td><td>'+pct(m.sme)+'</td><td>'+pct(m.local)+'</td><td><span class="icv-co-status '+(m.ok?'icv-co-ok':'icv-co-bad')+'">'+(m.ok?'مستوفٍ':'غير مستوفٍ')+'</span></td></tr>';
   }).join('');
   ov.innerHTML='<div class="panel"><div class="toolbar"><div><h2>شركة '+esc(company.name)+'</h2><div class="muted">تفاصيل مشاريع الشركة ومؤشرات المحتوى المحلي</div></div><button class="btn" id="icvCoClose">إغلاق</button></div>'+
-    '<div class="icv-co-actions"><button class="btn primary" id="icvCoPdf">تصدير تقرير PDF</button><button class="btn" id="icvCoExcel">تصدير Excel</button></div>'+
+    '<div class="icv-co-actions"><button class="btn primary" id="icvCoPdf">تصدير تقرير PDF</button><button class="btn" id="icvCoExcel">تصدير Excel — التقرير الكامل</button></div>'+
     '<div class="icv-co-summary"><div><small>المشاريع</small><b>'+ps.length+'</b></div><div><small>قيمة المشاريع</small><b>'+money(total)+' ر.ع</b></div><div><small>مستوفٍ</small><b class="icv-co-ok">'+ok+'</b></div><div><small>غير مستوفٍ</small><b class="icv-co-bad">'+(ps.length-ok)+'</b></div><div><small>نسبة الاستيفاء</small><b>'+pct(ps.length?ok/ps.length*100:0)+'</b></div></div>'+
     '<div class="table-wrap"><table><thead><tr><th>م</th><th>المشروع</th><th>الجهة الحكومية</th><th>القيمة</th><th>التعمين</th><th>SME</th><th>المحتوى المحلي</th><th>الحالة</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   document.body.appendChild(ov);
