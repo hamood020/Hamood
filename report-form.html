@@ -82,7 +82,7 @@ const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let session=null,profile=null,project=null,current=null;
 const qs=new URLSearchParams(location.search),pid=qs.get('id'),rid=qs.get('report');
 const $=id=>document.getElementById(id),n=v=>Number(v||0);
-function goPlatform(page){let u='index.html?page='+encodeURIComponent(page);if(page==='project'&&pid)u+='&project='+encodeURIComponent(pid);location.href=u}
+function goPlatform(page){let u=page==='project'&&pid?'index.html?project='+encodeURIComponent(pid):'index.html?page='+encodeURIComponent(page);location.href=u}
 async function logout(){await db.auth.signOut();sessionStorage.removeItem('icv-auth-session');location.href='index.html'}
 function calc(){for(let i=1;i<=3;i++)$('tt'+i).value=n($('om'+i).value)+n($('fo'+i).value);const om=[1,2,3].reduce((a,i)=>a+n($('om'+i).value),0),fo=[1,2,3].reduce((a,i)=>a+n($('fo'+i).value),0);$('totOm').value=om;$('totFo').value=fo;$('totEmp').value=om+fo}
 [1,2,3].forEach(i=>[$('om'+i),$('fo'+i)].forEach(x=>x.addEventListener('input',calc)));
