@@ -289,4 +289,30 @@ window.icvCompanyProjects=async id=>{let c=(await dbx.from('companies').select('
 async function renderCompaniesV2(){let b=document.getElementById('page-companies'),r=await dbx.from('companies').select('*').order('name');if(!b)return;b.innerHTML='<div class="panel"><div class="toolbar"><div><h2>الشركات</h2><div class="muted">الشركات المنفذة والموردون.</div></div>'+(canEdit()?'<button class="btn primary" onclick="window.icvAddCompanyV2()">+ إضافة شركة</button>':'')+'</div><div class="table-wrap"><table><thead><tr><th>الشركة</th><th>النوع</th><th>المشاريع</th></tr></thead><tbody>'+(r.data||[]).map(x=>'<tr><td><a class="project-link" href="javascript:window.icvCompanyProjects(\''+x.id+'\')"><b>'+E(x.name)+'</b></a></td><td>'+E(x.company_type||'—')+'</td><td>'+((window.projects||[]).filter(p=>p.implementing_company_id===x.id).length)+'</td></tr>').join('')+'</tbody></table></div></div>'}
 window.icvAddCompanyV2=()=>modal('إضافة شركة',field('اسم الشركة','cn2')+field('نوع الشركة','ct2')+'<div id="cm2"></div><button class="btn primary" onclick="window.icvSaveCompanyV2()">حفظ</button>');
 window.icvSaveCompanyV2=async()=>{let r=await dbx.from('companies').insert({name:val('cn2').trim(),company_type:val('ct2').trim()||null});if(r.error)return msg('cm2',r.error.message);document.getElementById('icvV2Modal')?.remove();renderCompaniesV2()};
-oldShow=window.showPage;window.showPage=function(n,b){if(n==='entities'){document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));document.getElementById('page-entities')?.classList.remove('hidden');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b?.classList.add('active');pageTitle.textContent='الجهات الحكومية';return renderEntitiesV2()}if(n==='companies'){document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));document.getElementById('page-companies')?.classList.remove('hidden');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b?.classList.add('active');pageTitle.textContent='الشركات';return renderCompaniesV2()}return oldShow?.(n,b)};window.icvV2={projectPage};})();
+oldShow=window.showPage;window.showPage=function(n,b){
+ if(n==='entity-profiles'){
+  document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));
+  document.getElementById('page-entity-profiles')?.classList.remove('hidden');
+  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+  b?.classList.add('active');
+  pageTitle.textContent='ملفات الجهات الحكومية';
+  return renderEntityProfiles();
+ }
+ if(n==='entities'){
+  document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));
+  document.getElementById('page-entities')?.classList.remove('hidden');
+  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+  b?.classList.add('active');
+  pageTitle.textContent='إدارة الجهات الحكومية';
+  return renderEntitiesV2()
+ }
+ if(n==='companies'){
+  document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));
+  document.getElementById('page-companies')?.classList.remove('hidden');
+  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+  b?.classList.add('active');
+  pageTitle.textContent='الشركات';
+  return renderCompaniesV2()
+ }
+ return oldShow?.(n,b)
+};window.icvV2={projectPage};})();
