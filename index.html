@@ -104,7 +104,7 @@ function toggleSignup(){document.getElementById('loginBox').classList.toggle('hi
 async function signup(){const n=fullName.value.trim(),e=signupEmail.value.trim(),p=signupPassword.value;if(!e||p.length<6)return authMsg.textContent='أدخل بريدًا صحيحًا وكلمة مرور من 6 أحرف على الأقل.';const r=await db.auth.signUp({email:e,password:p,options:{data:{full_name:n}}});authMsg.textContent=r.error?r.error.message:'تم إنشاء الحساب. تحقق من بريدك إذا طلب النظام ذلك، ثم سجل الدخول.'}
 async function login(){const e=email.value.trim(),p=password.value;const r=await db.auth.signInWithPassword({email:e,password:p});if(r.error)return authMsg.textContent=r.error.message;await boot(r.data.session)}
 async function logout(){await db.auth.signOut();location.reload()}
-async function boot(s){session=s||session;if(!session)return;const r=await db.from('user_profiles').select('*').eq('id',session.user.id).single();profile=r.data;if(profile?.role==='viewer'){await db.rpc('claim_first_admin');const rr=await db.from('user_profiles').select('*').eq('id',session.user.id).single();profile=rr.data||profile;}document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden');userName.textContent=profile?.full_name||session.user.email;userRole.textContent=profile?.role||'viewer';await loadAll();showPage('dashboard',document.querySelector('[data-page=dashboard]'))}
+async function boot(s){session=s||session;if(!session)return;const r=await db.from('user_profiles').select('*').eq('id',session.user.id).single();profile=r.data;if(profile?.role==='viewer'){await db.rpc('claim_first_admin');const rr=await db.from('user_profiles').select('*').eq('id',session.user.id).single();profile=rr.data||profile;}document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden');userName.textContent=profile?.full_name||session.user.email;userRole.textContent=profile?.role||'viewer';window.__icvProfile=profile;await loadAll();const q=new URLSearchParams(location.search);const requestedPage=q.get('page');const requestedProject=q.get('project');if(requestedPage&&typeof showPage==='function'){showPage(requestedPage,document.querySelector('[data-page="'+requestedPage+'"]'));}else if(requestedProject&&typeof window.viewProject==='function){window.viewProject(requestedProject);}else{showPage('dashboard',document.querySelector('[data-page=dashboard]'));}}
 async function loadAll(){const [p,r,pl]=await Promise.all([db.from('projects').select('*,government_entities(name),companies(name)').order('serial_no'),db.from('quarterly_reports').select('*,projects(project_name)').order('created_at',{ascending:false}),db.from('local_content_plans').select('*,projects(project_name)').order('created_at',{ascending:false})]);projects=p.data||[];reports=r.data||[];plans=pl.data||[];window.projects=projects;window.reports=reports;window.plans=plans;renderDashboard();renderProjects();renderEntities();renderCompanies();renderReports();renderPlans();renderFollowups();renderAudit()}
 function showPage(name,btn){document.querySelectorAll('[id^=page-]').forEach(e=>e.classList.add('hidden'));document.getElementById('page-'+name).classList.remove('hidden');document.querySelectorAll('.nav button').forEach(e=>e.classList.remove('active'));if(btn)btn.classList.add('active');const titles={dashboard:'لوحة التحكم',projects:'المشاريع',entities:'الجهات الحكومية',companies:'الشركات',reports:'التقارير الربع سنوية',plans:'خطط المحتوى المحلي',followups:'متابعة الموظفين',audit:'سجل التدقيق'};pageTitle.textContent=titles[name]}
 function renderDashboard(){
@@ -189,13 +189,13 @@ function applySize(){document.documentElement.style.setProperty("--icv-font-scal
   const page=q.get('page'), project=q.get('project');
   if(!page&&!project)return;
   const run=()=>{
-    if(project&&typeof window.viewProject==='function'){
-      window.viewProject(project);
-      return;
-    }
     if(page&&typeof window.showPage==='function'){
       const btn=document.querySelector('[data-page="'+page+'"]');
       window.showPage(page,btn||null);
+      return;
+    }
+    if(project&&typeof window.viewProject==='function'){
+      window.viewProject(project);
     }
   };
   const timer=setInterval(()=>{
