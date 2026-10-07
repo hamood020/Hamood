@@ -8,7 +8,7 @@ function ensureProjectPageStyles(){if(document.getElementById('icvProjectPageSty
 function fmtProjectDate(v){if(!v)return '—';const d=new Date(v);return isNaN(d)?String(v):d.toLocaleDateString('en-GB')}
 async function projectPage(id){ document.getElementById('pageTitle')?.replaceChildren(document.createTextNode('صفحة المشروع'));
  ensureProjectReferenceVisual();
- pid=id;
+ pid=id;window.__icvCurrentProjectId=id;
  const p=(window.projects||[]).find(x=>String(x.id)===String(id)); if(!p)return;
  document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));
  const root=document.getElementById('page-project-detail'); if(!root)return; root.classList.remove('hidden');
