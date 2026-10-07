@@ -22,7 +22,7 @@ async function projectPage(id){ document.getElementById('pageTitle')?.replaceChi
  const e=er.data||{},co=cr.data||{},plan=((pr.data||[]).find(x=>['معتمدة','معتمد'].includes(String(x.status||'').trim()))||null),reports=rr.data||[],history=hr.data||[];
  const pd=plan?.plan_data||{}, latest=(reports.filter(r=>String(r.status||'').includes('معتمد')).slice(-1)[0]||reports.slice(-1)[0]), ld=latest?.report_data||{};
  const n=v=>Number(v||0), money=v=>n(v).toLocaleString('en-US',{maximumFractionDigits:0})+' ر.ع', pct=v=>n(v).toFixed(1)+'%', esc2=E;
- const om=n(p.current_omani||ld.omani_total), foreign=n(p.non_omani||ld.foreign_total), total=om+foreign, omPct=total?om/total*100:n(p.omanization_pct);
+ const om=n(ld.omani_total), foreign=n(ld.foreign_total), total=om+foreign, omPct=total?om/total*100:0;
  const yearNo=(String(p.annual_update||'').match(/\\d+/)||[''])[0], qNo=String(p.current_quarter||'').replace(/\\D/g,'')||'', periodKey=yearNo&&qNo?(yearNo+'_'+qNo):'';
  const planWorkforce=Object.values(pd.workforce||{});
  const planWorkTotals=planWorkforce.reduce((a,v)=>{const cats=v.categories||[];return {omani:a.omani+cats.reduce((x,c)=>x+n(c.omani),0),foreign:a.foreign+cats.reduce((x,c)=>x+n(c.foreign),0),omani_salary:a.omani_salary+n(v.omani_salary),foreign_salary:a.foreign_salary+n(v.foreign_salary)}},{omani:0,foreign:0,omani_salary:0,foreign_salary:0});
