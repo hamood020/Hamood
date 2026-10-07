@@ -78,7 +78,7 @@ async function projectPage(id){ document.getElementById('pageTitle')?.replaceChi
  const planServices=planServiceTotals;
  const actualPurchaseVals={...actualPurchases};
  const actualServiceVals={...actualServices};
- const hasPlan=Object.values(planPurchases).some(v=>v>0)||Object.values(planServices).some(v=>v>0)||planOm>0||planForeign>0||planOmaniSalary>0||planForeignSalary>0||actualSubcontracts>0;
+ const hasPlan=Object.values(planPurchases).some(v=>v>0)||Object.values(planServices).some(v=>v>0)||planOm>0||planForeign>0||planOmaniSalary>0||planForeignSalary>0||actualSubcontractsTotal>0;
  const workforceStatus=total?(omPct>=30?'مستوفي':'غير مستوفي'):'غير منطبق';
  const goodsActual=Object.values(actualPurchaseVals).reduce((a,v)=>a+v,0), goodsLocalContentActual=actualPurchaseVals.made_in_oman*.7+actualPurchaseVals.local_supplier*.18+actualPurchaseVals.direct_import*.06+actualPurchaseVals.sme_purchase*.18, goodsPlan=Object.values(planPurchases).reduce((a,v)=>a+v,0), goodsStatus=goodsPlan?(goodsLocalContentActual>=goodsPlan?'مستوفي':'غير مستوفي'):'غير منطبق';
  const smeStatus=sme>=10?'مستوفي':(sme?'غير مستوفي':'غير منطبق');
