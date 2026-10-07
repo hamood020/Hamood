@@ -95,7 +95,8 @@
   }
 
   function exportCompanyExcel(company, stats, reports){
-    if(typeof XLSX==='undefined'){alert('مكتبة Excel غير متاحة حالياً.');return;}
+    try{
+    if(typeof XLSX==='undefined'){alert('مكتبة Excel غير متاحة حالياً. أعد تحديث الصفحة ثم حاول مرة أخرى.');return;}
     const generated=new Date().toLocaleDateString('ar-OM',{year:'numeric',month:'long',day:'numeric'});
     const projectRows=stats.projects||[];
     const wb=XLSX.utils.book_new();
@@ -137,6 +138,7 @@
 
     const safe=String(company.name||'شركة').replace(/[\\/:*?"<>|]/g,'-').trim()||'شركة';
     XLSX.writeFile(wb,'تقرير شركة - '+safe+'.xlsx');
+    }catch(err){console.error('Company Excel export error:',err);alert('تعذر إنشاء ملف Excel.\n'+(err?.message||err));}
   }
   function cumulativeSalariesLocal(rows){let om=0,fo=0;for(const r of (rows||[]).sort((a,b)=>(Number(a.annual_period||0)*10+Number(String(a.quarter||'').replace(/\D/g,'')))-(Number(b.annual_period||0)*10+Number(String(b.quarter||'').replace(/\D/g,'')))){const d=r.report_data||{},cum=String(d.salary_input_type||'رواتب الربع').includes('تراكمية'),a=Number(d.omani_salary||0),b=Number(d.foreign_salary||0);if(cum){om=a;fo=b}else{om+=a;fo+=b}}return{omani:om,foreign:fo}}
 
