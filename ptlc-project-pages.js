@@ -351,6 +351,7 @@ oldShow=window.showPage;window.showPage=function(n,b){
   document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
   b?.classList.add('active');
   pageTitle.textContent='الشركات';
+  if(typeof window.icvCompaniesPage==='function') return window.icvCompaniesPage();
   return renderCompaniesV2()
  }
  return oldShow?.(n,b)
