@@ -20,39 +20,23 @@ async function projectPage(id){ document.getElementById('pageTitle')?.replaceChi
   dbx.from('project_end_date_history').select('*').eq('project_id',id).order('changed_at',{ascending:false})
  ]);
  const e=er.data||{},co=cr.data||{},plan=pr.data,reports=rr.data||[],history=hr.data||[];
- const pd=plan?.plan_data||{};
- const planWorkforce=Object.values(pd.workforce||{});
- const planPeriods=Object.values(pd.periods||{});
- const planWorkTotals=planWorkforce.reduce((a,v)=>{const cats=v.categories||[];return {omani:a.omani+cats.reduce((x,c)=>x+n(c.omani),0),foreign:a.foreign+cats.reduce((x,c)=>x+n(c.foreign),0),omani_salary:a.omani_salary+n(v.omani_salary),foreign_salary:a.foreign_salary+n(v.foreign_salary)}},{omani:0,foreign:0,omani_salary:0,foreign_salary:0});
- const planPurchaseRows=pd.purchases||[], planServiceRows=pd.services||[], planSubRows=pd.subcontracts||[];
- const sumPlanRows=(rows,typeValue)=>rows.filter(x=>!typeValue||((x.supply_type||x.supplier_type)===typeValue)).reduce((a,x)=>a+n(x.value),0);
- const planPurchaseTotals={
-   made_in_oman:sumPlanRows(planPurchaseRows,'صنع في عمان'),
-   local_supplier:sumPlanRows(planPurchaseRows,'مورد محلي'),
-   direct_import:sumPlanRows(planPurchaseRows,'استيراد مباشر'),
-   sme_purchase:sumPlanRows(planPurchaseRows,'مورد المؤسسات الصغيرة والمتوسطة')
- };
- const planServiceTotals={
-   local_service:sumPlanRows(planServiceRows,'مزود محلي'),
-   foreign_service:sumPlanRows(planServiceRows,'مزود أجنبي'),
-   sme_service:sumPlanRows(planServiceRows,'مؤسسة صغيرة ومتوسطة')
- };
- const planSubTotals={
-   local:sumPlanRows(planSubRows,'مزود محلي'),
-   foreign:sumPlanRows(planSubRows,'مزود أجنبي'),
-   sme:sumPlanRows(planSubRows,'مؤسسة صغيرة ومتوسطة')
- };
- const planTrainingRows=pd.training||[];
- const planTrainingTotal=planTrainingRows.reduce((a,x)=>a+n(x.ojt)+n(x.tfe)+n(x.tfq),0);
- const planDisplayPeriod=periodKey&&pd.periods?.[periodKey]?pd.periods[periodKey]:null;
- const planDisplayOm=planDisplayPeriod? n(planDisplayPeriod.omani):planWorkTotals.omani;
- const planDisplayForeign=planDisplayPeriod? n(planDisplayPeriod.foreign):planWorkTotals.foreign;
- const planDisplayOmaniSalary=planDisplayPeriod? n(planDisplayPeriod.omani_salary):planWorkTotals.omani_salary;
- const planDisplayForeignSalary=planDisplayPeriod? n(planDisplayPeriod.foreign_salary):planWorkTotals.foreign_salary;
- const latest=(reports.filter(r=>String(r.status||'').includes('معتمد')).slice(-1)[0]||reports.slice(-1)[0]), ld=latest?.report_data||{};
+ const pd=plan?.plan_data||{}, latest=(reports.filter(r=>String(r.status||'').includes('معتمد')).slice(-1)[0]||reports.slice(-1)[0]), ld=latest?.report_data||{};
  const n=v=>Number(v||0), money=v=>n(v).toLocaleString('en-US',{maximumFractionDigits:0})+' ر.ع', pct=v=>n(v).toFixed(1)+'%', esc2=E;
  const om=n(p.current_omani||ld.omani_total), foreign=n(p.non_omani||ld.foreign_total), total=om+foreign, omPct=total?om/total*100:n(p.omanization_pct);
  const yearNo=(String(p.annual_update||'').match(/\\d+/)||[''])[0], qNo=String(p.current_quarter||'').replace(/\\D/g,'')||'', periodKey=yearNo&&qNo?(yearNo+'_'+qNo):'';
+ const planWorkforce=Object.values(pd.workforce||{});
+ const planWorkTotals=planWorkforce.reduce((a,v)=>{const cats=v.categories||[];return {omani:a.omani+cats.reduce((x,c)=>x+n(c.omani),0),foreign:a.foreign+cats.reduce((x,c)=>x+n(c.foreign),0),omani_salary:a.omani_salary+n(v.omani_salary),foreign_salary:a.foreign_salary+n(v.foreign_salary)}},{omani:0,foreign:0,omani_salary:0,foreign_salary:0});
+ const planPurchaseRows=pd.purchases||[], planServiceRows=pd.services||[], planSubRows=pd.subcontracts||[];
+ const sumPlanRows=(rows,typeValue)=>rows.filter(x=>!typeValue||((x.supply_type||x.supplier_type)===typeValue)).reduce((a,x)=>a+n(x.value),0);
+ const planPurchaseTotals={made_in_oman:sumPlanRows(planPurchaseRows,'صنع في عمان'),local_supplier:sumPlanRows(planPurchaseRows,'مورد محلي'),direct_import:sumPlanRows(planPurchaseRows,'استيراد مباشر'),sme_purchase:sumPlanRows(planPurchaseRows,'مورد المؤسسات الصغيرة والمتوسطة')};
+ const planServiceTotals={local_service:sumPlanRows(planServiceRows,'مزود محلي'),foreign_service:sumPlanRows(planServiceRows,'مزود أجنبي'),sme_service:sumPlanRows(planServiceRows,'مؤسسة صغيرة ومتوسطة')};
+ const planSubTotals={local:sumPlanRows(planSubRows,'مزود محلي'),foreign:sumPlanRows(planSubRows,'مزود أجنبي'),sme:sumPlanRows(planSubRows,'مؤسسة صغيرة ومتوسطة')};
+ const planTrainingRows=pd.training||[], planTrainingTotal=planTrainingRows.reduce((a,x)=>a+n(x.ojt)+n(x.tfe)+n(x.tfq),0);
+ const planDisplayPeriod=periodKey&&pd.periods?.[periodKey]?pd.periods[periodKey]:null;
+ const planDisplayOm=planDisplayPeriod?n(planDisplayPeriod.omani):planWorkTotals.omani;
+ const planDisplayForeign=planDisplayPeriod?n(planDisplayPeriod.foreign):planWorkTotals.foreign;
+ const planDisplayOmaniSalary=planDisplayPeriod?n(planDisplayPeriod.omani_salary):planWorkTotals.omani_salary;
+ const planDisplayForeignSalary=planDisplayPeriod?n(planDisplayPeriod.foreign_salary):planWorkTotals.foreign_salary;
  const planPeriod=(pd.periods&&pd.periods[periodKey])||{};
  const pickPlan=planDisplayPeriod;
  const planOm=planDisplayOm, planForeign=planDisplayForeign;
