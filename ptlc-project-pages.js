@@ -1,4 +1,9 @@
 (()=>{const dbx=window.__icvAccessClient||db,E=v=>String(v??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])),N=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2}),P=v=>Number(v||0).toFixed(1)+'%',canEdit=()=>['admin','editor'].includes(window.__icvProfile?.role||'viewer');let pid=null,oldShow=null;
+function reportSortKey(r){const y=Number(r?.annual_period||0),q=Number(String(r?.quarter||'').replace(/\\D/g,''))||0;return y*10+q}
+function sortReports(rows){return [...(rows||[])].sort((a,b)=>reportSortKey(a)-reportSortKey(b)||String(a.created_at||'').localeCompare(String(b.created_at||''))}
+function cumulativeFinancials(rows){const out={purchases:{made_in_oman:0,local_supplier:0,direct_import:0,sme_purchase:0},services:{local_service:0,foreign_service:0,sme_service:0},subcontracts:{local:0,foreign:0,sme:0}};for(const r of sortReports(rows)){const d=r.report_data||{},cum=String(d.report_type||'ربعي منفصل').includes('تراكمي'),pg=d.purchases||{},sg=d.services||{},cg=d.subcontracts||{},vals={purchases:{made_in_oman:Number(pg.made_in_oman||0),local_supplier:Number(pg.local_supplier||0),direct_import:Number(pg.direct_import||0),sme_purchase:Number(pg.sme_purchase||0)},services:{local_service:Number(sg.local_service||0),foreign_service:Number(sg.foreign_service||0),sme_service:Number(sg.sme_service||0)},subcontracts:{local:Number(cg.local||0),foreign:Number(cg.foreign||0),sme:Number(cg.sme||0)}};for(const g of Object.keys(out))for(const k of Object.keys(out[g]))out[g][k]=cum?vals[g][k]:out[g][k]+vals[g][k]}return out}
+function cumulativeSalaries(rows){let om=0,fo=0;for(const r of sortReports(rows)){const d=r.report_data||{},cum=String(d.salary_input_type||'رواتب الربع').includes('تراكمية'),a=Number(d.omani_salary||0),b=Number(d.foreign_salary||0);if(cum){om=a;fo=b}else{om+=a;fo+=b}}return{omani:om,foreign:fo}}
+function localContentFromFinancials(f,s){return Number(s.omani||0)*.8+Number(s.foreign||0)*.2+Number(f.purchases.made_in_oman||0)*.7+Number(f.purchases.local_supplier||0)*.18+Number(f.purchases.direct_import||0)*.06+Number(f.purchases.sme_purchase||0)*.18+Number(f.services.local_service||0)*.7+Number(f.services.foreign_service||0)*.10+Number(f.services.sme_service||0)*.7+(Number(f.subcontracts.local||0)+Number(f.subcontracts.foreign||0)+Number(f.subcontracts.sme||0))*.7}
 function modal(t,b){document.getElementById('icvV2Modal')?.remove();let d=document.createElement('div');d.id='icvV2Modal';d.style='position:fixed;inset:0;background:#0008;z-index:100;padding:18px;overflow:auto';d.innerHTML='<div class="panel" style="max-width:1150px;margin:auto"><div class="toolbar"><h2>'+t+'</h2><button class="btn" onclick="document.getElementById(\'icvV2Modal\').remove()">إغلاق</button></div>'+b+'</div>';document.body.appendChild(d)}
 function field(l,id,t,v,x){return '<div class="field"><label>'+l+'</label><input id="'+id+'" type="'+(t||'text')+'" value="'+E(v||'')+'" '+(x||'')+'></div>'}
 function sel(l,id,ops,v){return '<div class="field"><label>'+l+'</label><select id="'+id+'">'+ops.map(o=>'<option value="'+E(o)+'" '+(String(o)===String(v||'')?'selected':'')+'>'+E(o)+'</option>').join('')+'</select></div>'}
@@ -20,9 +25,17 @@ async function projectPage(id){ document.getElementById('pageTitle')?.replaceChi
   dbx.from('project_end_date_history').select('*').eq('project_id',id).order('changed_at',{ascending:false})
  ]);
  const e=er.data||{},co=cr.data||{},plan=((pr.data||[]).find(x=>['معتمدة','معتمد'].includes(String(x.status||'').trim()))||null),reports=rr.data||[],history=hr.data||[];
- const pd=plan?.plan_data||{}, latest=(reports.filter(r=>String(r.status||'').includes('معتمد')).slice(-1)[0]||reports.slice(-1)[0]), ld=latest?.report_data||{};
+ const pd=plan?.plan_data||{}, orderedReports=sortReports(reports), latest=(orderedReports.filter(r=>String(r.status||'').includes('معتمد')).slice(-1)[0]||orderedReports.slice(-1)[0]), ld=latest?.report_data||{};
  const n=v=>Number(v||0), money=v=>n(v).toLocaleString('en-US',{maximumFractionDigits:0})+' ر.ع', pct=v=>n(v).toFixed(1)+'%', esc2=E;
  const om=n(ld.omani_total), foreign=n(ld.foreign_total), total=om+foreign, omPct=total?om/total*100:0;
+ const cumulativeFinancial=cumulativeFinancials(orderedReports), cumulativeSalary=cumulativeSalaries(orderedReports);
+ const actualOmaniSalary=cumulativeSalary.omani, actualForeignSalary=cumulativeSalary.foreign;
+ const actualPurchases=cumulativeFinancial.purchases, actualServices=cumulativeFinancial.services, actualSubcontracts=cumulativeFinancial.subcontracts;
+ const actualSubcontractsTotal=Object.values(actualSubcontracts).reduce((a,v)=>a+v,0);
+ const totalExpenditure=actualOmaniSalary+actualForeignSalary+Object.values(actualPurchases).reduce((a,v)=>a+v,0)+Object.values(actualServices).reduce((a,v)=>a+v,0)+actualSubcontractsTotal;
+ const totalLocalContent=localContentFromFinancials(cumulativeFinancial,{omani:actualOmaniSalary,foreign:actualForeignSalary});
+ const smeActual=actualSubcontractsTotal+n(actualServices.sme_service);
+ const sme=n(p.total_project_value)?smeActual/n(p.total_project_value)*100:0;
  const yearNo=(String(p.annual_update||'').match(/\\d+/)||[''])[0], qNo=String(p.current_quarter||'').replace(/\\D/g,'')||'', periodKey=yearNo&&qNo?(yearNo+'_'+qNo):'';
  const planWorkforce=Object.values(pd.workforce||{});
  const planWorkTotals=planWorkforce.reduce((a,v)=>{const cats=v.categories||[];return {omani:a.omani+cats.reduce((x,c)=>x+n(c.omani),0),foreign:a.foreign+cats.reduce((x,c)=>x+n(c.foreign),0),omani_salary:a.omani_salary+n(v.omani_salary),foreign_salary:a.foreign_salary+n(v.foreign_salary)}},{omani:0,foreign:0,omani_salary:0,foreign_salary:0});
@@ -57,21 +70,18 @@ async function projectPage(id){ document.getElementById('pageTitle')?.replaceChi
  const omCat1Actual=reportCat(0,'omani'), omCat2Actual=reportCat(1,'omani'), omCat3Actual=reportCat(2,'omani');
  const foreignCat1Plan=catPlan('cat1','foreign')||catPlan('cat1','non_omani'), foreignCat2Plan=catPlan('cat2','foreign')||catPlan('cat2','non_omani'), foreignCat3Plan=catPlan('cat3','foreign')||catPlan('cat3','non_omani');
  const foreignCat1Actual=reportCat(0,'foreign'), foreignCat2Actual=reportCat(1,'foreign'), foreignCat3Actual=reportCat(2,'foreign');
- const subcontractPlan={local:planSubTotals.local,foreign:planSubTotals.foreign,sme:planSubTotals.sme}; const subcontractRaw=latestData.subcontracts||{};
- const subcontractActual={local:n(subcontractRaw.local),foreign:n(subcontractRaw.foreign),sme:n(subcontractRaw.sme)};
+ const subcontractPlan={local:planSubTotals.local,foreign:planSubTotals.foreign,sme:planSubTotals.sme};
+ const subcontractActual={...actualSubcontracts};
 
  const planOmaniSalary=planDisplayOmaniSalary, planForeignSalary=planDisplayForeignSalary;
- const actualOmaniSalary=n(latestData.omani_salary), actualForeignSalary=n(latestData.foreign_salary);
- const actualPurchases=latestData.purchases||{}, actualServices=latestData.services||{};
- const actualSubcontracts=Object.values(subcontractActual).reduce((a,v)=>a+v,0);
  const planPurchases=planPurchaseTotals;
  const planServices=planServiceTotals;
- const actualPurchaseVals={made_in_oman:n(actualPurchases.made_in_oman),local_supplier:n(actualPurchases.local_supplier),direct_import:n(actualPurchases.direct_import),sme_purchase:n(actualPurchases.sme_purchase)};
- const actualServiceVals={local_service:n(actualServices.local_service),foreign_service:n(actualServices.foreign_service),sme_service:n(actualServices.sme_service)};
+ const actualPurchaseVals={...actualPurchases};
+ const actualServiceVals={...actualServices};
  const hasPlan=Object.values(planPurchases).some(v=>v>0)||Object.values(planServices).some(v=>v>0)||planOm>0||planForeign>0||planOmaniSalary>0||planForeignSalary>0||actualSubcontracts>0;
  const workforceStatus=planOm?(om>=planOm?'مستوفي':'غير مستوفي'):'غير منطبق';
  const goodsActual=Object.values(actualPurchaseVals).reduce((a,v)=>a+v,0), goodsPlan=Object.values(planPurchases).reduce((a,v)=>a+v,0), goodsStatus=goodsPlan?(goodsActual>=goodsPlan?'مستوفي':'غير مستوفي'):'غير منطبق';
- const sme=n(p.sme_pct), smeStatus=sme>=10?'مستوفي':(sme?'غير مستوفي':'غير منطبق');
+ const smeStatus=sme>=10?'مستوفي':(sme?'غير مستوفي':'غير منطبق');
  const compliance=omPct>=30&&sme>=10;
  const compareStatus=(plan,actual)=>plan<=0?'غير منطبق':actual>=plan?'محقق':'أقل من الخطة';
  const comparePct=(plan,actual)=>plan>0?(actual/plan*100).toFixed(1)+'%':'—';
