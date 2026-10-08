@@ -100,7 +100,7 @@ const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); window.icvDb=db; let 
 const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 const money=n=>Number(n||0).toLocaleString('en-US',{maximumFractionDigits:2});
 const pct=n=>(Number(n||0)*100).toFixed(1)+'%';
-function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.remove('hidden');setTimeout(()=>e.classList.add('hidden'),2500)}
+function toast(m){if(/^تم (حفظ|تحديث|إضافة|إنشاء|حذف|اعتماد|رفع)/.test(String(m))&&typeof window.icvSaveSuccess==='function'){window.icvSaveSuccess(m);return}const e=document.getElementById('toast');e.textContent=m;e.classList.remove('hidden');setTimeout(()=>e.classList.add('hidden'),2500)}
 function toggleSignup(){document.getElementById('loginBox').classList.toggle('hidden');document.getElementById('signupBox').classList.toggle('hidden');document.getElementById('authMsg').textContent=''}
 async function signup(){const n=fullName.value.trim(),e=signupEmail.value.trim(),p=signupPassword.value;if(!e||p.length<6)return authMsg.textContent='أدخل بريدًا صحيحًا وكلمة مرور من 6 أحرف على الأقل.';const r=await db.auth.signUp({email:e,password:p,options:{data:{full_name:n}}});authMsg.textContent=r.error?r.error.message:'تم إنشاء الحساب. تحقق من بريدك إذا طلب النظام ذلك، ثم سجل الدخول.'}
 async function login(){const e=email.value.trim(),p=password.value;const r=await db.auth.signInWithPassword({email:e,password:p});if(r.error)return authMsg.textContent=r.error.message;await boot(r.data.session)}
