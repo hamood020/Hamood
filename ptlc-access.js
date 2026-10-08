@@ -74,59 +74,34 @@ function ensurePageShell(){
  }
 }
 async function loadProfilePage(){
- if(!profile)await getProfile();
- const uid=profile?.id;if(!uid)return;
- const [a,e,projectsR,reportsR,plansR,tasksR]=await Promise.all([
-   client.from('user_entity_assignments_view').select('*').eq('user_id',uid).order('government_entity'),
-   client.from('government_entities').select('id,name,code').order('name'),
-   client.from('projects').select('id,project_name,government_entity_id,status,project_end_date,original_end_date,local_content_plan,omanization_percent,sme_percent').order('project_name'),
-   client.from('quarterly_reports').select('id,project_id,quarter,annual_period,status,created_at,updated_at,projects(project_name)').order('created_at',{ascending:false}),
-   client.from('local_content_plans').select('project_id,status,created_at').order('created_at',{ascending:false}),
-   client.from('employee_followups').select('*').eq('assigned_to',uid).order('due_date',{ascending:true})
+ if(!profile)await getProfile(); const uid=profile?.id;if(!uid)return;
+ const [a,pr,rr,pl,tasks]=await Promise.all([
+  client.from('user_entity_assignments_view').select('*').eq('user_id',uid).order('government_entity'),
+  client.from('projects').select('id,project_name,serial_no,government_entity_id,project_status,start_date,end_date,local_content_plan,omanization_pct,sme_pct,total_project_value,notes').order('project_name'),
+  client.from('quarterly_reports').select('id,project_id,quarter,annual_period,status,submitted_at,created_at,notes').order('created_at',{ascending:false}),
+  client.from('local_content_plans').select('project_id,status,created_at').order('created_at',{ascending:false}),
+  client.from('employee_followups').select('*').eq('assigned_to',uid).order('due_date',{ascending:true})
  ]);
- const assigned=a.data||[],entities=e.data||[],allProjects=projectsR.data||[],allReports=reportsR.data||[],allPlans=plansR.data||[],tasks=tasksR.data||[]; window.__icvProfileAssignedIds=assigned.map(x=>x.government_entity_id);
- const assignedIds=new Set(assigned.map(x=>x.government_entity_id));
- const myProjects=allProjects.filter(p=>assignedIds.has(p.government_entity_id));
- const myPids=new Set(myProjects.map(p=>p.id));
- const myReports=allReports.filter(r=>myPids.has(r.project_id));
- const myPlans=allPlans.filter(p=>myPids.has(p.project_id));
- const latestPlan=new Map();myPlans.forEach(x=>{if(!latestPlan.has(x.project_id))latestPlan.set(x.project_id,x)});
- const latestReport=new Map();myReports.forEach(x=>{if(!latestReport.has(x.project_id+'|'+x.annual_period+'|'+x.quarter))latestReport.set(x.project_id+'|'+x.annual_period+'|'+x.quarter,x)});
- const now=new Date(), year=now.getFullYear(), q=Math.floor(now.getMonth()/3)+1;
- const missing=[],dueSoon=[];
- myProjects.forEach(p=>{
-   for(let qi=1;qi<=q;qi++){
-     const key=p.id+'|'+year+'|Q'+qi, rr=latestReport.get(key);
-     const quarterEnd=new Date(year,qi*3,0), due=new Date(quarterEnd);due.setDate(due.getDate()+30);
-     if(!rr && due>now){const days=Math.ceil((due-now)/86400000); if(days<=10)dueSoon.push({p,q:'Q'+qi,days})}
-     else if(!rr && due<=now)missing.push({p,q:'Q'+qi});
-   }
- });
- const attention=[];
- myProjects.forEach(p=>{
-   const oman=Number(p.omanization_percent||0),sme=Number(p.sme_percent||0);
-   if(oman<30)attention.push({p,text:'التعمين أقل من 30%',kind:'red'});
-   if(sme<10)attention.push({p,text:'SME أقل من 10%',kind:'red'});
-   if(p.status==='متعثر')attention.push({p,text:'المشروع متعثر',kind:'orange'});
-   if(!p.local_content_plan && !latestPlan.has(p.id))attention.push({p,text:'لا توجد خطة محتوى محلي',kind:'orange'});
- });
- const expiring=myProjects.filter(p=>p.project_end_date).map(p=>({p,d:new Date(p.project_end_date)})).filter(x=>x.d>=now&&x.d<=new Date(now.getTime()+90*86400000)).sort((a,b)=>a.d-b.d);
- const summary=[['إجمالي المشاريع',myProjects.length,''],['قيد التنفيذ',myProjects.filter(p=>p.status==='قيد التنفيذ').length,'green'],['تحتاج متابعة',attention.length,'orange'],['تقارير تحتاج إجراء',missing.length+dueSoon.length,'red']];
- document.getElementById('accessProfileSummary').innerHTML=summary.map(x=>'<div class="card"><div class="label">'+escA(x[0])+'</div><div class="value '+x[2]+'" style="font-size:22px">'+x[1]+'</div></div>').join('');
- document.getElementById('accessProfileEntities').innerHTML=assigned.length?'<table><thead><tr><th>الجهة</th><th>الرمز</th><th>المشاريع</th></tr></thead><tbody>'+assigned.map(x=>'<tr><td>'+escA(x.government_entity)+'</td><td>'+escA(x.code||'—')+'</td><td>'+myProjects.filter(p=>p.government_entity_id===x.government_entity_id).length+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">لم يتم تخصيص جهات لهذا الحساب بعد.</div>';
- const alertBox=document.getElementById('accessProfileAlerts');
- let html='<div class="toolbar"><h2>🔔 التقارير التي تحتاج إجراء</h2><div class="profile-filters"><button class="btn active" onclick="filterMyAlerts(\'all\',this)">الكل</button><button class="btn" onclick="filterMyAlerts(\'missing\',this)">غير مستلم</button><button class="btn" onclick="filterMyAlerts(\'due\',this)">مستحق قريبًا</button></div></div><div id="myReportAlerts">';
- missing.forEach(x=>html+='<div class="profile-alert" data-type="missing"><span class="alert-icon red">!</span><div><b>'+escA(x.p.project_name)+'</b><small>'+x.q+' '+year+' — التقرير غير مستلم</small></div><button class="link-btn" onclick="openMyProject(\''+x.p.id+'\')">فتح المشروع ←</button></div>');
- dueSoon.forEach(x=>html+='<div class="profile-alert" data-type="due"><span class="alert-icon orange">!</span><div><b>'+escA(x.p.project_name)+'</b><small>'+x.q+' '+year+' — مستحق خلال '+x.days+' يوم</small></div><button class="link-btn" onclick="openMyProject(\''+x.p.id+'\')">فتح المشروع ←</button></div>');
- html+='</div><div class="profile-section-title">📅 مشاريع تنتهي خلال 3 أشهر</div>';
- expiring.forEach(x=>{const days=Math.ceil((x.d-now)/86400000);html+='<div class="profile-alert"><span class="alert-icon orange">3M</span><div><b>'+escA(x.p.project_name)+'</b><small>تاريخ الانتهاء: '+x.d.toLocaleDateString('ar-OM')+' — متبقي '+days+' يوم</small></div><button class="link-btn" onclick="openMyProject(\''+x.p.id+'\')">فتح المشروع ←</button></div>'});
- html+='<div class="profile-section-title">⚠️ مشاريع تحتاج متابعة</div>';
- attention.forEach(x=>html+='<div class="profile-alert"><span class="alert-icon '+x.kind+'">!</span><div><b>'+escA(x.p.project_name)+'</b><small>'+x.text+'</small></div><button class="link-btn" onclick="openMyProject(\''+x.p.id+'\')">فتح المشروع ←</button></div>');
- if(!missing.length&&!dueSoon.length&&!expiring.length&&!attention.length)html+='<div class="empty">لا توجد تنبيهات تحتاج إجراء حاليًا.</div>';
- alertBox.innerHTML=html;
- renderMyTasks(tasks);renderMyActivity(tasks);
+ const assigned=a.data||[],all=pr.data||[],reports=rr.data||[],plans=pl.data||[],myPlans=new Set(plans.map(x=>x.project_id)),admin=profile.role==='admin',ids=new Set(assigned.map(x=>x.government_entity_id));
+ const projects=admin?all:all.filter(x=>ids.has(x.government_entity_id)); window.__icvProfileAssignedIds=admin?[...new Set(all.map(x=>x.government_entity_id).filter(Boolean))]:[...ids];
+ const pids=new Set(projects.map(x=>x.id)),myReports=reports.filter(x=>pids.has(x.project_id)),latest=new Set(myReports.map(x=>x.project_id+'|'+x.annual_period+'|'+x.quarter));
+ const now=new Date(),year=now.getFullYear(),q=Math.floor(now.getMonth()/3)+1,missing=[],due=[];
+ projects.forEach(p=>{if(!p.start_date||new Date(p.start_date)>now)return;const key=p.id+'|'+year+'|Q'+q;if(latest.has(key))return;const d=new Date(year,q*3,0);d.setDate(d.getDate()+30);const days=Math.ceil((d-now)/86400000);if(days>=0&&days<=10)due.push({p,days});else if(days<0)missing.push({p,days:Math.abs(days)})});
+ const attention=[];const pct=v=>{let n=Number(v||0);if(n<=1)n*=100;return n.toFixed(1)+'%'};projects.forEach(p=>{if(Number(p.omanization_pct||0)<.30)attention.push({p,t:'التعمين أقل من 30%',k:'red'});if(Number(p.sme_pct||0)<.10)attention.push({p,t:'SME أقل من 10%',k:'red'});if(p.project_status==='متعثر')attention.push({p,t:'المشروع متعثر',k:'orange'});if(!p.local_content_plan&&!myPlans.has(p.id))attention.push({p,t:'لا توجد خطة محتوى محلي',k:'orange'})});
+ const exp=projects.filter(p=>p.end_date).map(p=>({p,d:new Date(p.end_date)})).filter(x=>x.d>=now&&x.d<=new Date(now.getTime()+90*86400000)).sort((a,b)=>a.d-b.d),fmt=d=>d?new Date(d).toLocaleDateString('ar-OM'):'—';
+ document.getElementById('accessProfileSummary').innerHTML=[['إجمالي المشاريع',projects.length,''],['قيد التنفيذ',projects.filter(p=>p.project_status==='قيد التنفيذ').length,'green'],['تحتاج متابعة',attention.length,'orange'],['تقارير تحتاج إجراء',missing.length+due.length,'red']].map(x=>'<div class="card"><div class="label">'+escA(x[0])+'</div><div class="value '+x[2]+'">'+x[1]+'</div></div>').join('');
+ document.getElementById('accessProfileEntities').innerHTML=assigned.length?'<table><thead><tr><th>الجهة</th><th>الرمز</th><th>المشاريع</th></tr></thead><tbody>'+assigned.map(x=>'<tr><td>'+escA(x.government_entity)+'</td><td>'+escA(x.code||'—')+'</td><td>'+projects.filter(p=>p.government_entity_id===x.government_entity_id).length+'</td></tr>').join('')+'</tbody></table>':(admin?'<div class="profile-admin-note">مدير النظام: يتم عرض جميع المشاريع.</div>':'<div class="empty">لم يتم تخصيص جهات لهذا الحساب.</div>');
+ let h='<div class="profile-alerts-grid"><section class="profile-box"><div class="profile-box-head"><h2>🔔 التقارير التي تحتاج إجراء</h2><div class="profile-filters"><button class="btn active" onclick="filterMyAlerts(\'all\',this)">الكل</button><button class="btn" onclick="filterMyAlerts(\'missing\',this)">غير مستلم</button><button class="btn" onclick="filterMyAlerts(\'due\',this)">مستحق قريبًا</button></div></div><div id="myReportAlerts">';
+ missing.forEach(x=>h+='<div class="profile-alert" data-type="missing"><span class="alert-icon red">!</span><div><b>'+escA(x.p.project_name)+'</b><small>Q'+q+' '+year+' — التقرير غير مستلم · متأخر '+x.days+' يوم</small></div><button class="link-btn" onclick="openMyProject(\''+x.p.id+'\')">فتح المشروع ←</button></div>');
+ due.forEach(x=>h+='<div class="profile-alert" data-type="due"><span class="alert-icon orange">!</span><div><b>'+escA(x.p.project_name)+'</b><small>Q'+q+' '+year+' — مستحق خلال '+x.days+' يوم</small></div><button class="link-btn" onclick="openMyProject(\''+x.p.id+'\')">فتح المشروع ←</button></div>');
+ h+='</div></section><section class="profile-box"><div class="profile-box-head"><h2>📅 مشاريع تنتهي خلال 3 أشهر</h2></div>';
+ exp.forEach(x=>h+='<div class="profile-alert"><span class="alert-icon orange">3M</span><div><b>'+escA(x.p.project_name)+'</b><small>تاريخ الانتهاء: '+fmt(x.p.end_date)+' · متبقي '+Math.ceil((x.d-now)/86400000)+' يوم</small></div><button class="link-btn" onclick="openMyProject(\''+x.p.id+'\')">فتح المشروع ←</button></div>');
+ if(!exp.length)h+='<div class="empty">لا توجد مشاريع تنتهي خلال 3 أشهر.</div>';h+='</section><section class="profile-box"><div class="profile-box-head"><h2>⚠️ مشاريع تحتاج متابعة</h2></div>';
+ attention.forEach(x=>h+='<div class="profile-alert"><span class="alert-icon '+x.k+'">!</span><div><b>'+escA(x.p.project_name)+'</b><small>'+x.t+' · التعمين '+pct(x.p.omanization_pct)+' · SME '+pct(x.p.sme_pct)+'</small></div><button class="link-btn" onclick="openMyProject(\''+x.p.id+'\')">فتح المشروع ←</button></div>');
+ if(!attention.length)h+='<div class="empty">لا توجد مشاريع تحتاج متابعة حاليًا.</div>';h+='</section><section class="profile-box"><div class="profile-box-head"><h2>📊 مشاريعي</h2><span class="muted">'+projects.length+' مشروع</span></div><div class="profile-projects"><table><thead><tr><th>المشروع</th><th>الحالة</th><th>الانتهاء</th><th>التعمين</th><th>SME</th><th>الخطة</th></tr></thead><tbody>';
+ projects.forEach(p=>h+='<tr><td><button class="table-link" onclick="openMyProject(\''+p.id+'\')">'+escA(p.project_name)+'</button><small>'+escA(p.serial_no||'')+'</small></td><td>'+escA(p.project_status||'—')+'</td><td>'+fmt(p.end_date)+'</td><td>'+pct(p.omanization_pct)+'</td><td>'+pct(p.sme_pct)+'</td><td>'+(p.local_content_plan?'موجودة':'غير موجودة')+'</td></tr>');
+ h+='</tbody></table></div></section></div>';document.getElementById('accessProfileAlerts').innerHTML=h;renderMyTasks(tasks.data||[]);renderMyActivity(tasks.data||[]);
 }
-
 window.openMyEntitySelection=async function(){
  const uid=profile?.id;if(!uid)return;
  const [e,a]=await Promise.all([client.from('government_entities').select('id,name,code').order('name'),client.from('user_entity_assignments_view').select('government_entity_id').eq('user_id',uid)]);
