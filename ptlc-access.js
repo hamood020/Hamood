@@ -42,7 +42,11 @@ async function loginWithUsername(){
  if(!valid(p)){await client.auth.signOut();if(msg)msg.textContent='الحساب غير نشط أو أن فترة الصلاحية غير سارية.';return}
  profile=p;window.__icvProfile=p;
  if(typeof window.boot==='function') await window.boot(r.data.session);
+ profile=await getProfile();
+ if(!profile||!valid(profile)){await client.auth.signOut();if(msg)msg.textContent='تعذر التحقق من صلاحيات الحساب.';return}
+ window.__icvProfile=profile;
  ensurePageShell();applyRoleUI();
+ if(typeof window.loadAll==='function') await window.loadAll();
  if(window.icvStructure?.renderDashboard){window.icvStructure.renderDashboard();window.icvStructure.renderProjects();window.icvStructure.renderLocalContent();}
 
 }
@@ -196,12 +200,16 @@ window.showPage=async function(name,btn){
  }
  applyRoleUI();
 };
+window.icvRefreshAccess=async function(){profile=await getProfile();if(profile&&!valid(profile)){await client.auth.signOut();return null}if(profile){window.__icvProfile=profile;applyRoleUI();if(typeof window.loadAll==='function')await window.loadAll()}return profile};
 async function init(){
  ensurePageShell();
  profile=await getProfile();
  if(profile&&!valid(profile)){await client.auth.signOut();return}
- if(profile)window.__icvProfile=profile;
- applyRoleUI();
+ if(profile){
+   window.__icvProfile=profile;
+   applyRoleUI();
+   if(typeof window.loadAll==='function') await window.loadAll();
+ }
 }
 window.addEventListener('load',()=>setTimeout(init,200));
 })();
