@@ -25,7 +25,7 @@ function renderAdmin(){const b=document.getElementById('page-settings');if(!b)re
 bind()}
 function editorSettingsStyle(){if(document.getElementById('is-editor-style'))return;const s=document.createElement('style');s.id='is-editor-style';s.textContent='.is-entity-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.is-entity-choice{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;background:#fff}.is-entity-choice:has(input:checked){border-color:var(--primary);background:var(--soft)}.is-entity-choice input{width:18px;height:18px}.is-entity-choice b{display:block;font-size:11px}.is-entity-choice small{display:block;color:var(--muted);font-size:9px;margin-top:3px}@media(max-width:1100px){.is-entity-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.is-entity-grid{grid-template-columns:1fr}}';document.head.appendChild(s)}
 async function renderEditor(){
- const b=document.getElementById('page-settings');if(!b)return;style();
+ const b=document.getElementById('page-settings');if(!b)return;style();editorSettingsStyle();
  const db=window.__icvAccessClient;
  if(!db){b.innerHTML='<div class="is-card"><div class="is-info">تعذر الاتصال بقاعدة البيانات.</div></div>';return}
  const uid=window.__icvProfile?.id;
