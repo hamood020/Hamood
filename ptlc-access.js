@@ -20,6 +20,7 @@ function applyRoleUI(){
  document.body.dataset.role=profile.role||'viewer';
  const admin=profile.role==='admin', editor=admin||profile.role==='editor';
  const nav=document.getElementById('userAdminNav'); if(nav)nav.classList.toggle('hidden',!admin);
+ const settingsNav=document.querySelector('.nav button[data-page="settings"]'); if(settingsNav)settingsNav.classList.toggle('hidden',!(admin||profile.role==='editor'));
  document.querySelectorAll('button').forEach(b=>{
    const oc=b.getAttribute('onclick')||'';
    if(/openProject\(|saveProject\(|openReport\(|openPlan\(/.test(oc)) b.classList.toggle('hidden',!editor);
