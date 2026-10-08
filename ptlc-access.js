@@ -199,20 +199,17 @@ injectUserManagementStyle();
 
 window.showPage=async function(name,btn){
  ensurePageShell();
- if(name==='users'&&profile?.role!=='admin')return;
- document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');
- document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));
- const target=document.getElementById('page-'+name);if(target)target.classList.remove('hidden');
- const titles={dashboard:'لوحة التحكم',projects:'المشاريع',entities:'الجهات الحكومية',companies:'الشركات',reports:'التقارير الربع سنوية',plans:'خطط المحتوى المحلي',followups:'متابعة الموظفين',audit:'سجل التدقيق',profile:'ملفي الشخصي',users:'إدارة المستخدمين'};
- const title=document.getElementById('pageTitle');if(title)title.textContent=titles[name]||name;
- if(name==='profile')await loadProfilePage();
- if(name==='users')await loadUsersAdmin();
- if(typeof originalShowPage==='function'&&['dashboard','projects','entities','companies','reports','plans','followups','audit'].includes(name)){
-   originalShowPage(name,btn);
-   ensurePageShell();
-   if(name==='dashboard')setTimeout(applyRoleUI,50);
- }
- applyRoleUI();
+ if(name==='profile'){document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));document.getElementById('page-profile')?.classList.remove('hidden');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));btn?.classList.add('active');const t=document.getElementById('pageTitle');if(t)t.textContent='ملفي الشخصي';await loadProfilePage();return}
+ if(name==='users'){if(profile?.role!=='admin')return;document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));document.getElementById('page-users')?.classList.remove('hidden');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));btn?.classList.add('active');const t=document.getElementById('pageTitle');if(t)t.textContent='إدارة المستخدمين';await loadUsersAdmin();return}
+ if(name==='project'){const id=new URLSearchParams(location.search).get('project');if(id&&typeof window.viewProject==='function')return window.viewProject(id)}
+ document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));const target=document.getElementById('page-'+name);if(target)target.classList.remove('hidden');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));btn?.classList.add('active');
+ const titles={dashboard:'الصفحة الرئيسية',projects:'المشاريع',entities:'الجهات الحكومية',companies:'الشركات',reports:'التقارير الربع سنوية',plans:'خطط المحتوى المحلي',followups:'متابعة الموظفين',audit:'سجل التدقيق','local-content':'المحتوى المحلي',settings:'الإعدادات'};const t=document.getElementById('pageTitle');if(t)t.textContent=titles[name]||name;
+ if(name==='dashboard'&&window.icvStructure?.renderDashboard)return window.icvStructure.renderDashboard();
+ if(name==='projects'&&window.icvStructure?.renderProjects)return window.icvStructure.renderProjects();
+ if(name==='local-content'&&window.icvStructure?.renderLocalContent)return window.icvStructure.renderLocalContent();
+ if(name==='settings'&&window.icvStructure?.renderSettings)return window.icvStructure.renderSettings();
+ if(name==='entities'&&typeof window.icvEntitiesPage==='function')return window.icvEntitiesPage();
+ if(name==='companies'&&typeof window.icvCompaniesPage==='function')return window.icvCompaniesPage();
 };
 async function init(){
  ensurePageShell();
