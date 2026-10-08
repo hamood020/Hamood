@@ -60,7 +60,7 @@ function ensurePageShell(){
  const main=document.querySelector('.main'); if(!main)return;
  if(!document.getElementById('page-profile')){
    const p=document.createElement('div');p.id='page-profile';p.className='hidden';
-   p.innerHTML='<div id="accessProfileSummary" class="cards"></div><div class="panel"><div class="toolbar"><div><h2>جهات المتابعة</h2><div class="muted">حدد الجهات التي تتابعها. ستنعكس مباشرة على المشاريع والتقارير الظاهرة لك.</div></div><button class="btn primary" style="width:auto" onclick="openMyEntitySelection()">تعديل جهات المتابعة</button></div><div id="accessProfileEntities" class="empty">جاري التحميل...</div></div><div class="panel"><h2>صلاحيات الحساب</h2><div id="accessProfilePermissions"></div></div>';
+   p.innerHTML='<div id="accessProfileSummary" class="cards"></div><div id="accessProfileAlerts" class="panel"></div><div class="panel"><div class="toolbar"><div><h2>الجهات الحكومية المسندة إليّ</h2><div class="muted">الجهات التي تتابع مشاريعها وتقاريرها.</div></div><button class="btn primary" style="width:auto" onclick="openMyEntitySelection()">تعديل جهات المتابعة</button></div><div id="accessProfileEntities" class="empty">جاري التحميل...</div></div><div class="panel"><div class="toolbar"><div><h2>📝 مهامي</h2><div class="muted">مهامك ومتابعاتك الشخصية.</div></div><button class="btn primary" style="width:auto" onclick="openMyTaskForm()">＋ إضافة مهمة</button></div><div id="accessProfileTasks" class="empty">جاري التحميل...</div></div><div class="panel"><h2>آخر الأنشطة</h2><div id="accessProfileActivity" class="empty">جاري التحميل...</div></div><div class="panel"><h2>أمان الحساب</h2><div class="toolbar"><div class="muted">يمكنك تغيير الرقم السري دون التأثير على صلاحياتك.</div><button class="btn" style="width:auto" onclick="openChangePassword()">تغيير الرقم السري</button></div></div>';
    main.appendChild(p);
  }
  const usersPage=document.getElementById('page-users')||document.createElement('div');
@@ -76,23 +76,58 @@ function ensurePageShell(){
 }
 async function loadProfilePage(){
  if(!profile)await getProfile();
- const uid=profile?.id; if(!uid)return;
- const [a,e]=await Promise.all([
+ const uid=profile?.id;if(!uid)return;
+ const [a,e,projectsR,reportsR,plansR,tasksR]=await Promise.all([
    client.from('user_entity_assignments_view').select('*').eq('user_id',uid).order('government_entity'),
-   client.from('government_entities').select('id,name,code').order('name')
+   client.from('government_entities').select('id,name,code').order('name'),
+   client.from('projects').select('id,project_name,government_entity_id,status,project_end_date,original_end_date,local_content_plan,omanization_percent,sme_percent').order('project_name'),
+   client.from('quarterly_reports').select('id,project_id,quarter,annual_period,status,created_at,updated_at,projects(project_name)').order('created_at',{ascending:false}),
+   client.from('local_content_plans').select('project_id,status,created_at').order('created_at',{ascending:false}),
+   client.from('employee_followups').select('*').eq('assigned_to',uid).order('due_date',{ascending:true})
  ]);
- const projectsR=await client.from('projects').select('id,government_entity_id');
- const assigned=(a.data||[]);
- const pids=(projectsR.data||[]).filter(p=>assigned.some(x=>x.government_entity_id===p.government_entity_id)).length;
- document.getElementById('accessProfileSummary').innerHTML=[
-   ['اسم الموظف',profile.full_name||profile.username||'—'],
-   ['الدور',roleLabel[profile.role]||profile.role],
-   ['الجهات المخصصة',assigned.length],
-   ['المشاريع التابعة',pids]
- ].map(x=>'<div class="card"><div class="label">'+escA(x[0])+'</div><div class="value" style="font-size:18px">'+escA(x[1])+'</div></div>').join('');
- document.getElementById('accessProfileEntities').innerHTML=assigned.length?'<table><thead><tr><th>الجهة</th><th>الرمز</th></tr></thead><tbody>'+assigned.map(x=>'<tr><td>'+escA(x.government_entity)+'</td><td>'+escA(x.code||'—')+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">لم يتم تخصيص جهات لهذا الحساب بعد.</div>';
- document.getElementById('accessProfilePermissions').innerHTML='<div class="metric"><span>الدور</span><b>'+escA(roleLabel[profile.role]||profile.role)+'</b></div><div class="metric"><span>الحساب</span><b class="'+(profile.is_active?'ok':'bad')+'">'+(profile.is_active?'نشط':'غير نشط')+'</b></div><div class="metric"><span>بداية الصلاحية</span><b>'+escA(profile.access_starts_at?new Date(profile.access_starts_at).toLocaleString('ar-OM'):'بدون حد')+'</b></div><div class="metric"><span>نهاية الصلاحية</span><b>'+escA(profile.access_expires_at?new Date(profile.access_expires_at).toLocaleString('ar-OM'):'بدون حد')+'</b></div>';
+ const assigned=a.data||[],entities=e.data||[],allProjects=projectsR.data||[],allReports=reportsR.data||[],allPlans=plansR.data||[],tasks=tasksR.data||[];
+ const assignedIds=new Set(assigned.map(x=>x.government_entity_id));
+ const myProjects=allProjects.filter(p=>assignedIds.has(p.government_entity_id));
+ const myPids=new Set(myProjects.map(p=>p.id));
+ const myReports=allReports.filter(r=>myPids.has(r.project_id));
+ const myPlans=allPlans.filter(p=>myPids.has(p.project_id));
+ const latestPlan=new Map();myPlans.forEach(x=>{if(!latestPlan.has(x.project_id))latestPlan.set(x.project_id,x)});
+ const latestReport=new Map();myReports.forEach(x=>{if(!latestReport.has(x.project_id+'|'+x.annual_period+'|'+x.quarter))latestReport.set(x.project_id+'|'+x.annual_period+'|'+x.quarter,x)});
+ const now=new Date(), year=now.getFullYear(), q=Math.floor(now.getMonth()/3)+1;
+ const missing=[],dueSoon=[];
+ myProjects.forEach(p=>{
+   for(let qi=1;qi<=q;qi++){
+     const key=p.id+'|'+year+'|Q'+qi, rr=latestReport.get(key);
+     const quarterEnd=new Date(year,qi*3,0), due=new Date(quarterEnd);due.setDate(due.getDate()+30);
+     if(!rr && due>now){const days=Math.ceil((due-now)/86400000); if(days<=10)dueSoon.push({p,q:'Q'+qi,days})}
+     else if(!rr && due<=now)missing.push({p,q:'Q'+qi});
+   }
+ });
+ const attention=[];
+ myProjects.forEach(p=>{
+   const oman=Number(p.omanization_percent||0),sme=Number(p.sme_percent||0);
+   if(oman<30)attention.push({p,text:'التعمين أقل من 30%',kind:'red'});
+   if(sme<10)attention.push({p,text:'SME أقل من 10%',kind:'red'});
+   if(p.status==='متعثر')attention.push({p,text:'المشروع متعثر',kind:'orange'});
+   if(!p.local_content_plan && !latestPlan.has(p.id))attention.push({p,text:'لا توجد خطة محتوى محلي',kind:'orange'});
+ });
+ const expiring=myProjects.filter(p=>p.project_end_date).map(p=>({p,d:new Date(p.project_end_date)})).filter(x=>x.d>=now&&x.d<=new Date(now.getTime()+90*86400000)).sort((a,b)=>a.d-b.d);
+ const summary=[['إجمالي المشاريع',myProjects.length,''],['قيد التنفيذ',myProjects.filter(p=>p.status==='قيد التنفيذ').length,'green'],['تحتاج متابعة',attention.length,'orange'],['تقارير تحتاج إجراء',missing.length+dueSoon.length,'red']];
+ document.getElementById('accessProfileSummary').innerHTML=summary.map(x=>'<div class="card"><div class="label">'+escA(x[0])+'</div><div class="value '+x[2]+'" style="font-size:22px">'+x[1]+'</div></div>').join('');
+ document.getElementById('accessProfileEntities').innerHTML=assigned.length?'<table><thead><tr><th>الجهة</th><th>الرمز</th><th>المشاريع</th></tr></thead><tbody>'+assigned.map(x=>'<tr><td>'+escA(x.government_entity)+'</td><td>'+escA(x.code||'—')+'</td><td>'+myProjects.filter(p=>p.government_entity_id===x.government_entity_id).length+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">لم يتم تخصيص جهات لهذا الحساب بعد.</div>';
+ const alertBox=document.getElementById('accessProfileAlerts');
+ let html='<div class="toolbar"><h2>🔔 التقارير التي تحتاج إجراء</h2><div class="profile-filters"><button class="btn active" onclick="filterMyAlerts(\'all\',this)">الكل</button><button class="btn" onclick="filterMyAlerts(\'missing\',this)">غير مستلم</button><button class="btn" onclick="filterMyAlerts(\'due\',this)">مستحق قريبًا</button></div></div><div id="myReportAlerts">';
+ missing.forEach(x=>html+='<div class="profile-alert" data-type="missing"><span class="alert-icon red">!</span><div><b>'+escA(x.p.project_name)+'</b><small>'+x.q+' '+year+' — التقرير غير مستلم</small></div><button class="link-btn" onclick="openMyProject(\''+x.p.id+'\')">فتح المشروع ←</button></div>');
+ dueSoon.forEach(x=>html+='<div class="profile-alert" data-type="due"><span class="alert-icon orange">!</span><div><b>'+escA(x.p.project_name)+'</b><small>'+x.q+' '+year+' — مستحق خلال '+x.days+' يوم</small></div><button class="link-btn" onclick="openMyProject(\''+x.p.id+'\')">فتح المشروع ←</button></div>');
+ html+='</div><div class="profile-section-title">📅 مشاريع تنتهي خلال 3 أشهر</div>';
+ expiring.forEach(x=>{const days=Math.ceil((x.d-now)/86400000);html+='<div class="profile-alert"><span class="alert-icon orange">3M</span><div><b>'+escA(x.p.project_name)+'</b><small>تاريخ الانتهاء: '+x.d.toLocaleDateString('ar-OM')+' — متبقي '+days+' يوم</small></div><button class="link-btn" onclick="openMyProject(\''+x.p.id+'\')">فتح المشروع ←</button></div>'});
+ html+='<div class="profile-section-title">⚠️ مشاريع تحتاج متابعة</div>';
+ attention.forEach(x=>html+='<div class="profile-alert"><span class="alert-icon '+x.kind+'">!</span><div><b>'+escA(x.p.project_name)+'</b><small>'+x.text+'</small></div><button class="link-btn" onclick="openMyProject(\''+x.p.id+'\')">فتح المشروع ←</button></div>');
+ if(!missing.length&&!dueSoon.length&&!expiring.length&&!attention.length)html+='<div class="empty">لا توجد تنبيهات تحتاج إجراء حاليًا.</div>';
+ alertBox.innerHTML=html;
+ renderMyTasks(tasks);renderMyActivity(tasks);
 }
+
 window.openMyEntitySelection=async function(){
  const uid=profile?.id;if(!uid)return;
  const [e,a]=await Promise.all([client.from('government_entities').select('id,name,code').order('name'),client.from('user_entity_assignments_view').select('government_entity_id').eq('user_id',uid)]);
@@ -223,3 +258,12 @@ async function init(){
 }
 window.addEventListener('load',()=>setTimeout(init,200));
 })();
+window.openMyProject=id=>{if(typeof window.viewProject==='function')window.viewProject(id);else location.href='index.html?project='+encodeURIComponent(id)};
+window.filterMyAlerts=(type,btn)=>{document.querySelectorAll('#accessProfileAlerts .profile-filters .btn').forEach(x=>x.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('#myReportAlerts .profile-alert').forEach(x=>x.style.display=type==='all'||x.dataset.type===type?'flex':'none')};
+function renderMyTasks(tasks){const b=document.getElementById('accessProfileTasks');if(!b)return;if(!tasks.length){b.innerHTML='<div class="empty">لا توجد مهام. أضف أول مهمة لك.</div>';return}b.innerHTML='<div class="profile-tasks">'+tasks.map(t=>'<div class="profile-task '+(t.status==='مكتملة'?'done':'')+'"><button class="task-check" onclick="toggleMyTask(\''+t.id+'\',this)">'+(t.status==='مكتملة'?'✓':'')+'</button><div class="task-main"><b>'+escA(t.action_required||t.employee_name||'مهمة')+'</b><small>'+escA(t.employee_name||'')+(t.project_id?' · مرتبط بمشروع':'')+(t.due_date?' · '+new Date(t.due_date).toLocaleDateString('ar-OM'):'')+'</small></div><span class="task-status">'+escA(t.status||'مفتوحة')+'</span></div>').join('')+'</div>'}
+window.toggleMyTask=async(id,btn)=>{const row=btn.closest('.profile-task'),done=row.classList.contains('done');const r=await client.from('employee_followups').update({status:done?'مفتوحة':'مكتملة',updated_at:new Date().toISOString()}).eq('id',id).eq('assigned_to',profile.id);if(r.error){toastA(r.error.message);return}btn.textContent=done?'':'✓';row.classList.toggle('done',!done);row.querySelector('.task-status').textContent=done?'مفتوحة':'مكتملة';toastA(done?'تم إعادة فتح المهمة':'تم إنجاز المهمة')};
+window.openMyTaskForm=()=>{document.getElementById('myTaskModal')?.remove();const d=document.createElement('div');d.id='myTaskModal';d.className='modal';d.innerHTML='<div class="modal-card"><div class="modal-head"><div><h2>إضافة مهمة</h2><div class="muted">أضف متابعة شخصية لك</div></div><button class="close" onclick="this.closest(\'.modal\').remove()">×</button></div><div class="field"><label>المهمة</label><input id="myTaskAction" placeholder="مثال: متابعة تقرير المشروع"></div><div class="field"><label>المشروع</label><select id="myTaskProject"><option value="">بدون مشروع</option>'+((window.projects||[]).filter(p=>(window.__icvProfileAssignedIds||[]).includes(p.government_entity_id)).map(p=>'<option value="'+p.id+'">'+escA(p.project_name)+'</option>').join(''))+'</select></div><div class="field"><label>تاريخ الاستحقاق</label><input id="myTaskDue" type="date"></div><div class="field"><label>الأولوية</label><select id="myTaskPriority"><option>عالية</option><option selected>متوسطة</option><option>منخفضة</option></select></div><div class="actions"><button class="btn" onclick="this.closest(\'.modal\').remove()">إلغاء</button><button class="btn primary" onclick="saveMyTask()">إضافة المهمة</button></div></div>';document.body.appendChild(d)};
+window.saveMyTask=async()=>{const action=document.getElementById('myTaskAction')?.value.trim();if(!action)return toastA('اكتب اسم المهمة أولاً');const r=await client.from('employee_followups').insert({project_id:document.getElementById('myTaskProject')?.value||null,employee_name:profile.full_name||profile.username||'المستخدم',action_required:action,due_date:document.getElementById('myTaskDue')?.value||null,status:'مفتوحة',notes:'الأولوية: '+(document.getElementById('myTaskPriority')?.value||'متوسطة'),assigned_to:profile.id}).select('*').single();if(r.error){toastA(r.error.message);return}document.getElementById('myTaskModal')?.remove();await loadProfilePage();toastA('تم إضافة المهمة')};
+window.openChangePassword=()=>{document.getElementById('passwordModal')?.remove();const d=document.createElement('div');d.id='passwordModal';d.className='modal';d.innerHTML='<div class="modal-card"><div class="modal-head"><h2>تغيير الرقم السري</h2><button class="close" onclick="this.closest(\'.modal\').remove()">×</button></div><div class="field"><label>الرقم السري الجديد</label><input id="newPassword" type="password" minlength="6" placeholder="6 أحرف على الأقل"></div><div class="field"><label>تأكيد الرقم السري</label><input id="newPassword2" type="password" minlength="6"></div><div id="passwordMsg"></div><div class="actions"><button class="btn" onclick="this.closest(\'.modal\').remove()">إلغاء</button><button class="btn primary" onclick="saveNewPassword()">حفظ</button></div></div>';document.body.appendChild(d)};
+window.saveNewPassword=async()=>{const p=document.getElementById('newPassword').value,p2=document.getElementById('newPassword2').value;if(p.length<6)return toastA('الرقم السري يجب أن يكون 6 أحرف على الأقل');if(p!==p2)return toastA('تأكيد الرقم السري غير مطابق');const r=await client.auth.updateUser({password:p});if(r.error)return toastA(r.error.message);document.getElementById('passwordModal')?.remove();toastA('تم تغيير الرقم السري بنجاح')};
+function renderMyActivity(tasks){const b=document.getElementById('accessProfileActivity');if(!b)return;const recent=(tasks||[]).slice(0,5);b.innerHTML=recent.length?recent.map(t=>'<div class="profile-activity">'+escA(t.action_required||t.employee_name||'مهمة')+'<small>'+(t.updated_at?new Date(t.updated_at).toLocaleString('ar-OM'):'')+'</small></div>').join(''):'<div class="empty">لا توجد أنشطة حديثة.</div>'}
