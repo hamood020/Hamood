@@ -85,7 +85,7 @@ async function loadProfilePage(){
    client.from('local_content_plans').select('project_id,status,created_at').order('created_at',{ascending:false}),
    client.from('employee_followups').select('*').eq('assigned_to',uid).order('due_date',{ascending:true})
  ]);
- const assigned=a.data||[],entities=e.data||[],allProjects=projectsR.data||[],allReports=reportsR.data||[],allPlans=plansR.data||[],tasks=tasksR.data||[];
+ const assigned=a.data||[],entities=e.data||[],allProjects=projectsR.data||[],allReports=reportsR.data||[],allPlans=plansR.data||[],tasks=tasksR.data||[]; window.__icvProfileAssignedIds=assigned.map(x=>x.government_entity_id);
  const assignedIds=new Set(assigned.map(x=>x.government_entity_id));
  const myProjects=allProjects.filter(p=>assignedIds.has(p.government_entity_id));
  const myPids=new Set(myProjects.map(p=>p.id));
