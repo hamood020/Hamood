@@ -412,4 +412,106 @@ function applySize(){document.documentElement.style.setProperty("--icv-font-scal
 
   waitForApp();
 })();
+</script><script>
+<!-- ICV FINAL NAV ROUTER -->
+(function(){
+  function hideAll(){
+    document.querySelectorAll('[id^="page-"]').forEach(function(el){el.classList.add('hidden');});
+  }
+  function activate(btn,name){
+    document.querySelectorAll('.nav button').forEach(function(el){el.classList.remove('active');});
+    if(btn) btn.classList.add('active');
+    var title=document.getElementById('pageTitle');
+    var titles={
+      dashboard:'الصفحة الرئيسية',
+      projects:'المشاريع',
+      entities:'الجهات الحكومية',
+      companies:'الشركات',
+      reports:'التقارير الربع سنوية',
+      plans:'خطط المحتوى المحلي',
+      followups:'متابعة الموظفين',
+      audit:'سجل التدقيق',
+      profile:'ملفي الشخصي',
+      users:'إدارة المستخدمين',
+      'local-content':'المحتوى المحلي',
+      settings:'الإعدادات',
+      'entity-profiles':'ملفات الجهات الحكومية'
+    };
+    if(title) title.textContent=titles[name]||name;
+  }
+  function routeUrl(name){
+    try{
+      var q=new URLSearchParams();
+      if(name==='project'){
+        var projectId=new URLSearchParams(location.search).get('project');
+        if(projectId) q.set('project',projectId);
+        else q.set('page','projects');
+      }else{
+        q.set('page',name||'dashboard');
+      }
+      history.pushState({route:name},'',location.pathname+'?'+q.toString()+(location.hash||''));
+    }catch(e){}
+  }
+  window.showPage=function(name,btn){
+    name=name||'dashboard';
+    if(name==='project'){
+      var projectId=new URLSearchParams(location.search).get('project');
+      if(projectId && typeof window.viewProject==='function'){
+        return Promise.resolve(window.viewProject(projectId));
+      }
+      name='projects';
+    }
+    if(name==='profile'){
+      hideAll();
+      document.getElementById('page-profile')?.classList.remove('hidden');
+      activate(btn,name);
+      if(typeof window.loadProfilePage==='function') return Promise.resolve(window.loadProfilePage());
+      return;
+    }
+    if(name==='users'){
+      if(window.__icvProfile?.role!=='admin') return;
+      hideAll();
+      document.getElementById('page-users')?.classList.remove('hidden');
+      activate(btn,name);
+      if(typeof window.loadUsersAdmin==='function') return Promise.resolve(window.loadUsersAdmin());
+      return;
+    }
+
+    hideAll();
+    var target=document.getElementById('page-'+name);
+    if(target) target.classList.remove('hidden');
+    activate(btn,name);
+
+    if(name==='dashboard' && typeof window.icvStructure?.renderDashboard==='function')
+      return Promise.resolve(window.icvStructure.renderDashboard());
+    if(name==='projects' && typeof window.icvStructure?.renderProjects==='function')
+      return Promise.resolve(window.icvStructure.renderProjects());
+    if(name==='local-content' && typeof window.icvStructure?.renderLocalContent==='function')
+      return Promise.resolve(window.icvStructure.renderLocalContent());
+    if(name==='settings'){
+      if(typeof window.icvSettingsPage==='function') return Promise.resolve(window.icvSettingsPage());
+      if(typeof window.icvStructure?.renderSettings==='function') return Promise.resolve(window.icvStructure.renderSettings());
+    }
+    if(name==='entities' && typeof window.icvEntitiesPage==='function')
+      return Promise.resolve(window.icvEntitiesPage());
+    if(name==='companies' && typeof window.icvCompaniesPage==='function')
+      return Promise.resolve(window.icvCompaniesPage());
+    if(name==='entity-profiles' && typeof window.renderEntityProfiles==='function')
+      return Promise.resolve(window.renderEntityProfiles());
+  };
+
+  window.addEventListener('popstate',function(){
+    if(!window.__icvProfile) return;
+    var q=new URLSearchParams(location.search);
+    if(q.get('project') && typeof window.viewProject==='function'){
+      Promise.resolve(window.viewProject(q.get('project'))).catch(function(){});
+      return;
+    }
+    var page=q.get('page')||'dashboard';
+    var btn=document.querySelector('[data-page="'+page+'"]');
+    Promise.resolve(window.showPage(page,btn)).catch(function(){});
+  });
+
+  window.__icvFinalNavReady=true;
+})();
 </script></body></html>
