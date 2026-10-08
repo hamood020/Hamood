@@ -63,6 +63,58 @@ function injectProfileStyle(){if(document.getElementById('icv-profile-style'))re
  document.getElementById('profilePasswordBtn')?.addEventListener('click',openChangePassword);
 }
 
+function renderMyTasks(rows){
+ const el=document.getElementById('accessProfileTasks'); if(!el)return;
+ if(!rows?.length){el.innerHTML='<div class="profile-empty">لا توجد مهام مسجلة حاليًا.</div>';return}
+ el.innerHTML=rows.slice(0,10).map(t=>{
+   const priority=t.priority||t.priority_level||'متوسطة';
+   const cls=priority==='عالية'?'red':priority==='منخفضة'?'green':'orange';
+   const title=t.task_name||t.action_required||t.title||'مهمة متابعة';
+   const project=t.project_name||t.project?.project_name||'بدون مشروع';
+   const due=t.due_date?new Date(t.due_date).toLocaleDateString('ar-OM'):'بدون تاريخ';
+   const done=String(t.status||'').toLowerCase().includes('مكتمل')||String(t.status||'').toLowerCase().includes('done');
+   return '<div class="profile-task '+(done?'done':'')+'"><button class="profile-check" type="button" data-task-id="'+escA(t.id)+'" aria-label="إنجاز المهمة"></button><div class="profile-row-main"><strong>'+escA(title)+'</strong><small>'+escA(project)+' · '+escA(due)+' · <b class="'+cls+'">أولوية '+escA(priority)+'</b></small></div></div>';
+ }).join('');
+ el.querySelectorAll('[data-task-id]').forEach(btn=>btn.onclick=async()=>{
+   const row=rows.find(x=>String(x.id)===String(btn.dataset.taskId)); if(!row)return;
+   const next=String(row.status||'')==='مكتمل'?'مفتوح':'مكتمل';
+   const {error}=await client.from('employee_followups').update({status:next}).eq('id',row.id).eq('assigned_to',profile.id);
+   if(error){toastA(error.message);return}
+   btn.parentElement.classList.toggle('done',next==='مكتمل');
+   window.icvSaveSuccess?.('تم تحديث حالة المهمة');
+ });
+}
+function renderMyActivity(rows){
+ const el=document.getElementById('accessProfileActivity');if(!el)return;
+ const items=(rows||[]).slice(0,6);
+ el.innerHTML=items.length?items.map(t=>'<div class="profile-activity"><b>'+escA(t.action_required||t.task_name||t.title||'تم تحديث مهمة متابعة')+'</b><small>'+escA(t.updated_at?new Date(t.updated_at).toLocaleString('ar-OM'):t.created_at?new Date(t.created_at).toLocaleString('ar-OM'):'آخر تحديث')+'</small></div>').join(''):'<div class="profile-empty">لا توجد أنشطة مسجلة حاليًا.</div>';
+}
+window.openMyTaskForm=function(){
+ document.getElementById('myTaskModal')?.remove();
+ const d=document.createElement('div');d.id='myTaskModal';d.className='modal';d.innerHTML='<div class="modal-card"><div class="modal-head"><div><h2>إضافة مهمة</h2><div class="muted">إضافة متابعة شخصية إلى ملفك.</div></div><button class="close" onclick="this.closest(\'.modal\').remove()">×</button></div><div class="form-grid"><div class="field full"><label>المهمة</label><input id="myTaskName" placeholder="اكتب المهمة"></div><div class="field"><label>المشروع</label><input id="myTaskProject" placeholder="اختياري"></div><div class="field"><label>تاريخ الاستحقاق</label><input id="myTaskDue" type="date"></div><div class="field"><label>الأولوية</label><select id="myTaskPriority"><option value="عالية">عالية</option><option value="متوسطة" selected>متوسطة</option><option value="منخفضة">منخفضة</option></select></div><div class="field full"><label>ملاحظات</label><textarea id="myTaskNotes" rows="3" placeholder="اختياري"></textarea></div></div><div id="myTaskMsg"></div><div class="modal-foot"><button class="btn primary" onclick="saveMyTask()">إضافة المهمة</button><button class="btn" onclick="this.closest(\'.modal\').remove()">إلغاء</button></div></div>';
+ document.body.appendChild(d);
+};
+window.saveMyTask=async function(){
+ const name=document.getElementById('myTaskName')?.value.trim(),msg=document.getElementById('myTaskMsg');
+ if(!name){if(msg)msg.innerHTML='<div class="bad">اكتب اسم المهمة أولاً.</div>';return}
+ const body={assigned_to:profile.id,employee_name:profile.full_name||profile.username||'المستخدم',action_required:name,due_date:document.getElementById('myTaskDue')?.value||null,status:'مفتوح',notes:((document.getElementById('myTaskProject')?.value||'')+' '+(document.getElementById('myTaskNotes')?.value||'')).trim()};
+ const {error}=await client.from('employee_followups').insert(body);
+ if(error){if(msg)msg.innerHTML='<div class="bad">'+escA(error.message)+'</div>';return}
+ document.getElementById('myTaskModal')?.remove();await loadProfilePage();window.icvSaveSuccess?.('تم إضافة المهمة');
+};
+window.openChangePassword=function(){
+ document.getElementById('changePasswordModal')?.remove();
+ const d=document.createElement('div');d.id='changePasswordModal';d.className='modal';d.innerHTML='<div class="modal-card"><div class="modal-head"><div><h2>تغيير الرقم السري</h2><div class="muted">سيتم تحديث كلمة مرور حسابك فقط.</div></div><button class="close" onclick="this.closest(\'.modal\').remove()">×</button></div><div class="form-grid"><div class="field full"><label>كلمة المرور الجديدة</label><input id="newPassword" type="password" minlength="8"></div><div class="field full"><label>تأكيد كلمة المرور</label><input id="newPassword2" type="password" minlength="8"></div></div><div id="changePasswordMsg"></div><div class="modal-foot"><button class="btn primary" onclick="saveNewPassword()">حفظ</button><button class="btn" onclick="this.closest(\'.modal\').remove()">إلغاء</button></div></div>';
+ document.body.appendChild(d);
+};
+window.saveNewPassword=async function(){
+ const a=document.getElementById('newPassword')?.value||'',b=document.getElementById('newPassword2')?.value||'',msg=document.getElementById('changePasswordMsg');
+ if(a.length<8){msg.innerHTML='<div class="bad">كلمة المرور يجب أن تكون 8 أحرف على الأقل.</div>';return}
+ if(a!==b){msg.innerHTML='<div class="bad">تأكيد كلمة المرور غير مطابق.</div>';return}
+ const {error}=await client.auth.updateUser({password:a});
+ if(error){msg.innerHTML='<div class="bad">'+escA(error.message)+'</div>';return}
+ document.getElementById('changePasswordModal')?.remove();window.icvSaveSuccess?.('تم تغيير الرقم السري بنجاح');
+};
 async function loadProfilePage(){
  if(!profile)await getProfile();const uid=profile?.id;if(!uid)return;
  const [a,pr,rr,pl,tasks]=await Promise.all([
