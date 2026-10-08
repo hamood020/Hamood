@@ -30,25 +30,29 @@ function applyRoleUI(){
  if(role)role.textContent=roleLabel[profile.role]||profile.role||'مشاهد';
 }
 async function loginWithUsername(){
- const field=document.getElementById('email'), pass=document.getElementById('password'), msg=document.getElementById('authMsg');
- const raw=(field?.value||'').trim().toLowerCase(), password=pass?.value||'';
+ const field=document.getElementById('email'),pass=document.getElementById('password'),msg=document.getElementById('authMsg');
+ const raw=(field?.value||'').trim().toLowerCase(),password=pass?.value||'';
  if(!raw||!password){if(msg)msg.textContent='أدخل اسم المستخدم أو البريد الإلكتروني وكلمة المرور.';return}
  if(msg)msg.textContent='جارٍ تسجيل الدخول...';
  const email=raw.includes('@')?raw:raw+'@icv-new.local';
  const r=await client.auth.signInWithPassword({email,password});
  if(r.error){if(msg)msg.textContent='فشل تسجيل الدخول: '+r.error.message;return}
- const {data:p,error:pe}=await client.from('user_profiles').select('*').eq('id',r.data.user.id).single();
- if(pe||!p){await client.auth.signOut();if(msg)msg.textContent='تعذر تحميل صلاحيات الحساب.';return}
+ const uid=r.data.user.id;
+ const {data:p,error:pe}=await client.from('user_profiles').select('*').eq('id',uid).maybeSingle();
+ if(pe||!p){if(msg)msg.textContent='تعذر تحميل صلاحيات الحساب: '+(pe?.message||'لا يوجد ملف صلاحيات مرتبط بهذا الحساب.');return}
  if(!valid(p)){await client.auth.signOut();if(msg)msg.textContent='الحساب غير نشط أو أن فترة الصلاحية غير سارية.';return}
  profile=p;window.__icvProfile=p;
- if(typeof window.boot==='function') await window.boot(r.data.session);
- profile=await getProfile();
- if(!profile||!valid(profile)){await client.auth.signOut();if(msg)msg.textContent='تعذر التحقق من صلاحيات الحساب.';return}
- window.__icvProfile=profile;
+ const app=document.getElementById('app'),login=document.getElementById('login');
+ if(login)login.classList.add('hidden');if(app)app.classList.remove('hidden');document.body.classList.remove('auth-pending');
+ const name=document.getElementById('userName'),role=document.getElementById('userRole');
+ if(name)name.textContent=p.full_name||p.username||r.data.user.email;
+ if(role)role.textContent=roleLabel[p.role]||p.role||'مشاهد';
  ensurePageShell();applyRoleUI();
- if(typeof window.loadAll==='function') await window.loadAll();
- if(window.icvStructure?.renderDashboard){window.icvStructure.renderDashboard();window.icvStructure.renderProjects();window.icvStructure.renderLocalContent();}
-
+ if(typeof window.loadAll==='function')await window.loadAll();
+ const q=new URLSearchParams(location.search),requestedPage=q.get('page'),requestedProject=q.get('project');
+ if(requestedPage&&typeof window.showPage==='function')window.showPage(requestedPage,document.querySelector('[data-page="'+requestedPage+'"]'));
+ else if(requestedProject&&typeof window.viewProject==='function')window.viewProject(requestedProject);
+ else if(typeof window.showPage==='function')window.showPage('dashboard',document.querySelector('[data-page=dashboard]'));
 }
 window.login=loginWithUsername;
 
