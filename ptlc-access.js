@@ -204,6 +204,12 @@ window.showPage=async function(name,btn){
  }
  applyRoleUI();
 };
+window.icvSaveSuccess=function(message='تم الحفظ بنجاح'){
+ let el=document.getElementById('icvSaveSuccessBar');
+ if(!el){el=document.createElement('div');el.id='icvSaveSuccessBar';el.setAttribute('role','status');el.style.cssText='position:fixed;top:18px;left:50%;transform:translate(-50%,-140%);z-index:99999;background:#eaf8ef;color:#087443;border:1px solid #a7e3bc;border-right:5px solid #12a150;border-radius:10px;padding:11px 22px;min-width:260px;max-width:calc(100vw - 40px);text-align:center;font-size:13px;font-weight:800;box-shadow:0 8px 28px rgba(0,0,0,.12);transition:transform .25s ease,opacity .25s ease;opacity:0;pointer-events:none;direction:rtl';document.body.appendChild(el)}
+ clearTimeout(window.__icvSaveSuccessTimer);el.textContent=message;el.style.transform='translate(-50%,0)';el.style.opacity='1';
+ window.__icvSaveSuccessTimer=setTimeout(()=>{el.style.transform='translate(-50%,-140%)';el.style.opacity='0'},2800);
+};
 window.icvRefreshAccess=async function(){profile=await getProfile();if(profile&&!valid(profile)){await client.auth.signOut();return null}if(profile){window.__icvProfile=profile;applyRoleUI();if(typeof window.loadAll==='function')await window.loadAll()}return profile};
 async function init(){
  ensurePageShell();
