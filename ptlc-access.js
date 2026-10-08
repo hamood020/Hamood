@@ -178,7 +178,12 @@ window.addEventListener('load',()=>setTimeout(init,200));
    client.from('government_entities').select('id,name').order('name')
  ]);
  if(r.error){box.innerHTML='<div class="bad">'+escA(r.error.message)+'</div>';return}
- window.__icvAdminUsers=r.data||[];
+ const ur=r.data||[];
+ const ids=ur.map(x=>x.user_id).filter(Boolean);
+ let ar={data:[]};
+ if(ids.length) ar=await client.from('user_entity_assignments').select('user_id,government_entity_id').in('user_id',ids);
+ const amap={};(ar.data||[]).forEach(x=>{(amap[x.user_id]||(amap[x.user_id]=[])).push(x.government_entity_id)});
+ window.__icvAdminUsers=ur.map(x=>Object.assign({},x,{assigned_entity_ids:(amap[x.user_id]||[]).join(',')}));
  const ef=document.getElementById('usersEntityFilter');
  if(ef)ef.innerHTML='<option value="">كل الجهات</option>'+((er.data||[]).map(e=>'<option value="'+escA(e.id)+'">'+escA(e.name)+'</option>').join(''));
  const count=document.getElementById('usersAdminCount');if(count)count.textContent='إجمالي المستخدمين: '+window.__icvAdminUsers.length;
