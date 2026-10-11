@@ -167,9 +167,7 @@ async function loadProfilePage(){
  myReports.forEach(r=>{const p=projects.find(x=>x.id===r.project_id);if(p)h+='<tr><td>'+escA(p.project_name)+'</td><td>'+escA((r.quarter||'')+' '+(r.annual_period||''))+'</td><td><span class="profile-status '+(String(r.status||'').includes('غير')?'red':'orange')+'">'+escA(r.status||'—')+'</span></td><td><button class="profile-open" data-open-project="'+p.id+'">فتح المشروع ←</button></td></tr>'});
  if(!myReports.length)h+='<tr><td colspan="4" class="profile-empty">لا توجد تقارير مسجلة.</td></tr>';
  h+='</tbody></table></div>'+(myReports.length>3?'<button class="profile-show-all" data-toggle-list="myReportsTable">إظهار الكل</button>':'')+'</section>';
- h+='<section class="profile-card"><div class="profile-card-head"><h3>📝 مهامي</h3><button class="btn primary" style="width:auto" id="profileAddTaskBtn">+ إضافة مهمة</button></div><div id="accessProfileTasks" class="profile-task-wrap">جاري التحميل...</div></section>';
- h+='<section class="profile-card"><div class="profile-card-head"><h3>🕐 آخر الأنشطة</h3><span class="profile-muted">آخر التحديثات</span></div><div id="accessProfileActivity" class="profile-activity-wrap">جاري التحميل...</div></section>';
- h+='</div><section class="profile-security"><div><h3>🔐 أمان الحساب</h3><p>تغيير الرقم السري متاح في أي وقت. صلاحياتك والجهات المسندة إليك تُدار من قبل مدير النظام.</p></div><button class="btn primary" style="width:auto" id="profilePasswordBtn">تغيير الرقم السري</button></section>';
+ h+='</div>';
  document.getElementById('accessProfileAlerts').innerHTML=h;
  document.getElementById('profileHeadName').textContent=profile.full_name||profile.username||'المستخدم';document.getElementById('profileHeadUsername').textContent=profile.username||'—';
  document.getElementById('profileHeadUsername').textContent=profile.username||'—';
