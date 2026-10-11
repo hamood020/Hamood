@@ -321,6 +321,43 @@ window.addEventListener('load',()=>setTimeout(init,200));
 
 ;(()=>{if(document.getElementById('icv-profile-v2-style'))return;const s=document.createElement('style');s.id='icv-profile-v2-style';s.textContent=`
 #page-profile .profile-page{padding:0 0 12px}
+
+/* Profile readability: increase typography only within the profile page */
+#page-profile .profile-page-head p{font-size:15px}
+#page-profile .profile-scope-badge{font-size:13px}
+#page-profile .profile-user-card h3{font-size:24px}
+#page-profile .profile-user-meta{font-size:15px}
+#page-profile .profile-active-badge{font-size:13px}
+#page-profile .profile-entities-head b{font-size:16px}
+#page-profile .profile-entity{font-size:14px}
+#page-profile .profile-kpis>.card .label{font-size:15px}
+#page-profile .profile-kpis>.card .value{font-size:32px}
+#page-profile .profile-card-head h3{font-size:17px}
+#page-profile .profile-muted{font-size:13px}
+#page-profile .profile-filter button{font-size:13px}
+#page-profile .profile-row-main strong{font-size:15px;line-height:1.7}
+#page-profile .profile-row-main span{font-size:14px;line-height:1.8}
+#page-profile .profile-open{font-size:13px}
+#page-profile .profile-icon{font-size:13px}
+#page-profile .profile-table{font-size:14px}
+#page-profile .profile-table th,#page-profile .profile-table td{font-size:14px;padding:14px 16px}
+#page-profile .profile-table th{font-size:13px}
+#page-profile .profile-status{font-size:13px}
+#page-profile .profile-task,#page-profile .profile-activity{font-size:14px}
+#page-profile .profile-task .profile-row-main strong{font-size:15px}
+#page-profile .profile-task small,#page-profile .profile-activity small{font-size:13px;line-height:1.8}
+#page-profile .profile-security h3{font-size:17px}
+#page-profile .profile-security p{font-size:14px;line-height:1.9}
+#page-profile .profile-show-all{font-size:13px;padding:9px 14px}
+#page-profile .profile-empty{font-size:14px;line-height:1.9}
+#page-profile .profile-compliance-top{font-size:14px}
+#page-profile .profile-compliance-item small{font-size:13px;line-height:1.8}
+@media(max-width:700px){
+ #page-profile .profile-grid{grid-template-columns:minmax(0,1fr)}
+ #page-profile .profile-compliance-grid{grid-template-columns:minmax(0,1fr)}
+ #page-profile .profile-row{align-items:flex-start;flex-wrap:wrap}
+ #page-profile .profile-open{white-space:nowrap}
+}
 #page-profile .profile-page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;padding:0 2px}
 #page-profile .profile-page-head p{margin:0;color:var(--muted);font-size:12px}
 #page-profile .profile-scope-badge{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;background:var(--soft);color:var(--primary2);border:1px solid var(--line);border-radius:999px;padding:7px 11px;font-size:10px;font-weight:800}
