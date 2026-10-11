@@ -182,10 +182,20 @@ window.loadProfilePage=loadProfilePage;
 
 function setupProfileInteractions(){
  document.querySelectorAll('#accessProfileAlerts [data-open-project]').forEach(b=>b.onclick=()=>openMyProject(b.dataset.openProject));
- document.querySelectorAll('#accessProfileAlerts [data-toggle-list]').forEach(b=>b.onclick=()=>{const list=document.getElementById(b.dataset.toggleList);if(!list)return;const open=list.classList.toggle('expanded');b.textContent=open?'إخفاء':'إظهار الكل'});
- document.querySelectorAll('#accessProfileAlerts [data-alert-filter]').forEach(b=>b.onclick=()=>{document.querySelectorAll('#accessProfileAlerts [data-alert-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');const type=b.dataset.alertFilter,list=document.getElementById('myReportAlerts');Array.from(list.children).forEach((x,i)=>x.style.display=type==='all'?(i<5||list.classList.contains('expanded')?'flex':'none'):(x.dataset.type===type&&(list.classList.contains('expanded')||Array.from(list.querySelectorAll('[data-type="'+type+'"]')).indexOf(x)<5)?'flex':'none'))});
+ document.querySelectorAll('#accessProfileAlerts [data-toggle-list]').forEach(b=>b.onclick=()=>{const list=document.getElementById(b.dataset.toggleList);if(!list)return;const open=list.classList.toggle('expanded');b.textContent=open?'إخفاء':'إظهار الكل';applyProfileListLimit(list,3)});
+ document.querySelectorAll('#accessProfileAlerts [data-alert-filter]').forEach(b=>b.onclick=()=>{document.querySelectorAll('#accessProfileAlerts [data-alert-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');const type=b.dataset.alertFilter,list=document.getElementById('myReportAlerts');Array.from(list.children).forEach(x=>x.style.display=type==='all'||x.dataset.type===type?'flex':'none');applyProfileListLimit(list,3)});
+ ['myReportAlerts','expiringProjects','attentionProjects'].forEach(id=>{const list=document.getElementById(id);if(list)applyProfileListLimit(list,3)});
+ const reportTable=document.querySelector('#page-profile .profile-table tbody');
+ if(reportTable){Array.from(reportTable.children).forEach((row,i)=>{if(i>=3)row.dataset.profileExtra='1'});if(reportTable.children.length>3&&!reportTable.parentElement.parentElement.querySelector('[data-profile-table-toggle]')){const btn=document.createElement('button');btn.className='profile-show-all';btn.dataset.profileTableToggle='1';btn.textContent='إظهار الكل';reportTable.parentElement.parentElement.appendChild(btn);btn.onclick=()=>{const open=btn.dataset.open!=='1';btn.dataset.open=open?'1':'0';Array.from(reportTable.children).forEach(row=>{if(row.dataset.profileExtra)row.style.display=open?'table-row':'none'});btn.textContent=open?'إخفاء':'إظهار الكل'}}}
 }
-function limitProfileList(list){if(!list)return;Array.from(list.children).forEach((x,i)=>x.classList.toggle('icv-profile-extra',i>=5))}
+function applyProfileListLimit(list,limit){
+ if(!list)return;
+ const items=Array.from(list.children).filter(x=>!x.classList.contains('profile-empty'));
+ const expanded=list.classList.contains('expanded');
+ items.forEach((x,i)=>x.style.display=(expanded||i<limit)?'flex':'none');
+ const btn=document.querySelector('#accessProfileAlerts [data-toggle-list="'+list.id+'"]');
+ if(btn){btn.style.display=items.length>limit?'inline-block':'none';btn.textContent=expanded?'إخفاء':'إظهار الكل'}
+}
 window.openMyProject=id=>{if(typeof window.viewProject==='function')window.viewProject(id);else location.href='index.html?project='+encodeURIComponent(id)};
 window.openMyEntitySelection=async function(){
  const uid=profile?.id;if(!uid)return;
