@@ -52,7 +52,9 @@ function injectProfileStyle(){if(document.getElementById('icv-profile-style'))re
  const p=document.getElementById('page-profile')||document.createElement('div');
  p.id='page-profile';p.className='hidden';
  if(!p.querySelector('#accessProfileSummary'))p.innerHTML='<div class="profile-page"><div class="profile-page-head"><div><h2>ملفي الشخصي</h2><p>مساحة عملك لمتابعة المشاريع والتقارير والتنبيهات المرتبطة بك</p></div></div><section class="profile-user-card"><div class="profiletop"><div class="profile-avatar" id="profileHeadInitials">م</div><div><h3 id="profileHeadName">المستخدم</h3><div class="profile-user-meta">اسم المستخدم: <span id="profileHeadUsername">—</span></div><div class="profile-user-meta" id="profileHeadRole">—</div><span class="profile-active-badge">● الحساب نشط</span></div></div><div class="profile-entities"><div class="profile-entities-head"><b>الجهات الحكومية المسندة إليّ</b><button class="btn primary" style="width:auto" id="profileEntitiesBtn">تعديل الجهات</button></div><div id="accessProfileEntities" class="profile-entity-list"><span class="profile-empty">جاري التحميل...</span></div></div></section><div id="accessProfileSummary" class="profile-kpis"></div><div id="accessProfileAlerts"></div><div class="profile-grid"><section class="profile-card"><div class="profile-card-head"><h3>📝 مهامي</h3><button class="btn primary" style="width:auto" id="profileAddTaskBtn">+ إضافة مهمة</button></div><div id="accessProfileTasks" class="profile-task-wrap"><div class="profile-empty">جاري التحميل...</div></div></section><section class="profile-card"><div class="profile-card-head"><h3>🕐 آخر الأنشطة</h3><span class="profile-muted">آخر التحديثات</span></div><div id="accessProfileActivity" class="profile-activity-wrap"><div class="profile-empty">جاري التحميل...</div></div></section></div><section class="profile-security"><div><h3>🔐 أمان الحساب</h3><p>تغيير الرقم السري متاح في أي وقت. صلاحياتك والجهات المسندة إليك تُدار من قبل مدير النظام.</p></div><button class="btn primary" style="width:auto" id="profilePasswordBtn">تغيير الرقم السري</button></section></div>';
- if(!p.parentElement)main.appendChild(p);
+ const profileIntro=p.querySelector('.profile-page-head');
+  if(profileIntro&&!profileIntro.querySelector('.profile-scope-badge'))profileIntro.innerHTML='<div><p>نظرة شاملة على المشاريع والتقارير ضمن الجهات الحكومية المسندة لحسابك.</p></div><span class="profile-scope-badge">◉ ضمن نطاق الجهات المسندة</span>';
+  if(!p.parentElement)main.appendChild(p);
  const usersPage=document.getElementById('page-users')||document.createElement('div');usersPage.id='page-users';usersPage.className=usersPage.className||'hidden';
  if(!usersPage.querySelector('.um-wrap')){usersPage.innerHTML='<div class="um-wrap"><div class="um-hero"><div><div class="um-crumb">إدارة النظام / المستخدمون</div><h2>إدارة المستخدمين</h2><p>إدارة حسابات الموظفين والأدوار وفترات الصلاحية والجهات المسندة إليهم.</p></div><button class="btn primary um-add" onclick="openUserForm()">＋ إضافة مستخدم</button></div><div class="um-filters panel"><div class="um-filter-grid"><div class="field"><label>اسم المستخدم</label><input id="usersSearch" placeholder="مثال: user01" oninput="filterAdminUsers()"></div><div class="field"><label>الاسم</label><input id="usersNameFilter" placeholder="ابحث بالاسم" oninput="filterAdminUsers()"></div><div class="field"><label>الدور</label><select id="usersRoleFilter" onchange="filterAdminUsers()"><option value="">الكل</option><option value="admin">مدير النظام</option><option value="editor">محرر</option><option value="viewer">مشاهد</option><option value="temporary_viewer">مشاهد مؤقت</option></select></div><div class="field"><label>الحالة</label><select id="usersStatusFilter" onchange="filterAdminUsers()"><option value="">الكل</option><option value="active">فعال</option><option value="inactive">غير فعال</option></select></div><div class="field"><label>الجهة المسندة</label><select id="usersEntityFilter" onchange="filterAdminUsers()"><option value="">كل الجهات</option></select></div></div></div><div class="panel um-table-panel"><div class="um-table-head"><div><h3>قائمة المستخدمين</h3><div id="usersAdminCount" class="muted"></div></div><button class="btn" onclick="loadUsersAdmin()">تحديث</button></div><div id="usersAdminBox" class="empty">جاري التحميل...</div></div></div>';if(!usersPage.parentElement)main.appendChild(usersPage);}
  const nav=document.querySelector('.nav');
@@ -117,29 +119,38 @@ window.saveNewPassword=async function(){
 };
 async function loadProfilePage(){
  if(!profile)await getProfile();const uid=profile?.id;if(!uid)return;
- const [a,pr,rr,pl,tasks]=await Promise.all([
-  client.from('user_entity_assignments_view').select('*').eq('user_id',uid).order('government_entity'),
-  client.from('projects').select('id,project_name,serial_no,government_entity_id,project_status,start_date,end_date,local_content_plan,omanization_pct,sme_pct,total_project_value,notes').order('project_name'),
-  client.from('quarterly_reports').select('id,project_id,quarter,annual_period,status,created_at').order('created_at',{ascending:false}),
-  client.from('local_content_plans').select('project_id,status,created_at').order('created_at',{ascending:false}),
+ const a=await client.from('user_entity_assignments_view').select('*').eq('user_id',uid).order('government_entity');
+ const assigned=a.data||[],admin=profile.role==='admin',ids=new Set(assigned.map(x=>x.government_entity_id).filter(Boolean));
+ let pr={data:[]};
+ if(admin||ids.size){
+  let projectQuery=client.from('projects').select('id,project_name,serial_no,government_entity_id,project_status,start_date,end_date,local_content_plan,omanization_pct,sme_pct,total_project_value,notes').order('project_name');
+  if(!admin)projectQuery=projectQuery.in('government_entity_id',[...ids]);
+  pr=await projectQuery;
+ }
+ const projects=pr.data||[],projectIds=[...new Set(projects.map(x=>x.id).filter(Boolean))];
+ const [rr,pl,tasks]=await Promise.all([
+  projectIds.length?client.from('quarterly_reports').select('id,project_id,quarter,annual_period,status,created_at').in('project_id',projectIds).order('created_at',{ascending:false}):Promise.resolve({data:[]}),
+  projectIds.length?client.from('local_content_plans').select('project_id,status,created_at').in('project_id',projectIds).order('created_at',{ascending:false}):Promise.resolve({data:[]}),
   client.from('employee_followups').select('*').eq('assigned_to',uid).order('due_date',{ascending:true})
  ]);
- const assigned=a.data||[],all=pr.data||[],reports=rr.data||[],plans=pl.data||[],taskRows=tasks.data||[],admin=profile.role==='admin',ids=new Set(assigned.map(x=>x.government_entity_id));
- const projects=admin?all:all.filter(x=>ids.has(x.government_entity_id));window.__icvProfileAssignedIds=admin?[...new Set(all.map(x=>x.government_entity_id).filter(Boolean))]:[...ids];
- const pids=new Set(projects.map(x=>x.id)),myReports=reports.filter(x=>pids.has(x.project_id)),planIds=new Set(plans.map(x=>x.project_id));
+ const reports=rr.data||[],plans=pl.data||[],taskRows=tasks.data||[];
+ window.__icvProfileAssignedIds=admin?[...new Set(projects.map(x=>x.government_entity_id).filter(Boolean))]:[...ids];
+ const pids=new Set(projectIds),myReports=reports.filter(x=>pids.has(x.project_id)),planIds=new Set(plans.map(x=>x.project_id));
+ const reviewReports=myReports.filter(r=>/مراجعة|review|pending/i.test(String(r.status||'')));
  const latest=new Set(myReports.map(x=>x.project_id+'|'+x.annual_period+'|'+x.quarter));
  const now=new Date(),year=now.getFullYear(),q=Math.floor(now.getMonth()/3)+1,missing=[],due=[];
  projects.forEach(p=>{if(!p.start_date||new Date(p.start_date)>now)return;const key=p.id+'|'+year+'|Q'+q;if(latest.has(key))return;const d=new Date(year,q*3,0);d.setDate(d.getDate()+30);const days=Math.ceil((d-now)/86400000);if(days>=0&&days<=10)due.push({p,days});else if(days<0)missing.push({p,days:Math.abs(days)})});
  const attention=[];const pct=v=>{let n=Number(v||0);if(n<=1)n*=100;return n.toFixed(1)+'%'};projects.forEach(p=>{if(Number(p.omanization_pct||0)<.30)attention.push({p,t:'التعمين أقل من 30%',k:'red'});if(Number(p.sme_pct||0)<.10)attention.push({p,t:'SME أقل من 10%',k:'red'});if(p.project_status==='متعثر')attention.push({p,t:'المشروع متعثر',k:'orange'});if(!p.local_content_plan&&!planIds.has(p.id))attention.push({p,t:'لا توجد خطة محتوى محلي',k:'orange'})});
  const exp=projects.filter(p=>p.end_date).map(p=>({p,d:new Date(p.end_date)})).filter(x=>x.d>=now&&x.d<=new Date(now.getTime()+90*86400000)).sort((a,b)=>a.d-b.d),fmt=d=>d?new Date(d).toLocaleDateString('ar-OM'):'—';
- document.getElementById('accessProfileSummary').innerHTML=[['إجمالي المشاريع',projects.length,''],['قيد التنفيذ',projects.filter(p=>p.project_status==='قيد التنفيذ').length,'green'],['تحتاج متابعة',attention.length,'orange'],['تقارير تحتاج إجراء',missing.length+due.length,'red']].map(x=>'<div class="card"><div class="label">'+escA(x[0])+'</div><div class="value '+x[2]+'">'+x[1]+'</div></div>').join('');
+ document.getElementById('accessProfileSummary').innerHTML=[['إجمالي المشاريع',projects.length,''],['قيد التنفيذ',projects.filter(p=>p.project_status==='قيد التنفيذ').length,'green'],['تحتاج متابعة',attention.length,'orange'],['تقارير تحتاج إجراء',missing.length+due.length+reviewReports.length,'red']].map(x=>'<div class="card"><div class="label">'+escA(x[0])+'</div><div class="value '+x[2]+'">'+x[1]+'</div></div>').join('');
  document.getElementById('accessProfileEntities').innerHTML=assigned.length?assigned.map(x=>'<span class="profile-entity">'+escA(x.government_entity)+'</span>').join(''):(admin?'<span class="profile-admin-note">مدير النظام: يتم عرض جميع المشاريع.</span>':'<span class="profile-empty">لم يتم تخصيص جهات لهذا الحساب.</span>');
  let h='<div class="profile-grid">';
- h+='<section class="profile-card full"><div class="profile-card-head"><h3>🔴 التقارير التي تحتاج إجراء</h3><span class="profile-muted">'+(missing.length+due.length)+' تقارير</span></div><div class="profile-filter"><button class="active" data-alert-filter="all">الكل</button><button data-alert-filter="missing">غير مستلم</button><button data-alert-filter="due">مستحق قريبًا</button></div><div id="myReportAlerts">';
+ h+='<section class="profile-card full"><div class="profile-card-head"><h3>🔴 التقارير التي تحتاج إجراء</h3><span class="profile-muted">'+(missing.length+due.length)+' تقارير</span></div><div class="profile-filter"><button class="active" data-alert-filter="all">الكل</button><button data-alert-filter="missing">غير مستلم</button><button data-alert-filter="due">مستحق قريبًا</button><button data-alert-filter="review">تحت المراجعة</button></div><div id="myReportAlerts">';
  missing.forEach(x=>h+='<div class="profile-row report-row" data-type="missing"><div class="profile-icon">!</div><div class="profile-row-main"><strong>'+escA(x.p.project_name)+'</strong><span>Q'+q+' '+year+' — التقرير غير مستلم · متأخر '+x.days+' يوم</span></div><button class="profile-open" data-open-project="'+x.p.id+'">فتح المشروع ←</button></div>');
  due.forEach(x=>h+='<div class="profile-row report-row" data-type="due"><div class="profile-icon orange">!</div><div class="profile-row-main"><strong>'+escA(x.p.project_name)+'</strong><span>Q'+q+' '+year+' — مستحق خلال '+x.days+' أيام</span></div><button class="profile-open" data-open-project="'+x.p.id+'">فتح المشروع ←</button></div>');
- if(!missing.length&&!due.length)h+='<div class="profile-empty">لا توجد تقارير تحتاج إجراء حاليًا.</div>';
- h+='</div>'+(missing.length+due.length>5?'<button class="profile-show-all" data-toggle-list="myReportAlerts">إظهار الكل</button>':'')+'</section>';
+ reviewReports.forEach(r=>{const p=projects.find(x=>x.id===r.project_id);if(p)h+='<div class="profile-row report-row" data-type="review"><div class="profile-icon orange">⌕</div><div class="profile-row-main"><strong>'+escA(p.project_name)+'</strong><span>'+escA((r.quarter||'')+' '+(r.annual_period||''))+' — بانتظار المراجعة</span></div><button class="profile-open" data-open-project="'+p.id+'">فتح المشروع ←</button></div>'});
+ if(!missing.length&&!due.length&&!reviewReports.length)h+='<div class="profile-empty">لا توجد تقارير تحتاج إجراء حاليًا.</div>';
+ h+='</div>'+(missing.length+due.length+reviewReports.length>5?'<button class="profile-show-all" data-toggle-list="myReportAlerts">إظهار الكل</button>':'')+'</section>';
  h+='<section class="profile-card"><div class="profile-card-head"><h3>📅 مشاريع تنتهي خلال 3 أشهر</h3><span class="profile-muted">'+exp.length+' مشاريع</span></div><div id="expiringProjects">';
  exp.forEach(x=>h+='<div class="profile-row"><div class="profile-icon orange">3M</div><div class="profile-row-main"><strong>'+escA(x.p.project_name)+'</strong><span>'+fmt(x.p.end_date)+' — متبقي '+Math.ceil((x.d-now)/86400000)+' يوم</span></div><button class="profile-open" data-open-project="'+x.p.id+'">فتح المشروع ←</button></div>');
  if(!exp.length)h+='<div class="profile-empty">لا توجد مشاريع تنتهي خلال 3 أشهر.</div>';
@@ -148,6 +159,11 @@ async function loadProfilePage(){
  attention.forEach(x=>h+='<div class="profile-row"><div class="profile-icon '+(x.k==='red'?'':'orange')+'">'+(x.t.includes('تعمين')?'30%':x.t.includes('SME')?'SME':x.t.includes('خطة')?'📄':'!')+'</div><div class="profile-row-main"><strong>'+escA(x.p.project_name)+'</strong><span>'+x.t+'</span></div><button class="profile-open" data-open-project="'+x.p.id+'">فتح المشروع ←</button></div>');
  if(!attention.length)h+='<div class="profile-empty">لا توجد مشاريع تحتاج متابعة حاليًا.</div>';
  h+='</div>'+(attention.length>5?'<button class="profile-show-all" data-toggle-list="attentionProjects">إظهار الكل</button>':'')+'</section>';
+ const pctValue=v=>{let n=Number(v||0);if(n<=1)n*=100;return n};
+ const knownOman=projects.filter(p=>p.omanization_pct!==null&&p.omanization_pct!==undefined&&p.omanization_pct!==''),knownSme=projects.filter(p=>p.sme_pct!==null&&p.sme_pct!==undefined&&p.sme_pct!=='');
+ const omanOk=knownOman.filter(p=>pctValue(p.omanization_pct)>=30).length,smeOk=knownSme.filter(p=>pctValue(p.sme_pct)>=10).length,plansOk=projects.filter(p=>!!p.local_content_plan||planIds.has(p.id)).length;
+ const complianceBar=(label,ok,total)=>{const ratio=total?Math.round(ok/total*100):0;return '<div class="profile-compliance-item"><div class="profile-compliance-top"><span>'+escA(label)+'</span><b>'+(total?ok+' من '+total:'لا توجد بيانات')+'</b></div><div class="profile-compliance-track"><i style="width:'+ratio+'%"></i></div><small>'+(total?ratio+'% من المشاريع ذات البيانات تحقق المستهدف':'لا تتوفر بيانات كافية للعرض')+'</small></div>'};
+ h+='<section class="profile-card full"><div class="profile-card-head"><h3>📊 لمحة عن الالتزام</h3><span class="profile-muted">ضمن الجهات المسندة للحساب</span></div><div class="profile-compliance-grid">'+complianceBar('مشاريع تحقق مستهدف التعمين (30%)',omanOk,knownOman.length)+complianceBar('مشاريع تحقق مستهدف المؤسسات الصغيرة والمتوسطة (10%)',smeOk,knownSme.length)+complianceBar('مشاريع لديها خطة محتوى محلي',plansOk,projects.length)+'</div></section>';
  h+='<section class="profile-card full"><div class="profile-card-head"><h3>📋 التقارير التي تحتاج إجراء</h3><span class="profile-muted">آخر الحالات</span></div><div class="profile-table-wrap"><table class="profile-table"><thead><tr><th>المشروع</th><th>الفترة</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody>';
  myReports.slice(0,10).forEach(r=>{const p=projects.find(x=>x.id===r.project_id);if(p)h+='<tr><td>'+escA(p.project_name)+'</td><td>'+escA((r.quarter||'')+' '+(r.annual_period||''))+'</td><td><span class="profile-status '+(String(r.status||'').includes('غير')?'red':'orange')+'">'+escA(r.status||'—')+'</span></td><td><button class="profile-open" data-open-project="'+p.id+'">فتح المشروع ←</button></td></tr>'});
  if(!myReports.length)h+='<tr><td colspan="4" class="profile-empty">لا توجد تقارير مسجلة.</td></tr>';
@@ -287,3 +303,72 @@ async function init(){
 }
 window.addEventListener('load',()=>setTimeout(init,200));
 })();if(!document.getElementById('icv-profile-isolated')){const s=document.createElement('style');s.id='icv-profile-isolated';s.textContent="#page-profile .profile-alerts-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}#page-profile .profile-box{background:#fff;border:1px solid #e4ebe7;border-radius:14px;padding:20px;box-shadow:0 4px 18px rgba(20,45,32,.06)}#page-profile .profile-box.full-profile-box{grid-column:1/-1}#page-profile .profile-box-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #edf1ee}#page-profile .profile-filters{display:flex;gap:6px;flex-wrap:wrap}#page-profile .profile-filters .btn{width:auto;padding:6px 11px;font-size:11px}#page-profile .profile-filters .btn.active{background:var(--primary);color:#fff}#page-profile .icv-profile-list .profile-alert:nth-child(n+6),#page-profile .profile-projects tbody tr:nth-child(n+6){display:none}#page-profile .icv-profile-list.expanded .profile-alert:nth-child(n+6),#page-profile .profile-projects.expanded tbody tr:nth-child(n+6){display:flex}#page-profile .profile-projects.expanded tbody tr:nth-child(n+6){display:table-row}#page-profile .show-all-btn{display:inline-flex;margin:13px auto 0;border:1px solid #d8e4dd;background:#f8fbf9;color:var(--primary);border-radius:9px;padding:8px 18px;font-size:12px;font-weight:800;cursor:pointer}#page-profile .profile-alert{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #eef2ef;min-height:58px}#page-profile .profile-alert>div{flex:1}#page-profile .alert-icon{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:11px;font-weight:800;flex:none}#page-profile .alert-icon.red{background:#fff0f0;color:#c62828}#page-profile .alert-icon.orange{background:#fff6e8;color:#b76b00}#page-profile .link-btn{border:1px solid #dce7e0;border-radius:8px;padding:7px 10px;background:#fff;color:var(--primary);font-weight:800;cursor:pointer}#page-profile .profile-projects{border:1px solid #edf1ee;border-radius:10px;overflow:auto}#page-profile .profile-projects table{width:100%;border-collapse:collapse}#page-profile .profile-projects th,#page-profile .profile-projects td{padding:11px 9px;border-bottom:1px solid #eef2ef;text-align:right;white-space:nowrap;font-size:11px}#page-profile .table-link{border:0;background:none;color:var(--primary);font-weight:800;cursor:pointer;font:inherit}@media(max-width:900px){#page-profile .profile-alerts-grid{grid-template-columns:1fr}#page-profile .profile-box.full-profile-box{grid-column:auto}}";document.head.appendChild(s)}
+
+
+;(()=>{if(document.getElementById('icv-profile-v2-style'))return;const s=document.createElement('style');s.id='icv-profile-v2-style';s.textContent=`
+#page-profile .profile-page{padding:0 0 12px}
+#page-profile .profile-page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;padding:0 2px}
+#page-profile .profile-page-head p{margin:0;color:var(--muted);font-size:12px}
+#page-profile .profile-scope-badge{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;background:var(--soft);color:var(--primary2);border:1px solid var(--line);border-radius:999px;padding:7px 11px;font-size:10px;font-weight:800}
+#page-profile .profile-user-card{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(115deg,var(--primary2),var(--primary));color:#fff;border:0;border-radius:20px;padding:23px 25px;box-shadow:0 12px 30px rgba(15,118,110,.16)}
+#page-profile .profile-user-card:after{content:"";position:absolute;z-index:-1;width:270px;height:270px;left:-70px;top:-175px;border:1px solid rgba(255,255,255,.15);border-radius:50%;box-shadow:0 0 0 28px rgba(255,255,255,.05),0 0 0 58px rgba(255,255,255,.035)}
+#page-profile .profiletop,#page-profile .profile-entities{position:relative;z-index:1}
+#page-profile .profile-avatar{width:72px;height:72px;border-radius:19px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);color:#fff;font-size:26px}
+#page-profile .profile-user-card h3{color:#fff;font-size:20px}
+#page-profile .profile-user-meta{color:rgba(255,255,255,.78);font-size:11px}
+#page-profile .profile-active-badge{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:10px}
+#page-profile .profile-entities{border-top:1px solid rgba(255,255,255,.2);margin-top:20px;padding-top:16px}
+#page-profile .profile-entities-head b{color:#fff;font-size:12px}
+#page-profile #profileEntitiesBtn{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.32);color:#fff}
+#page-profile .profile-entity-list{gap:8px}
+#page-profile .profile-entity{background:rgba(255,255,255,.11);border-color:rgba(255,255,255,.24);color:#fff;border-radius:10px;padding:8px 11px;font-size:11px}
+#page-profile .profile-kpis{gap:13px;margin:0 0 18px}
+#page-profile .profile-kpis>.card{position:relative;overflow:hidden;border:1px solid var(--line);border-top:3px solid var(--primary);border-radius:15px;padding:16px 18px;box-shadow:0 6px 22px rgba(15,23,42,.045);min-width:0}
+#page-profile .profile-kpis>.card:after{content:"";position:absolute;left:-17px;bottom:-23px;width:70px;height:70px;border-radius:50%;background:var(--soft);opacity:.7}
+#page-profile .profile-kpis>.card .label{font-size:11px;color:var(--muted);position:relative;z-index:1}
+#page-profile .profile-kpis>.card .value{font-size:29px;font-weight:800;margin:7px 0 2px;position:relative;z-index:1;color:var(--ink)}
+#page-profile .profile-kpis>.card .value.green{color:#16a34a}
+#page-profile .profile-kpis>.card .value.orange{color:#d97706}
+#page-profile .profile-kpis>.card .value.red{color:#dc2626}
+#page-profile #accessProfileAlerts{display:grid;gap:17px}
+#page-profile .profile-grid{gap:17px;align-items:start}
+#page-profile .profile-card{border-color:var(--line);border-radius:16px;box-shadow:0 7px 24px rgba(15,23,42,.045)}
+#page-profile .profile-card-head{padding:16px 18px;border-bottom:1px solid var(--line);gap:10px}
+#page-profile .profile-card-head h3{font-size:13px;font-weight:800}
+#page-profile .profile-muted{font-size:10px}
+#page-profile .profile-filter{padding:11px 16px;border-color:var(--line)}
+#page-profile .profile-filter button{font-size:10px;border-color:var(--line);border-radius:9px;padding:7px 11px;color:var(--muted)}
+#page-profile .profile-filter button.active{background:var(--primary);border-color:var(--primary);color:#fff}
+#page-profile .profile-row{gap:10px;padding:13px 16px;border-color:#edf1f5;transition:background .15s}
+#page-profile .profile-row:hover{background:#fbfdfc}
+#page-profile .profile-icon{width:36px;height:36px;border-radius:11px;background:#fff0f0;color:#dc2626;font-size:11px}
+#page-profile .profile-icon.orange{background:#fff5e4;color:#a96508}
+#page-profile .profile-row-main strong{font-size:11px}
+#page-profile .profile-row-main span{font-size:10px;color:var(--muted);line-height:1.7}
+#page-profile .profile-open{color:var(--primary);font-size:10px}
+#page-profile .profile-table-wrap{overflow:auto}
+#page-profile .profile-table{min-width:540px;font-size:11px}
+#page-profile .profile-table th,#page-profile .profile-table td{padding:12px 14px;border-color:#edf1f5}
+#page-profile .profile-table th{background:#f8fafc;color:#667085;font-size:10px}
+#page-profile .profile-status{font-size:10px;border-radius:8px}
+#page-profile .profile-task-wrap,#page-profile .profile-activity-wrap{padding:4px 17px}
+#page-profile .profile-task,#page-profile .profile-activity{padding:12px 0;border-color:#edf1f5;font-size:11px}
+#page-profile .profile-check{border-radius:6px}
+#page-profile .profile-task.done .profile-check{background:var(--primary);border-color:var(--primary)}
+#page-profile .profile-task .profile-row-main strong{font-size:11px}
+#page-profile .profile-task small,#page-profile .profile-activity small{font-size:10px;line-height:1.7}
+#page-profile .profile-security{border-color:var(--line);border-radius:15px;box-shadow:0 7px 24px rgba(15,23,42,.045);padding:17px 19px}
+#page-profile .profile-security h3{font-size:13px}
+#page-profile .profile-security p{font-size:10px;line-height:1.8}
+#page-profile .profile-show-all{color:var(--primary);border-color:var(--line);border-radius:9px;font-size:10px}
+#page-profile .profile-empty{font-size:11px;color:var(--muted);line-height:1.8}
+#page-profile .profile-compliance-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;padding:16px 18px 18px}
+#page-profile .profile-compliance-item{min-width:0;border:1px solid var(--line);background:#fbfcfd;border-radius:12px;padding:13px}
+#page-profile .profile-compliance-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;font-size:10px;line-height:1.7;margin-bottom:9px}
+#page-profile .profile-compliance-top b{white-space:nowrap;color:var(--primary);font-size:10px}
+#page-profile .profile-compliance-track{height:7px;background:#e9eef2;border-radius:99px;overflow:hidden}
+#page-profile .profile-compliance-track i{display:block;height:100%;background:var(--primary);border-radius:99px}
+#page-profile .profile-compliance-item small{display:block;color:var(--muted);font-size:9px;line-height:1.7;margin-top:8px}
+@media(max-width:900px){#page-profile .profile-compliance-grid{grid-template-columns:1fr}#page-profile .profile-grid{grid-template-columns:1fr}#page-profile .profile-card.full{grid-column:auto}}
+@media(max-width:600px){#page-profile .profile-page-head{align-items:flex-start;flex-direction:column}#page-profile .profile-user-card{padding:18px}#page-profile .profiletop{align-items:flex-start}#page-profile .profile-avatar{width:60px;height:60px}#page-profile .profile-kpis{grid-template-columns:1fr 1fr;gap:9px}#page-profile .profile-kpis>.card{padding:13px}#page-profile .profile-kpis>.card .value{font-size:24px}#page-profile .profile-entities-head{align-items:flex-start;flex-direction:column}#page-profile .profile-security{align-items:flex-start;flex-direction:column;gap:12px}#page-profile .profile-row{align-items:flex-start}#page-profile .profile-open{font-size:9px}}
+`;document.head.appendChild(s)})();
