@@ -149,24 +149,24 @@ async function loadProfilePage(){
  due.forEach(x=>h+='<div class="profile-row report-row" data-type="due"><div class="profile-icon orange">!</div><div class="profile-row-main"><strong>'+escA(x.p.project_name)+'</strong><span>Q'+q+' '+year+' — مستحق خلال '+x.days+' أيام</span></div><button class="profile-open" data-open-project="'+x.p.id+'">فتح المشروع ←</button></div>');
  reviewReports.forEach(r=>{const p=projects.find(x=>x.id===r.project_id);if(p)h+='<div class="profile-row report-row" data-type="review"><div class="profile-icon orange">⌕</div><div class="profile-row-main"><strong>'+escA(p.project_name)+'</strong><span>'+escA((r.quarter||'')+' '+(r.annual_period||''))+' — بانتظار المراجعة</span></div><button class="profile-open" data-open-project="'+p.id+'">فتح المشروع ←</button></div>'});
  if(!missing.length&&!due.length&&!reviewReports.length)h+='<div class="profile-empty">لا توجد تقارير تحتاج إجراء حاليًا.</div>';
- h+='</div>'+(missing.length+due.length+reviewReports.length>5?'<button class="profile-show-all" data-toggle-list="myReportAlerts">إظهار الكل</button>':'')+'</section>';
+ h+='</div>'+(missing.length+due.length+reviewReports.length>3?'<button class="profile-show-all" data-toggle-list="myReportAlerts">إظهار الكل</button>':'')+'</section>';
  h+='<section class="profile-card"><div class="profile-card-head"><h3>📅 مشاريع تنتهي خلال 3 أشهر</h3><span class="profile-muted">'+exp.length+' مشاريع</span></div><div id="expiringProjects">';
  exp.forEach(x=>h+='<div class="profile-row"><div class="profile-icon orange">3M</div><div class="profile-row-main"><strong>'+escA(x.p.project_name)+'</strong><span>'+fmt(x.p.end_date)+' — متبقي '+Math.ceil((x.d-now)/86400000)+' يوم</span></div><button class="profile-open" data-open-project="'+x.p.id+'">فتح المشروع ←</button></div>');
  if(!exp.length)h+='<div class="profile-empty">لا توجد مشاريع تنتهي خلال 3 أشهر.</div>';
- h+='</div>'+(exp.length>5?'<button class="profile-show-all" data-toggle-list="expiringProjects">إظهار الكل</button>':'')+'</section>';
+ h+='</div>'+(exp.length>3?'<button class="profile-show-all" data-toggle-list="expiringProjects">إظهار الكل</button>':'')+'</section>';
  h+='<section class="profile-card"><div class="profile-card-head"><h3>⚠️ مشاريع تحتاج متابعة</h3><span class="profile-muted">'+attention.length+'</span></div><div id="attentionProjects">';
  attention.forEach(x=>h+='<div class="profile-row"><div class="profile-icon '+(x.k==='red'?'':'orange')+'">'+(x.t.includes('تعمين')?'30%':x.t.includes('SME')?'SME':x.t.includes('خطة')?'📄':'!')+'</div><div class="profile-row-main"><strong>'+escA(x.p.project_name)+'</strong><span>'+x.t+'</span></div><button class="profile-open" data-open-project="'+x.p.id+'">فتح المشروع ←</button></div>');
  if(!attention.length)h+='<div class="profile-empty">لا توجد مشاريع تحتاج متابعة حاليًا.</div>';
- h+='</div>'+(attention.length>5?'<button class="profile-show-all" data-toggle-list="attentionProjects">إظهار الكل</button>':'')+'</section>';
+ h+='</div>'+(attention.length>3?'<button class="profile-show-all" data-toggle-list="attentionProjects">إظهار الكل</button>':'')+'</section>';
  const pctValue=v=>{let n=Number(v||0);if(n<=1)n*=100;return n};
  const knownOman=projects.filter(p=>p.omanization_pct!==null&&p.omanization_pct!==undefined&&p.omanization_pct!==''),knownSme=projects.filter(p=>p.sme_pct!==null&&p.sme_pct!==undefined&&p.sme_pct!=='');
  const omanOk=knownOman.filter(p=>pctValue(p.omanization_pct)>=30).length,smeOk=knownSme.filter(p=>pctValue(p.sme_pct)>=10).length,plansOk=projects.filter(p=>!!p.local_content_plan||planIds.has(p.id)).length;
  const complianceBar=(label,ok,total)=>{const ratio=total?Math.round(ok/total*100):0;return '<div class="profile-compliance-item"><div class="profile-compliance-top"><span>'+escA(label)+'</span><b>'+(total?ok+' من '+total:'لا توجد بيانات')+'</b></div><div class="profile-compliance-track"><i style="width:'+ratio+'%"></i></div><small>'+(total?ratio+'% من المشاريع ذات البيانات تحقق المستهدف':'لا تتوفر بيانات كافية للعرض')+'</small></div>'};
  h+='<section class="profile-card full"><div class="profile-card-head"><h3>📊 لمحة عن الالتزام</h3><span class="profile-muted">ضمن الجهات المسندة للحساب</span></div><div class="profile-compliance-grid">'+complianceBar('مشاريع تحقق مستهدف التعمين (30%)',omanOk,knownOman.length)+complianceBar('مشاريع تحقق مستهدف المؤسسات الصغيرة والمتوسطة (10%)',smeOk,knownSme.length)+complianceBar('مشاريع لديها خطة محتوى محلي',plansOk,projects.length)+'</div></section>';
  h+='<section class="profile-card full"><div class="profile-card-head"><h3>📋 التقارير التي تحتاج إجراء</h3><span class="profile-muted">آخر الحالات</span></div><div class="profile-table-wrap"><table class="profile-table"><thead><tr><th>المشروع</th><th>الفترة</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody>';
- myReports.slice(0,10).forEach(r=>{const p=projects.find(x=>x.id===r.project_id);if(p)h+='<tr><td>'+escA(p.project_name)+'</td><td>'+escA((r.quarter||'')+' '+(r.annual_period||''))+'</td><td><span class="profile-status '+(String(r.status||'').includes('غير')?'red':'orange')+'">'+escA(r.status||'—')+'</span></td><td><button class="profile-open" data-open-project="'+p.id+'">فتح المشروع ←</button></td></tr>'});
+ myReports.forEach(r=>{const p=projects.find(x=>x.id===r.project_id);if(p)h+='<tr><td>'+escA(p.project_name)+'</td><td>'+escA((r.quarter||'')+' '+(r.annual_period||''))+'</td><td><span class="profile-status '+(String(r.status||'').includes('غير')?'red':'orange')+'">'+escA(r.status||'—')+'</span></td><td><button class="profile-open" data-open-project="'+p.id+'">فتح المشروع ←</button></td></tr>'});
  if(!myReports.length)h+='<tr><td colspan="4" class="profile-empty">لا توجد تقارير مسجلة.</td></tr>';
- h+='</tbody></table></div></section>';
+ h+='</tbody></table></div>'+(myReports.length>3?'<button class="profile-show-all" data-toggle-list="myReportsTable">إظهار الكل</button>':'')+'</section>';
  h+='<section class="profile-card"><div class="profile-card-head"><h3>📝 مهامي</h3><button class="btn primary" style="width:auto" id="profileAddTaskBtn">+ إضافة مهمة</button></div><div id="accessProfileTasks" class="profile-task-wrap">جاري التحميل...</div></section>';
  h+='<section class="profile-card"><div class="profile-card-head"><h3>🕐 آخر الأنشطة</h3><span class="profile-muted">آخر التحديثات</span></div><div id="accessProfileActivity" class="profile-activity-wrap">جاري التحميل...</div></section>';
  h+='</div><section class="profile-security"><div><h3>🔐 أمان الحساب</h3><p>تغيير الرقم السري متاح في أي وقت. صلاحياتك والجهات المسندة إليك تُدار من قبل مدير النظام.</p></div><button class="btn primary" style="width:auto" id="profilePasswordBtn">تغيير الرقم السري</button></section>';
@@ -176,13 +176,15 @@ async function loadProfilePage(){
  document.getElementById('profileHeadRole').textContent=roleLabel[profile.role]||profile.role||'مشاهد';
  document.getElementById('profileHeadInitials').textContent=(profile.full_name||profile.username||'م').trim().split(/\\s+/).slice(0,2).map(x=>x[0]).join('');
  setupProfileInteractions();renderMyTasks(taskRows);renderMyActivity(taskRows);
+ ['myReportAlerts','expiringProjects','attentionProjects'].forEach(id=>applyProfileListLimit(document.getElementById(id),3));
+ const reportTable=document.querySelector('#accessProfileAlerts .profile-table tbody');if(reportTable){reportTable.id='myReportsTable';applyProfileListLimit(reportTable,3);}
 }
 
 window.loadProfilePage=loadProfilePage;
 
 function setupProfileInteractions(){
  document.querySelectorAll('#accessProfileAlerts [data-open-project]').forEach(b=>b.onclick=()=>openMyProject(b.dataset.openProject));
- document.querySelectorAll('#accessProfileAlerts [data-toggle-list]').forEach(b=>b.onclick=()=>{const list=document.getElementById(b.dataset.toggleList);if(!list)return;const open=list.classList.toggle('expanded');b.textContent=open?'إخفاء':'إظهار الكل';applyProfileListLimit(list,3)});
+ document.querySelectorAll('#accessProfileAlerts [data-toggle-list]').forEach(b=>b.onclick=()=>{const list=document.getElementById(b.dataset.toggleList);if(!list)return;list.classList.toggle('expanded');applyProfileListLimit(list,3)});
  document.querySelectorAll('#accessProfileAlerts [data-alert-filter]').forEach(b=>b.onclick=()=>{document.querySelectorAll('#accessProfileAlerts [data-alert-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');const type=b.dataset.alertFilter,list=document.getElementById('myReportAlerts');Array.from(list.children).forEach(x=>x.style.display=type==='all'||x.dataset.type===type?'flex':'none');applyProfileListLimit(list,3)});
  ['myReportAlerts','expiringProjects','attentionProjects'].forEach(id=>{const list=document.getElementById(id);if(list)applyProfileListLimit(list,3)});
  const reportTable=document.querySelector('#page-profile .profile-table tbody');
@@ -192,7 +194,8 @@ function applyProfileListLimit(list,limit){
  if(!list)return;
  const items=Array.from(list.children).filter(x=>!x.classList.contains('profile-empty'));
  const expanded=list.classList.contains('expanded');
- items.forEach((x,i)=>x.style.display=(expanded||i<limit)?'flex':'none');
+ const displayValue=list.tagName==='TBODY'?'table-row':'flex';
+ items.forEach((x,i)=>x.style.display=(expanded||i<limit)?displayValue:'none');
  const btn=document.querySelector('#accessProfileAlerts [data-toggle-list="'+list.id+'"]');
  if(btn){btn.style.display=items.length>limit?'inline-block':'none';btn.textContent=expanded?'إخفاء':'إظهار الكل'}
 }
