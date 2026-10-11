@@ -221,7 +221,7 @@ async function renderEntities(){
    '</div></td></tr>';
  }).join('');
 
- root.innerHTML='<div class="panel"><div class="toolbar"><div><h2>الجهات الحكومية</h2><div class="muted">اضغط على اسم الجهة لعرض مشاريعها، واضغط مرة أخرى لإخفائها.</div></div></div>'+
+ root.innerHTML='<div class="panel"><div class="toolbar"><div><h2>الجهات الحكومية</h2><div class="muted">اضغط على اسم الجهة لعرض مشاريعها أو إخفائها.</div></div>'+(['admin','editor'].includes(window.__icvProfile?.role)&&typeof window.icvAddEntityV2==='function'?'<button class="btn primary" onclick="window.icvAddEntityV2()">+ إضافة جهة</button>':'')+'</div>'+
  '<div class="entities-filter"><div class="field"><label>فلتر الجهة</label><select id="entityFilter"><option value="">جميع الجهات</option>'+entities.map(e=>'<option value="'+esc(e.id)+'">'+esc(e.name)+'</option>').join('')+'</select></div></div>'+
  '<div class="table-wrap"><table><thead><tr><th>الجهة الحكومية</th><th>عدد المشاريع</th><th>قيمة المشاريع</th><th>الإنفاق</th><th>المحتوى المحلي</th><th>متوسط التعمين</th><th>متوسط SME</th></tr></thead><tbody id="entityRows">'+rows+'</tbody></table></div></div>';
 
