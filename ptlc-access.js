@@ -120,11 +120,10 @@ window.saveNewPassword=async function(){
 async function loadProfilePage(){
  if(!profile)await getProfile();const uid=profile?.id;if(!uid)return;
  const a=await client.from('user_entity_assignments_view').select('*').eq('user_id',uid).order('government_entity');
- const assigned=a.data||[],admin=profile.role==='admin',ids=new Set(assigned.map(x=>x.government_entity_id).filter(Boolean));
+ const assigned=a.data||[],ids=new Set(assigned.map(x=>x.government_entity_id).filter(Boolean));
  let pr={data:[]};
- if(admin||ids.size){
-  let projectQuery=client.from('projects').select('id,project_name,serial_no,government_entity_id,project_status,start_date,end_date,local_content_plan,omanization_pct,sme_pct,total_project_value,notes').order('project_name');
-  if(!admin)projectQuery=projectQuery.in('government_entity_id',[...ids]);
+ if(ids.size){
+  const projectQuery=client.from('projects').select('id,project_name,serial_no,government_entity_id,project_status,start_date,end_date,local_content_plan,omanization_pct,sme_pct,total_project_value,notes').in('government_entity_id',[...ids]).order('project_name');
   pr=await projectQuery;
  }
  const projects=pr.data||[],projectIds=[...new Set(projects.map(x=>x.id).filter(Boolean))];
@@ -134,7 +133,7 @@ async function loadProfilePage(){
   client.from('employee_followups').select('*').eq('assigned_to',uid).order('due_date',{ascending:true})
  ]);
  const reports=rr.data||[],plans=pl.data||[],taskRows=tasks.data||[];
- window.__icvProfileAssignedIds=admin?[...new Set(projects.map(x=>x.government_entity_id).filter(Boolean))]:[...ids];
+ window.__icvProfileAssignedIds=[...ids];
  const pids=new Set(projectIds),myReports=reports.filter(x=>pids.has(x.project_id)),planIds=new Set(plans.map(x=>x.project_id));
  const reviewReports=myReports.filter(r=>/مراجعة|review|pending/i.test(String(r.status||'')));
  const latest=new Set(myReports.map(x=>x.project_id+'|'+x.annual_period+'|'+x.quarter));
@@ -143,7 +142,7 @@ async function loadProfilePage(){
  const attention=[];const pct=v=>{let n=Number(v||0);if(n<=1)n*=100;return n.toFixed(1)+'%'};projects.forEach(p=>{if(Number(p.omanization_pct||0)<.30)attention.push({p,t:'التعمين أقل من 30%',k:'red'});if(Number(p.sme_pct||0)<.10)attention.push({p,t:'SME أقل من 10%',k:'red'});if(p.project_status==='متعثر')attention.push({p,t:'المشروع متعثر',k:'orange'});if(!p.local_content_plan&&!planIds.has(p.id))attention.push({p,t:'لا توجد خطة محتوى محلي',k:'orange'})});
  const exp=projects.filter(p=>p.end_date).map(p=>({p,d:new Date(p.end_date)})).filter(x=>x.d>=now&&x.d<=new Date(now.getTime()+90*86400000)).sort((a,b)=>a.d-b.d),fmt=d=>d?new Date(d).toLocaleDateString('ar-OM'):'—';
  document.getElementById('accessProfileSummary').innerHTML=[['إجمالي المشاريع',projects.length,''],['قيد التنفيذ',projects.filter(p=>p.project_status==='قيد التنفيذ').length,'green'],['تحتاج متابعة',attention.length,'orange'],['تقارير تحتاج إجراء',missing.length+due.length+reviewReports.length,'red']].map(x=>'<div class="card"><div class="label">'+escA(x[0])+'</div><div class="value '+x[2]+'">'+x[1]+'</div></div>').join('');
- document.getElementById('accessProfileEntities').innerHTML=assigned.length?assigned.map(x=>'<span class="profile-entity">'+escA(x.government_entity)+'</span>').join(''):(admin?'<span class="profile-admin-note">مدير النظام: يتم عرض جميع المشاريع.</span>':'<span class="profile-empty">لم يتم تخصيص جهات لهذا الحساب.</span>');
+ document.getElementById('accessProfileEntities').innerHTML=assigned.length?assigned.map(x=>'<span class="profile-entity">'+escA(x.government_entity)+'</span>').join(''):'<span class="profile-empty">لم يتم تخصيص جهات لهذا الحساب.</span>';
  let h='<div class="profile-grid">';
  h+='<section class="profile-card full"><div class="profile-card-head"><h3>🔴 التقارير التي تحتاج إجراء</h3><span class="profile-muted">'+(missing.length+due.length)+' تقارير</span></div><div class="profile-filter"><button class="active" data-alert-filter="all">الكل</button><button data-alert-filter="missing">غير مستلم</button><button data-alert-filter="due">مستحق قريبًا</button><button data-alert-filter="review">تحت المراجعة</button></div><div id="myReportAlerts">';
  missing.forEach(x=>h+='<div class="profile-row report-row" data-type="missing"><div class="profile-icon">!</div><div class="profile-row-main"><strong>'+escA(x.p.project_name)+'</strong><span>Q'+q+' '+year+' — التقرير غير مستلم · متأخر '+x.days+' يوم</span></div><button class="profile-open" data-open-project="'+x.p.id+'">فتح المشروع ←</button></div>');
