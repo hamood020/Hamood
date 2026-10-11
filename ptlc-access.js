@@ -178,6 +178,8 @@ async function loadProfilePage(){
  setupProfileInteractions();renderMyTasks(taskRows);renderMyActivity(taskRows);
 }
 
+window.loadProfilePage=loadProfilePage;
+
 function setupProfileInteractions(){
  document.querySelectorAll('#accessProfileAlerts [data-open-project]').forEach(b=>b.onclick=()=>openMyProject(b.dataset.openProject));
  document.querySelectorAll('#accessProfileAlerts [data-toggle-list]').forEach(b=>b.onclick=()=>{const list=document.getElementById(b.dataset.toggleList);if(!list)return;const open=list.classList.toggle('expanded');b.textContent=open?'إخفاء':'إظهار الكل'});
