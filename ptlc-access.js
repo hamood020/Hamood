@@ -173,13 +173,25 @@ async function loadProfilePage(){
  document.getElementById('profileHeadUsername').textContent=profile.username||'—';
  document.getElementById('profileHeadRole').textContent=roleLabel[profile.role]||profile.role||'مشاهد';
  document.getElementById('profileHeadInitials').textContent=(profile.full_name||profile.username||'م').trim().split(/\\s+/).slice(0,2).map(x=>x[0]).join('');
- setupProfileInteractions();renderMyTasks(taskRows);renderMyActivity(taskRows);
+ removeDuplicateProfileSections();setupProfileInteractions();renderMyTasks(taskRows);renderMyActivity(taskRows);
  ['myReportAlerts','expiringProjects','attentionProjects'].forEach(id=>applyProfileListLimit(document.getElementById(id),3));
  const reportTable=document.querySelector('#accessProfileAlerts .profile-table tbody');if(reportTable){reportTable.id='myReportsTable';applyProfileListLimit(reportTable,3);}
 }
 
 window.loadProfilePage=loadProfilePage;
 
+function removeDuplicateProfileSections(){
+ const root=document.getElementById('page-profile');if(!root)return;
+ ['accessProfileTasks','accessProfileActivity','profileAddTaskBtn','profilePasswordBtn'].forEach(id=>{
+  const nodes=Array.from(root.querySelectorAll('#'+id));
+  nodes.slice(1).forEach(node=>{
+   const section=node.closest('.profile-card,.profile-security');
+   if(section)section.remove();else node.remove();
+  });
+ });
+ const security=Array.from(root.querySelectorAll('.profile-security'));
+ security.slice(1).forEach(node=>node.remove());
+}
 function setupProfileInteractions(){
  document.querySelectorAll('#accessProfileAlerts [data-open-project]').forEach(b=>b.onclick=()=>openMyProject(b.dataset.openProject));
  document.querySelectorAll('#accessProfileAlerts [data-toggle-list]').forEach(b=>b.onclick=()=>{const list=document.getElementById(b.dataset.toggleList);if(!list)return;list.classList.toggle('expanded');applyProfileListLimit(list,3)});
