@@ -41,6 +41,7 @@ async function loginWithUsername(){
  if(!valid(p)){await client.auth.signOut();if(msg)msg.textContent='الحساب غير نشط أو أن فترة الصلاحية غير سارية.';return}
  profile=p;window.__icvProfile=p;
  if(typeof window.boot==='function') await window.boot(r.data.session);
+ if(window.icvLoadPlatformSettings) await window.icvLoadPlatformSettings();
  ensurePageShell();applyRoleUI();
  if(window.icvStructure?.renderDashboard){window.icvStructure.renderDashboard();window.icvStructure.renderProjects();window.icvStructure.renderLocalContent();}
 
