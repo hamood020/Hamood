@@ -360,9 +360,10 @@ window.icvSaveEntityProfile=async id=>{
  if(!name)return msg('entityProfileMsg','اسم الجهة مطلوب.');
  const contacts=[...document.querySelectorAll('#entityProfileContacts .entity-contact-edit-row')].map(r=>({
    name:r.querySelector('.ec-name')?.value.trim()||'',
+   job_title:r.querySelector('.ec-job')?.value.trim()||'',
    phone:r.querySelector('.ec-phone')?.value.trim()||'',
    email:r.querySelector('.ec-email')?.value.trim()||''
- })).filter(x=>x.name||x.phone||x.email);
+ })).filter(x=>x.name||x.job_title||x.phone||x.email);
  const r=await dbx.from('government_entities').update({name,contact_points:contacts}).eq('id',id);
  if(r.error)return msg('entityProfileMsg',r.error.message);window.icvSaveSuccess?.('تم حفظ تعديلات الجهة الحكومية بنجاح');
  (window.projects||[]).forEach(p=>{if(String(p.government_entity_id)===String(id))p.government_entities={...(p.government_entities||{}),name};});
