@@ -123,35 +123,88 @@ function showPage(name,btn){
  pageTitle.textContent=titles[name]||name;
 }
 function renderDashboard(){
+ const root=document.getElementById('page-dashboard');if(!root)return;
  const value=projects.reduce((a,p)=>a+Number(p.total_project_value||0),0);
  const lc=projects.reduce((a,p)=>a+Number(p.total_local_content||0),0);
- const sp=projects.reduce((a,p)=>a+Number(p.total_spend||0),0);
- const avg=sp?lc/sp:0;
- const bad=projects.filter(p=>p.made_in_oman_status==='غير مستوفي'||p.sme_10_status==='غير مستوفي').length;
- const states=[...new Set(projects.map(p=>p.project_status).filter(Boolean))].map(st=>[st,projects.filter(p=>p.project_status===st).length]);
- const relevant=projects.filter(p=>p.made_in_oman_status&&p.made_in_oman_status!=='-');
- const goodsOk=relevant.filter(p=>p.made_in_oman_status==='مستوفي').length;
- const smeRel=projects.filter(p=>p.sme_10_status&&p.sme_10_status!=='-');
- const smeOk=smeRel.filter(p=>p.sme_10_status==='مستوفي').length;
- document.getElementById('page-dashboard').innerHTML=
- '<div class="cards">'+
- '<div class="card"><div class="label">إجمالي المشاريع</div><div class="value">'+projects.length+'</div><div class="sub">مشروع</div></div>'+
- '<div class="card"><div class="label">إجمالي قيمة المشاريع</div><div class="value">'+money(value)+'</div><div class="sub">ريال عماني</div></div>'+
- '<div class="card"><div class="label">إجمالي المحتوى المحلي</div><div class="value">'+money(lc)+'</div><div class="sub">من بيانات المشاريع</div></div>'+
- '<div class="card"><div class="label">متوسط المحتوى المحلي من الصرف</div><div class="value">'+pct(avg)+'</div><div class="sub">للمشاريع ذات بيانات الصرف</div></div>'+
+ const spend=projects.reduce((a,p)=>a+Number(p.total_spend||0),0);
+ const targetLC=projects.reduce((a,p)=>a+Number(p.target_local_content||p.total_local_content_target||0),0);
+ const pctSafe=(a,b)=>b?Math.max(0,Math.min(100,a/b*100)):0;
+ const avgSpend=pctSafe(lc,spend);
+ const avgTarget=pctSafe(lc,targetLC);
+ const oman=projects.length?projects.reduce((a,p)=>a+Number(p.omanization_pct||0),0)/projects.length:0;
+ const smeProjects=projects.filter(p=>p.sme_10_status&&p.sme_10_status!=='-');
+ const smeOK=smeProjects.filter(p=>p.sme_10_status==='مستوفي').length;
+ const goodsProjects=projects.filter(p=>p.made_in_oman_status&&p.made_in_oman_status!=='-');
+ const goodsOK=goodsProjects.filter(p=>p.made_in_oman_status==='مستوفي').length;
+ const entityTotals={};projects.forEach(p=>{const n=p.government_entities?.name||'غير محدد';entityTotals[n]=(entityTotals[n]||0)+Number(p.total_spend||0)});
+ const companyTotals={};projects.forEach(p=>{const n=p.companies?.name||'غير محددة';companyTotals[n]=(companyTotals[n]||0)+Number(p.total_spend||0)});
+ const topEntities=Object.entries(entityTotals).sort((a,b)=>b[1]-a[1]).slice(0,5);
+ const topCompanies=Object.entries(companyTotals).filter(x=>x[0]!=='غير محددة').sort((a,b)=>b[1]-a[1]).slice(0,5);
+ const bestProjects=[...projects].sort((a,b)=>Number(b.local_content_project_pct||0)-Number(a.local_content_project_pct||0)).slice(0,3);
+ const quarters={};
+ (reports||[]).forEach(r=>{const d=r.report_data||{},year=Number(r.annual_period||d.year||new Date().getFullYear()),q=String(r.quarter||d.quarter||'').match(/[1-4]/)?.[0];if(!q)return;const key=year+'-Q'+q;if(!quarters[key])quarters[key]={spend:0,lc:0};quarters[key].spend+=Number(d.total_spend||d.actual_spend||d.spend||0);quarters[key].lc+=Number(d.total_local_content||d.local_content_actual||d.local_content||0)});
+ const quarterKeys=Object.keys(quarters).sort().slice(-8);
+ const maxQ=Math.max(1,...quarterKeys.flatMap(k=>[quarters[k].spend,quarters[k].lc]));
+ const qBars=quarterKeys.length?quarterKeys.map(k=>'<div class="icv-q-col"><div class="icv-q-bars"><i class="spend" style="height:'+Math.max(2,quarters[k].spend/maxQ*100)+'%" title="الصرف '+money(quarters[k].spend)+'"></i><i class="local" style="height:'+Math.max(2,quarters[k].lc/maxQ*100)+'%" title="المحتوى المحلي '+money(quarters[k].lc)+'"></i></div><small>'+esc(k)+'</small></div>').join(''):'<div class="icv-empty">ستظهر البيانات بعد تسجيل التقارير الربع سنوية.</div>';
+ const stateCounts=[...new Set(projects.map(p=>p.project_status||'غير محدد'))].map(st=>[st,projects.filter(p=>(p.project_status||'غير محدد')===st).length]);
+ const stateHtml=stateCounts.map(x=>'<div class="icv-state-row"><span>'+esc(x[0])+'</span><div class="icv-track"><i style="width:'+(projects.length?x[1]/projects.length*100:0)+'%"></i></div><b>'+x[1]+'</b></div>').join('')||'<div class="icv-empty">لا توجد مشاريع مسجلة.</div>';
+ const rankRows=rows=>rows.length?rows.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(x[0])+'</td><td>'+money(x[1])+'</td></tr>').join(''):'<tr><td colspan="3">لا توجد بيانات</td></tr>';
+ root.innerHTML='<style>'+
+ '#page-dashboard .icv-home{display:flex;flex-direction:column;gap:18px}'+
+ '#page-dashboard .icv-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}'+
+ '#page-dashboard .icv-kpi,#page-dashboard .icv-panel{background:#fff;border:1px solid #e5ebef;border-radius:16px;padding:17px;box-shadow:0 5px 18px rgba(20,50,60,.045);min-width:0}'+
+ '#page-dashboard .icv-kpi .icv-label{font-size:12px;color:#71818a;margin-bottom:9px}'+
+ '#page-dashboard .icv-kpi strong{display:block;font-size:clamp(17px,1.6vw,25px);color:#123b4a;overflow-wrap:anywhere;line-height:1.4}'+
+ '#page-dashboard .icv-kpi small{display:block;color:#8a989e;font-size:11px;margin-top:6px}'+
+ '#page-dashboard .icv-home-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,1fr);gap:18px}'+
+ '#page-dashboard .icv-panel h2{font-size:16px;margin:0 0 5px;color:#20333b}'+
+ '#page-dashboard .icv-subtitle{font-size:11px;color:#87959b;margin-bottom:16px}'+
+ '#page-dashboard .icv-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:#71818a;margin-bottom:12px}'+
+ '#page-dashboard .icv-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-left:5px}'+
+ '#page-dashboard .icv-q-chart{height:185px;display:flex;align-items:stretch;gap:8px;border-bottom:1px solid #e8edef;padding:8px 0 0;overflow:hidden}'+
+ '#page-dashboard .icv-q-col{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;text-align:center;gap:7px}'+
+ '#page-dashboard .icv-q-bars{height:150px;display:flex;align-items:flex-end;justify-content:center;gap:5px;border-bottom:1px dashed #e8edef}'+
+ '#page-dashboard .icv-q-bars i{display:block;width:min(24px,38%);min-height:2px;border-radius:5px 5px 0 0}'+
+ '#page-dashboard .icv-q-bars .spend{background:#b9cbd2}#page-dashboard .icv-q-bars .local{background:#087f78}'+
+ '#page-dashboard .icv-q-col small{font-size:10px;color:#71818a;white-space:nowrap}'+
+ '#page-dashboard .icv-state-row{display:grid;grid-template-columns:90px minmax(30px,1fr) 25px;align-items:center;gap:9px;margin:15px 0;font-size:12px}'+
+ '#page-dashboard .icv-track{height:8px;background:#edf1f3;border-radius:9px;overflow:hidden}#page-dashboard .icv-track i{display:block;height:100%;background:#087f78;border-radius:9px}'+
+ '#page-dashboard .icv-compliance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}'+
+ '#page-dashboard .icv-compliance div{background:#f5f8f9;border-radius:12px;padding:13px;min-width:0}'+
+ '#page-dashboard .icv-compliance b{display:block;font-size:20px;color:#123b4a;margin:5px 0}#page-dashboard .icv-compliance small{font-size:11px;color:#71818a}'+
+ '#page-dashboard .icv-bottom{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}'+
+ '#page-dashboard .icv-mini-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px}'+
+ '#page-dashboard .icv-mini-table th,#page-dashboard .icv-mini-table td{padding:8px 5px;border-bottom:1px solid #edf1f3;text-align:right;overflow-wrap:anywhere;vertical-align:top}'+
+ '#page-dashboard .icv-mini-table th{color:#71818a;font-weight:600}#page-dashboard .icv-mini-table th:first-child,#page-dashboard .icv-mini-table td:first-child{width:28px}#page-dashboard .icv-mini-table th:last-child,#page-dashboard .icv-mini-table td:last-child{width:88px}'+
+ '#page-dashboard .icv-empty{font-size:12px;color:#87959b;padding:16px 0}'+
+ '@media(max-width:1100px){#page-dashboard .icv-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}#page-dashboard .icv-bottom{grid-template-columns:repeat(2,minmax(0,1fr))}}'+
+ '@media(max-width:760px){#page-dashboard .icv-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#page-dashboard .icv-home-grid,#page-dashboard .icv-bottom{grid-template-columns:1fr}#page-dashboard .icv-compliance{grid-template-columns:repeat(3,minmax(0,1fr))}#page-dashboard .icv-kpi,#page-dashboard .icv-panel{padding:13px}}'+
+ '</style><div class="icv-home">'+
+ '<div class="icv-kpis">'+
+ '<div class="icv-kpi"><div class="icv-label">عدد المشاريع</div><strong>'+projects.length+'</strong><small>مشروع مسجل</small></div>'+
+ '<div class="icv-kpi"><div class="icv-label">إجمالي قيمة المشاريع</div><strong>'+money(value)+'</strong><small>ريال عماني</small></div>'+
+ '<div class="icv-kpi"><div class="icv-label">إجمالي الصرف</div><strong>'+money(spend)+'</strong><small>الصرف المسجل للمشاريع</small></div>'+
+ '<div class="icv-kpi"><div class="icv-label">المحتوى المحلي المستهدف</div><strong>'+money(targetLC)+'</strong><small>وفق بيانات الخطط المتاحة</small></div>'+
+ '<div class="icv-kpi"><div class="icv-label">المحتوى المحلي الفعلي</div><strong>'+money(lc)+'</strong><small>وفق بيانات المشاريع الحالية</small></div>'+
  '</div>'+
- '<div class="grid2">'+
- '<div class="card"><h2>حالة المشاريع</h2><div class="desc">توزيع المشاريع حسب الحالة الحالية</div><div class="bar-list">'+states.map(x=>'<div class="bar-row"><span>'+esc(x[0])+'</span><div class="bar"><i style="width:'+(projects.length?x[1]/projects.length*100:0)+'%"></i></div><b>'+x[1]+'</b></div>').join('')+'</div></div>'+
- '<div class="card"><h2>المحتوى المحلي</h2><div class="desc">نسبة المحتوى المحلي إلى إجمالي الصرف</div><div class="chart-flex"><div class="donut" style="background:conic-gradient(var(--primary) 0 '+Math.min(100,avg*100)+'%,#cbd5e1 '+Math.min(100,avg*100)+'% 100%)"><div class="donut-center">'+pct(avg)+'</div></div><div class="legend"><span><i class="dot primary"></i> المحتوى المحلي</span><span><i class="dot gray"></i> المتبقي من الصرف</span><small class="muted">محسوبة من البيانات الحالية</small></div></div></div>'+
+ '<div class="icv-home-grid">'+
+ '<div class="icv-panel"><h2>الصرف والمحتوى المحلي عبر الأرباع</h2><div class="icv-subtitle">مقارنة التقارير المسجلة في النظام</div><div class="icv-legend"><span><i style="background:#b9cbd2"></i>الصرف الفعلي</span><span><i style="background:#087f78"></i>المحتوى المحلي الفعلي</span></div><div class="icv-q-chart">'+qBars+'</div></div>'+
+ '<div class="icv-panel"><h2>مستوى الالتزام</h2><div class="icv-subtitle">مؤشرات محسوبة من بيانات المشاريع المتاحة</div><div class="icv-compliance">'+
+ '<div><small>المعدل العام للمحتوى المحلي</small><b>'+pct(avgSpend/100)+'</b><small>من الصرف الفعلي</small></div>'+
+ '<div><small>متوسط التعمين</small><b>'+pct(oman/100)+'</b><small>حسب بيانات المشاريع</small></div>'+
+ '<div><small>استيفاء SME</small><b>'+smeOK+' / '+smeProjects.length+'</b><small>مشاريع مستوفية</small></div>'+
+ '</div><div style="height:14px"></div><h2>حالة المشاريع</h2>'+stateHtml+'</div>'+
  '</div>'+
- '<div class="section"><div class="section-head"><h2>حالة الاستيفاء</h2><span class="muted">حسب البيانات الحالية</span></div><div class="split-status">'+
- '<div class="status-box"><div class="muted">القوى العاملة</div><b>'+pct(projects.length?projects.reduce((a,p)=>a+Number(p.omanization_pct||0),0)/projects.length/100:0)+'</b><small class="muted">متوسط نسبة التعمين</small></div>'+
- '<div class="status-box"><div class="muted">السلع — صنع في عمان</div><b>'+goodsOk+' / '+relevant.length+'</b><small class="muted">عدد المشاريع المستوفية</small></div>'+
- '<div class="status-box"><div class="muted">SME</div><b>'+smeOk+' / '+smeRel.length+'</b><small class="muted">استيفاء 10%</small></div>'+
+ '<div class="icv-panel"><h2>مؤشرات الاستيفاء</h2><div class="icv-subtitle">عدد المشاريع المستوفية حسب المؤشر</div><div class="icv-compliance">'+
+ '<div><small>التعمين</small><b>'+pct(oman/100)+'</b><small>متوسط النسبة المسجلة</small></div>'+
+ '<div><small>السلع المحلية</small><b>'+goodsOK+' / '+goodsProjects.length+'</b><small>مشاريع مستوفية</small></div>'+
+ '<div><small>خدمات وعقود SME</small><b>'+smeOK+' / '+smeProjects.length+'</b><small>مشاريع مستوفية</small></div>'+
  '</div></div>'+
- '<div class="section"><div class="section-head"><h2>أحدث المشاريع</h2><span class="muted">'+projects.length+' مشروع</span></div><div class="card"><div class="table-wrap"><table><thead><tr><th>المشروع</th><th>الجهة</th><th>القيمة</th><th>الإنجاز</th><th>المحتوى المحلي</th><th>SME</th></tr></thead><tbody>'+
- projects.slice(0,6).map(p=>'<tr><td><a class="project-link" href="javascript:viewProject(\''+p.id+'\')">'+esc(p.project_name)+'</a></td><td>'+esc(p.government_entities?.name)+'</td><td>'+money(p.total_project_value)+'</td><td>'+Number(p.progress_pct||0).toFixed(1)+'%</td><td>'+pct(p.local_content_project_pct)+'</td><td>'+pct(p.sme_pct)+'</td></tr>').join('')+
- '</tbody></table></div></div></div>';
+ '<div class="icv-bottom">'+
+ '<div class="icv-panel"><h2>الجهات الأعلى صرفًا</h2><div class="icv-subtitle">حسب مجموع الصرف المسجل</div><table class="icv-mini-table"><thead><tr><th>#</th><th>الجهة الحكومية</th><th>الصرف</th></tr></thead><tbody>'+rankRows(topEntities)+'</tbody></table></div>'+
+ '<div class="icv-panel"><h2>الشركات الأعلى صرفًا</h2><div class="icv-subtitle">حسب المشاريع المرتبطة بالشركة</div><table class="icv-mini-table"><thead><tr><th>#</th><th>الشركة</th><th>الصرف</th></tr></thead><tbody>'+rankRows(topCompanies)+'</tbody></table></div>'+
+ '<div class="icv-panel"><h2>أفضل 3 مشاريع في الاستيفاء</h2><div class="icv-subtitle">مرتبة حسب نسبة المحتوى المحلي المسجلة</div><table class="icv-mini-table"><thead><tr><th>#</th><th>المشروع</th><th>النسبة</th></tr></thead><tbody>'+(bestProjects.length?bestProjects.map((p,i)=>'<tr><td>'+(i+1)+'</td><td><a class="project-link" href="javascript:viewProject(\''+p.id+'\')">'+esc(p.project_name||'مشروع')+'</a></td><td>'+pct(p.local_content_project_pct)+'</td></tr>').join(''):'<tr><td colspan="3">لا توجد بيانات</td></tr>')+'</tbody></table></div>'+
+ '</div></div>';
 }
 function renderProjects(){
  const root=document.getElementById('page-projects');if(!root)return;
