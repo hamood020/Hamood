@@ -60,13 +60,14 @@ async function projectPage(id){ if(window.icvLoadPlatformSettings)await window.i
    const readCat=w=>w?.categories?.[idx]?.[who]??w?.categories?.[idx]?.[who==='foreign'?'non_omani':who];
    const exact=periodKey?(workforce[periodKey]||workforce[periodKey.split('_')[0]]):null;
    if(exact?.categories?.[idx]) return n(readCat(exact));
+   // Plan selector stores Year N_QN, whereas project metadata can store calendar year + quarter.
+   // For repeated quarters across multiple plan years, display the latest entered plan year.
    const quarter=periodKey.match(/(?:^|_)(Q[1-4])$/)?.[1];
-   const matching=quarter?keys.filter(k=>k.endsWith('_'+quarter)):keys;
-   const candidates=matching.length?matching:keys;
-   if(candidates.length===1) return n(readCat(workforce[candidates[0]]));
-   const vals=candidates.map(k=>workforce[k]?.categories?.[idx]).filter(Boolean);
-   if(vals.length===1) return n(vals[0][who]??vals[0][who==='foreign'?'non_omani':who]);
-   return 0;
+   let candidates=quarter?keys.filter(k=>k.endsWith('_'+quarter)):keys;
+   if(!candidates.length)candidates=keys;
+   candidates.sort((a,b)=>(Number((a.match(/Year\s*(\d+)/i)||[])[1])||0)-(Number((b.match(/Year\s*(\d+)/i)||[])[1])||0));
+   const chosen=candidates[candidates.length-1];
+   return n(readCat(workforce[chosen]));
  };
  const latestReport=latest||null, latestData=latestReport?.report_data||{};
  const reportCats=Array.isArray(latestData.workforce_categories)?latestData.workforce_categories:[];
