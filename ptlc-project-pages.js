@@ -263,7 +263,7 @@ window.icvViewEntityCard=async id=>{
  const pp=(window.projects||[]).filter(p=>String(p.government_entity_id)===String(id));
  const contacts=Array.isArray(e.contact_points)?e.contact_points:[];
  const contactHtml=contacts.length
-  ? contacts.map(c=>'<div style="background:var(--soft);border-radius:11px;padding:11px 12px;margin:8px 0"><b style="display:block;margin-bottom:5px">'+E(c.name||'—')+'</b><span style="font-size:12px;color:var(--muted)">📞 '+E(c.phone||'—')+' &nbsp; | &nbsp; ✉ '+E(c.email||'—')+'</span></div>').join('')
+  ? contacts.map(c=>'<div style="background:var(--soft);border-radius:11px;padding:11px 12px;margin:8px 0"><b style="display:block;margin-bottom:5px">'+E(c.name||'—')+'</b><div style="font-size:12px;color:var(--muted);line-height:1.9">الوظيفة: '+E(c.job_title||c.job||'—')+'<br>📞 '+E(c.phone||'—')+'<br>✉ '+E(c.email||'—')+'</div></div>').join('')
   : '<div class="muted" style="padding:8px 0">لا توجد نقاط تواصل مضافة.</div>';
  const projectsHtml=pp.length
   ? '<div class="table-wrap"><table><thead><tr><th>م</th><th>اسم المشروع</th><th>رقم المشروع/المناقصة</th><th>قيمة المشروع</th><th>الإنجاز</th><th>الحالة</th></tr></thead><tbody>'+
@@ -342,7 +342,7 @@ window.icvEditEntityProfile=async id=>{
  const r=await dbx.from('government_entities').select('*').eq('id',id).maybeSingle();
  const e=r.data;if(!e)return;
  const contacts=Array.isArray(e.contact_points)?e.contact_points:[];
- const rows=contacts.length?contacts.map(c=>'<div class="entity-contact-edit-row"><input class="ec-name" placeholder="اسم الشخص" value="'+E(c.name||'')+'"><input class="ec-phone" placeholder="رقم الهاتف" value="'+E(c.phone||'')+'"><input class="ec-email" placeholder="البريد الإلكتروني" value="'+E(c.email||'')+'"><button type="button" onclick="this.parentElement.remove()">×</button></div>').join(''):'';
+ const rows=contacts.length?contacts.map(c=>'<div class="entity-contact-edit-row"><input class="ec-name" placeholder="الاسم" value="'+E(c.name||'')+'"><input class="ec-job" placeholder="الوظيفة" value="'+E(c.job_title||c.job||'')+'"><input class="ec-phone" placeholder="رقم الهاتف" value="'+E(c.phone||'')+'"><input class="ec-email" placeholder="البريد الإلكتروني" value="'+E(c.email||'')+'"><button type="button" onclick="this.parentElement.remove()">×</button></div>').join(''):'';
  const html='<div class="entity-profile-modal"><div class="field entity-profile-form"><label>اسم الجهة</label><input id="entityProfileName" value="'+E(e.name||'')+'"></div><div class="entity-profile-form"><label>نقاط التواصل</label><div id="entityProfileContacts">'+rows+'</div><button type="button" class="btn entity-profile-add-contact" onclick="window.icvAddEntityContactRow()">+ إضافة نقطة تواصل</button></div><div id="entityProfileMsg" class="muted" style="margin-top:10px"></div><div class="entity-profile-save-row"><button class="btn primary" onclick="window.icvSaveEntityProfile(\''+E(e.id)+'\')">حفظ التعديلات</button><button class="btn" onclick="document.getElementById(\'icvV2Modal\')?.remove()">إلغاء</button></div></div>';
  modal('تعديل ملف الجهة',html);
  if(!contacts.length)window.icvAddEntityContactRow();
@@ -351,7 +351,7 @@ window.icvEditEntityProfile=async id=>{
 window.icvAddEntityContactRow=()=>{
  const box=document.getElementById('entityProfileContacts');if(!box)return;
  const d=document.createElement('div');d.className='entity-contact-edit-row';
- d.innerHTML='<input class="ec-name" placeholder="اسم الشخص"><input class="ec-phone" placeholder="رقم الهاتف"><input class="ec-email" placeholder="البريد الإلكتروني"><button type="button" onclick="this.parentElement.remove()">×</button>';
+ d.innerHTML='<input class="ec-name" placeholder="الاسم"><input class="ec-job" placeholder="الوظيفة"><input class="ec-phone" placeholder="رقم الهاتف"><input class="ec-email" placeholder="البريد الإلكتروني"><button type="button" onclick="this.parentElement.remove()">×</button>';
  box.appendChild(d);
 };
 
