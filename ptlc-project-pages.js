@@ -46,7 +46,7 @@ async function projectPage(id){ if(window.icvLoadPlatformSettings)await window.i
  const planServiceTotals={local_service:sumPlanRows(planServiceRows,'مزود محلي'),foreign_service:sumPlanRows(planServiceRows,'مزود أجنبي'),sme_service:sumPlanRows(planServiceRows,'مؤسسة صغيرة ومتوسطة')};
  const planSubTotals={local:sumPlanRows(planSubRows,'مزود محلي'),foreign:sumPlanRows(planSubRows,'مزود أجنبي'),sme:sumPlanRows(planSubRows,'مؤسسة صغيرة ومتوسطة')};
  const planTrainingRows=pd.training||[], planTrainingTotal=planTrainingRows.reduce((a,x)=>a+n(x.ojt)+n(x.tfe)+n(x.tfq),0);
- const planDisplayPeriod=periodKey&&pd.periods?.[periodKey]?pd.periods[periodKey]:null;
+ const planDisplayPeriod=periodKey?(pd.periods?.[periodKey]||pd.periods?.[periodKey.split('_')[0]]||null):null;
  const planDisplayOm=planDisplayPeriod?n(planDisplayPeriod.omani):planWorkTotals.omani;
  const planDisplayForeign=planDisplayPeriod?n(planDisplayPeriod.foreign):planWorkTotals.foreign;
  const planDisplayOmaniSalary=planDisplayPeriod?n(planDisplayPeriod.omani_salary):planWorkTotals.omani_salary;
@@ -58,7 +58,7 @@ async function projectPage(id){ if(window.icvLoadPlatformSettings)await window.i
    const idx=Number(String(cat).replace('cat',''))-1;
    if(pickPlan && pd.workforce){
      const key=periodKey;
-     const w=pd.workforce[key];
+     const w=pd.workforce[key]||pd.workforce[key.split('_')[0]];
      if(w?.categories?.[idx]) return n(w.categories[idx][who]);
    }
    return 0;
