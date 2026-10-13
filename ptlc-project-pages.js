@@ -100,7 +100,21 @@ async function projectPage(id){ if(window.icvLoadPlatformSettings)await window.i
  const comparePct=(plan,actual)=>plan>0?(actual/plan*100).toFixed(1)+'%':'—';
  const cmpRow=(label,plan,actual,moneyMode=true)=>'<div class="compare-row"><div class="compare-label">'+esc2(label)+'</div><div class="compare-value"><small>الخطة</small><b>'+ (moneyMode?money(plan):n(plan)) +'</b></div><div class="compare-value"><small>الأداء الفعلي</small><b>'+ (moneyMode?money(actual):n(actual)) +'</b></div><div class="compare-result"><small>التنفيذ</small><b class="'+(plan>0?(actual>=plan?'ok':'bad'):'')+'">'+comparePct(plan,actual)+'</b><span>'+compareStatus(plan,actual)+'</span></div></div>';
  const cmpCard=(title,tag,rows,totalPlan,totalActual,totalMoney=true,headerExtra='')=>'<section class="section-card comparison-card"><div class="section-card-head"><div><h2>'+title+'</h2><p>مقارنة الخطة المعتمدة مع آخر أداء فعلي مسجل</p></div>'+headerExtra+'<span class="section-tag">'+tag+'</span></div><div class="compare-head"><span>المؤشر</span><span>الخطة</span><span>الأداء الفعلي</span><span>نسبة التنفيذ</span></div><div class="compare-list">'+rows+'</div><div class="compare-summary"><div><small>إجمالي الخطة</small><b>'+money(totalPlan)+'</b></div><div><small>إجمالي الأداء الفعلي</small><b>'+money(totalActual)+'</b></div><div><small>الفرق</small><b class="'+(totalActual>=totalPlan?'ok':'bad')+'">'+money(totalActual-totalPlan)+'</b></div></div></section>';
- const reportsTarget=n(p.target_reports), reportsDue=n(p.due_reports), reportsReceived=n(p.received_reports), reportsLate=n(p.late_reports);
+ const projectQuarterStats=()=>{
+   const parseDate=v=>{if(!v)return null;const d=new Date(String(v).slice(0,10)+'T00:00:00');return Number.isNaN(d.getTime())?null:d};
+   const start=parseDate(p.start_date),end=parseDate(p.end_date),today=new Date();today.setHours(0,0,0,0);
+   if(!start||!end||end<start)return {target:0,due:0,received:0,late:0};
+   const quarterEnd=(year,q)=>new Date(year,q*3,0);
+   const targets=[];
+   for(let year=start.getFullYear();year<=end.getFullYear();year++)for(let q=1;q<=4;q++){const dueDate=quarterEnd(year,q);if(dueDate>=start&&dueDate<=end)targets.push({year,q,dueDate})}
+   const dueTargets=targets.filter(x=>x.dueDate<=today);
+   const targetKeys=new Set(targets.map(x=>x.year+'_Q'+x.q)),dueKeys=new Set(dueTargets.map(x=>x.year+'_Q'+x.q));
+   const receivedKeys=new Set((reports||[]).filter(r=>{const y=Number(r.annual_period),q=Number(String(r.quarter||'').replace(/\\D/g,''));return y&&q>=1&&q<=4&&targetKeys.has(y+'_Q'+q)}).map(r=>Number(r.annual_period)+'_Q'+Number(String(r.quarter||'').replace(/\\D/g,''))));
+   const received=receivedKeys.size,due=dueTargets.length,receivedDue=[...receivedKeys].filter(k=>dueKeys.has(k)).length;
+   return {target:targets.length,due,received,late:Math.max(0,due-receivedDue)};
+ };
+ const reportStats=projectQuarterStats();
+ const reportsTarget=reportStats.target,reportsDue=reportStats.due,reportsReceived=reportStats.received,reportsLate=reportStats.late;
  const reportCards=reports.length?reports.map(r=>{const d=r.report_data||{};return '<div class="icv-report"><div class="icv-quarter">'+esc2(r.quarter||'—')+'</div><div><small>السنة</small><b>'+esc2(r.annual_period||'—')+'</b></div><div><small>نوع التقرير</small><b>'+esc2(d.report_type||'—')+'</b></div><div><small>الحالة</small><b>'+esc2(r.status||'—')+'</b></div><div><button class="btn" onclick="window.icvV2ViewReport(\''+r.id+'\')">عرض</button> '+(canEdit()?'<button class="btn" onclick="window.icvV2Report(\''+r.id+'\')">تعديل</button>':'')+'</div></div>'}).join(''):'<div class="icv-banner"><b>لا توجد تقارير تفصيلية محفوظة لهذا المشروع.</b></div>';
  const historyHtml=history.length?history.map(h=>'<div><b>'+fmtProjectDate(h.old_end_date)+'</b><span>→</span><strong>'+fmtProjectDate(h.new_end_date)+'</strong><span class="date">'+fmtProjectDate(h.changed_at)+'</span></div>').join(''):'<div><span class="muted">لا توجد تغييرات مسجلة حتى الآن.</span></div>';
  const edit=canEdit()?'<button class="hero-btn" onclick="window.icvV2EditProject()">تعديل بيانات المشروع</button>':'';
