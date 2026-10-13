@@ -56,11 +56,16 @@ async function projectPage(id){ if(window.icvLoadPlatformSettings)await window.i
  const planOm=planDisplayOm, planForeign=planDisplayForeign;
  const catPlan=(cat,who)=>{
    const idx=Number(String(cat).replace('cat',''))-1;
-   if(pickPlan && pd.workforce){
-     const key=periodKey;
-     const w=pd.workforce[key]||pd.workforce[key.split('_')[0]];
-     if(w?.categories?.[idx]) return n(w.categories[idx][who]);
-   }
+   const workforce=pd.workforce||{}, keys=Object.keys(workforce);
+   const readCat=w=>w?.categories?.[idx]?.[who]??w?.categories?.[idx]?.[who==='foreign'?'non_omani':who];
+   const exact=periodKey?(workforce[periodKey]||workforce[periodKey.split('_')[0]]):null;
+   if(exact?.categories?.[idx]) return n(readCat(exact));
+   const quarter=periodKey.match(/(?:^|_)(Q[1-4])$/)?.[1];
+   const matching=quarter?keys.filter(k=>k.endsWith('_'+quarter)):keys;
+   const candidates=matching.length?matching:keys;
+   if(candidates.length===1) return n(readCat(workforce[candidates[0]]));
+   const vals=candidates.map(k=>workforce[k]?.categories?.[idx]).filter(Boolean);
+   if(vals.length===1) return n(vals[0][who]??vals[0][who==='foreign'?'non_omani':who]);
    return 0;
  };
  const latestReport=latest||null, latestData=latestReport?.report_data||{};
