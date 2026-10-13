@@ -194,62 +194,63 @@ async function renderEntitiesV2(){
  let b=document.getElementById('page-entities');if(!b)return;
  const r=await dbx.from('government_entities').select('*').order('name');
  const entities=r.data||[], allProjects=window.projects||[], allReports=window.reports||[];
-
  if(!document.getElementById('icvEntitiesV2Style')){
   const st=document.createElement('style');st.id='icvEntitiesV2Style';
-  st.textContent='.entities-filter{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:14px}.entities-filter .field{min-width:320px;margin:0}.entity-row{cursor:pointer}.entity-row:hover td{background:#fbfdfd}.entity-toggle{border:0;background:transparent;font:inherit;color:inherit;display:flex;align-items:center;gap:9px;cursor:pointer;width:100%;text-align:right;padding:0}.entity-chevron{width:24px;height:24px;border-radius:8px;background:#eef7f5;color:var(--primary2);display:inline-grid;place-items:center;font-weight:900;transition:.2s}.entity-row.expanded .entity-chevron{transform:rotate(180deg)}.entity-projects-row>td{padding:0!important;background:#f8fafc}.entity-projects-panel{padding:16px 18px;border-top:1px solid var(--line)}.entity-projects-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.entity-projects-head strong{font-size:14px}.entity-projects-head span{color:var(--muted);font-size:12px}.entity-projects-table{margin-top:0}.entity-projects-table table{min-width:900px}.entity-projects-table th,.entity-projects-table td{font-size:12px}.entity-projects-table .project-link{font-weight:800}.entity-empty{background:#fff;border:1px dashed var(--line);border-radius:10px;padding:12px;color:var(--muted);font-size:11px}';
+  st.textContent='.entities-filter{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:14px}.entities-filter .field{min-width:320px;margin:0}.entity-row{cursor:pointer}.entity-row:hover td{background:#fbfdfd}.entity-toggle{border:0;background:transparent;font:inherit;color:inherit;display:flex;align-items:center;gap:9px;cursor:pointer;width:100%;text-align:right;padding:0}.entity-chevron{width:24px;height:24px;border-radius:8px;background:#eef7f5;color:var(--primary2);display:inline-grid;place-items:center;font-weight:900;transition:.2s}.entity-row.expanded .entity-chevron{transform:rotate(180deg)}.entity-projects-row>td{padding:0!important;background:#f8fafc}.entity-projects-panel{padding:16px 18px;border-top:1px solid var(--line)}.entity-projects-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.entity-projects-head strong{font-size:14px}.entity-projects-head span{color:var(--muted);font-size:12px}.entity-projects-table{margin-top:0}.entity-projects-table table{min-width:1050px}.entity-projects-table th,.entity-projects-table td{font-size:12px;white-space:nowrap}.entity-projects-table .project-link{font-weight:800}.entity-empty{background:#fff;border:1px dashed var(--line);border-radius:10px;padding:12px;color:var(--muted);font-size:11px}';
   document.head.appendChild(st);
  }
-
  const reportsFor=projectId=>allReports.filter(x=>String(x.project_id)===String(projectId)).sort((a,b)=>{
-   const ay=Number(a.annual_period||0),by=Number(b.annual_period||0);
-   const aq=Number(String(a.quarter||'').replace(/\D/g,''))||0,bq=Number(String(b.quarter||'').replace(/\D/g,''))||0;
-   return (ay*10+aq)-(by*10+bq)||String(a.created_at||'').localeCompare(String(b.created_at||''));
+  const ay=Number(a.annual_period||0),by=Number(b.annual_period||0),aq=Number(String(a.quarter||'').replace(/\\D/g,''))||0,bq=Number(String(b.quarter||'').replace(/\\D/g,''))||0;
+  return (ay*10+aq)-(by*10+bq)||String(a.created_at||'').localeCompare(String(b.created_at||''));
  });
-
+ const metricsFor=p=>{
+  const rr=reportsFor(p.id);let omSalary=0,foSalary=0;
+  const fin={purchases:{made_in_oman:0,local_supplier:0,direct_import:0,sme_purchase:0},services:{local_service:0,foreign_service:0,sme_service:0},subcontracts:{local:0,foreign:0,sme:0}};
+  for(const row of rr){
+   const d=row.report_data||{},cum=String(d.report_type||'ربعي منفصل').includes('تراكمي'),salCum=String(d.salary_input_type||'رواتب الربع').includes('تراكمية');
+   const os=Number(d.omani_salary||0),fs=Number(d.foreign_salary||0);
+   if(salCum){omSalary=os;foSalary=fs}else{omSalary+=os;foSalary+=fs}
+   for(const [g,keys] of Object.entries({purchases:['made_in_oman','local_supplier','direct_import','sme_purchase'],services:['local_service','foreign_service','sme_service'],subcontracts:['local','foreign','sme']})){
+    for(const k of keys){const v=Number(d[g]?.[k]||0);fin[g][k]=cum?v:fin[g][k]+v}
+   }
+  }
+  const c=calcCfg().coefficients,goodsSpend=Object.values(fin.purchases).reduce((a,v)=>a+v,0),made=fin.purchases.made_in_oman;
+  const spend=omSalary+foSalary+goodsSpend+Object.values(fin.services).reduce((a,v)=>a+v,0)+Object.values(fin.subcontracts).reduce((a,v)=>a+v,0);
+  const lc=omSalary*c.omaniSalary+foSalary*c.foreignSalary+made*c.madeInOman+fin.purchases.local_supplier*c.localSupplier+fin.purchases.direct_import*c.directImport+fin.purchases.sme_purchase*c.smePurchase+fin.services.local_service*c.localService+fin.services.foreign_service*c.foreignService+fin.services.sme_service*c.smeService+Object.values(fin.subcontracts).reduce((a,v)=>a+v,0)*c.smeSubcontract;
+  const latest=rr[rr.length-1],w=latest?.report_data?.workforce_categories||[];
+  const omWorkers=w.reduce((a,x)=>a+Number(x.omani||0),0),foWorkers=w.reduce((a,x)=>a+Number(x.foreign||0),0),workforceTotal=omWorkers+foWorkers;
+  return {reports:rr,spend:Number(p.total_spend??spend),lc:Number(p.total_local_content??lc),omanization:workforceTotal?omWorkers/workforceTotal*100:Number(p.omanization_pct||0),sme:Number(p.sme_pct||0),goods:goodsSpend?made/goodsSpend*100:0,value:Number(p.total_project_value||0)};
+ };
+ const E0=E;
  const rows=entities.map((x,idx)=>{
-   const pp=allProjects.filter(p=>String(p.government_entity_id||'')===String(x.id));
-   const target='entity-projects-'+idx;
-   const tv=pp.reduce((a,p)=>a+Number(p.total_project_value||0),0);
-   const spend=pp.reduce((a,p)=>a+Number(p.total_spend||0),0);
-   const lc=pp.reduce((a,p)=>a+Number(p.total_local_content||0),0);
-   const om=pp.length?pp.reduce((a,p)=>a+Number(p.omanization_pct||0),0)/pp.length:0;
-   const sme=pp.length?pp.reduce((a,p)=>a+Number(p.sme_pct||0),0)/pp.length:0;
-
-   const projectRows=pp.map((p,i)=>{
-     const rr=reportsFor(p.id),latest=rr[rr.length-1];
-     return '<tr><td>'+String(i+1)+'</td><td><a class="project-link entity-project-link" href="#" data-project-id="'+E(p.id)+'">'+E(p.project_name)+'</a></td><td>'+E(p.tender_type||p.serial_no||'—')+'</td><td>'+N(p.total_project_value)+'</td><td>'+Number(p.progress_pct||0).toFixed(1)+'%</td><td>'+E(latest?.annual_period||'—')+' / '+E(latest?.quarter||'—')+'</td><td>'+E(p.project_status||'—')+'</td></tr>';
-   }).join('');
-
-   return '<tr class="entity-row" data-target="'+target+'"><td><button type="button" class="entity-toggle"><span class="entity-chevron">⌄</span><b>'+E(x.name)+'</b></button></td><td>'+pp.length+'</td><td>'+N(tv)+'</td><td>'+N(spend)+'</td><td><button type="button" class="btn entity-card-view" onclick="event.stopPropagation();window.icvViewEntityCard(\''+E(x.id)+'\')">عرض</button></td></tr>'+
-   '<tr id="'+target+'" class="entity-projects-row" hidden><td colspan="5"><div class="entity-projects-panel"><div class="entity-projects-head"><strong>مشاريع الجهة</strong><span>'+pp.length+' مشروع</span></div>'+
-   (projectRows?'<div class="table-wrap entity-projects-table"><table><thead><tr><th>م</th><th>اسم المشروع</th><th>رقم المشروع/المناقصة</th><th>قيمة المشروع</th><th>نسبة الإنجاز</th><th>السنة / الربع</th><th>الحالة</th></tr></thead><tbody>'+projectRows+'</tbody></table></div>':'<div class="entity-empty">لا توجد مشاريع مرتبطة بهذه الجهة.</div>')+
-   '</div></td></tr>';
+  const pp=allProjects.filter(p=>String(p.government_entity_id||'')===String(x.id)),target='entity-projects-'+idx;
+  const pm=pp.map(p=>({p,m:metricsFor(p)}));
+  const tv=pp.reduce((a,p)=>a+Number(p.total_project_value||0),0),spend=pm.reduce((a,x)=>a+x.m.spend,0),lc=pm.reduce((a,x)=>a+x.m.lc,0);
+  const projectRows=pm.map(({p,m},i)=>'<tr><td><a class="project-link entity-project-link" href="#" data-project-id="'+E(p.id)+'">'+E(p.project_name)+'</a></td><td>'+N(m.value)+'</td><td>'+N(m.spend)+'</td><td>'+N(m.lc)+'</td><td>'+m.omanization.toFixed(1)+'%</td><td>'+m.sme.toFixed(1)+'%</td><td>'+m.goods.toFixed(1)+'%</td></tr>').join('');
+  return '<tr class="entity-row" data-target="'+target+'"><td><button type="button" class="entity-toggle"><span class="entity-chevron">⌄</span><b>'+E(x.name)+'</b></button></td><td>'+pp.length+'</td><td>'+N(tv)+'</td><td>'+N(spend)+'</td><td>'+N(lc)+'</td><td><button type="button" class="btn entity-card-view" onclick="event.stopPropagation();window.icvViewEntityCard(\''+E(x.id)+'\')">عرض</button></td></tr>'+
+  '<tr id="'+target+'" class="entity-projects-row" hidden><td colspan="6"><div class="entity-projects-panel"><div class="entity-projects-head"><strong>مشاريع الجهة</strong><span>'+pp.length+' مشروع</span></div>'+
+  (projectRows?'<div class="table-wrap entity-projects-table"><table><thead><tr><th>المشروع</th><th>القيمة</th><th>الإنفاق</th><th>المحتوى المحلي</th><th>التعمين%</th><th>SME%</th><th>نسبة استيفاء السلع%</th></tr></thead><tbody>'+projectRows+'</tbody></table></div>':'<div class="entity-empty">لا توجد مشاريع مرتبطة بهذه الجهة.</div>')+
+  '</div></td></tr>';
  }).join('');
-
  b.innerHTML='<div class="panel"><div class="toolbar"><div><h2>الجهات الحكومية</h2><div class="muted">اضغط على اسم الجهة لعرض مشاريعها أو إخفائها.</div></div>'+(canEdit()?'<button class="btn primary" onclick="window.icvAddEntityV2()">+ إضافة جهة</button>':'')+'</div>'+
  '<div class="entities-filter"><div class="field"><label>فلتر الجهة</label><select id="entityFilter"><option value="">جميع الجهات</option>'+entities.map(x=>'<option value="'+E(x.id)+'">'+E(x.name)+'</option>').join('')+'</select></div></div>'+
- '<div class="table-wrap"><table><thead><tr><th>الجهة الحكومية</th><th>عدد المشاريع</th><th>قيمة المشاريع</th><th>الإنفاق</th><th>بطاقة الجهة</th></tr></thead><tbody id="entityRows">'+rows+'</tbody></table></div></div>';
-
+ '<div class="table-wrap"><table><thead><tr><th>الجهة الحكومية</th><th>عدد المشاريع</th><th>قيمة المشاريع</th><th>الإنفاق</th><th>المحتوى المحلي</th><th>بطاقة الجهة</th></tr></thead><tbody id="entityRows">'+rows+'</tbody></table></div></div>';
  const tbody=document.getElementById('entityRows');
  tbody.querySelectorAll('.entity-row').forEach(row=>row.addEventListener('click',e=>{
-   if(e.target.closest('.entity-project-link'))return;
-   const target=document.getElementById(row.dataset.target);if(!target)return;
-   const opening=target.hidden;target.hidden=!opening;row.classList.toggle('expanded',opening);
+  if(e.target.closest('.entity-card-view')||e.target.closest('.entity-project-link'))return;
+  const target=document.getElementById(row.dataset.target);if(!target)return;
+  const opening=target.hidden;target.hidden=!opening;row.classList.toggle('expanded',opening);
  }));
  tbody.querySelectorAll('.entity-project-link').forEach(a=>a.addEventListener('click',e=>{
-   e.preventDefault();e.stopPropagation();
-   const id=a.dataset.projectId;
-   if(window.openICVProject)window.openICVProject(id);
-   else if(window.viewProject)window.viewProject(id);
+  e.preventDefault();e.stopPropagation();const id=a.dataset.projectId;
+  if(window.openICVProject)window.openICVProject(id);else if(window.viewProject)window.viewProject(id);
  }));
  document.getElementById('entityFilter')?.addEventListener('change',e=>{
-   const v=e.target.value;
-   [...tbody.querySelectorAll('.entity-row')].forEach((row,i)=>{
-     const match=!v||String(entities[i]?.id)===String(v),target=document.getElementById(row.dataset.target);
-     row.style.display=match?'':'none';
-     if(target){target.style.display=match?'':'none';if(!match)target.hidden=true;}
-   });
+  const v=e.target.value;
+  [...tbody.querySelectorAll('.entity-row')].forEach(row=>{
+   const ix=Number(row.dataset.target.replace('entity-projects-','')),match=!v||String(entities[ix]?.id)===String(v),target=document.getElementById(row.dataset.target);
+   row.style.display=match?'':'none';if(target){target.style.display=match?'':'none';if(!match)target.hidden=true;}
+  });
  });
 }
 
