@@ -104,9 +104,15 @@ async function projectPage(id){ if(window.icvLoadPlatformSettings)await window.i
    const parseDate=v=>{if(!v)return null;const d=new Date(String(v).slice(0,10)+'T00:00:00');return Number.isNaN(d.getTime())?null:d};
    const start=parseDate(p.start_date),end=parseDate(p.end_date),today=new Date();today.setHours(0,0,0,0);
    if(!start||!end||end<start)return {target:0,due:0,received:0,late:0};
+   const quarterStart=(year,q)=>new Date(year,(q-1)*3,1);
    const quarterEnd=(year,q)=>new Date(year,q*3,0);
    const targets=[];
-   for(let year=start.getFullYear();year<=end.getFullYear();year++)for(let q=1;q<=4;q++){const dueDate=quarterEnd(year,q);if(dueDate>=start&&dueDate<=end)targets.push({year,q,dueDate})}
+   for(let year=start.getFullYear();year<=end.getFullYear();year++)for(let q=1;q<=4;q++){
+     const qStart=quarterStart(year,q),qEnd=quarterEnd(year,q);
+     // Include every calendar quarter overlapping the project. Its deadline is quarter-end,
+     // unless the project ends first, in which case the project end date is the deadline.
+     if(qStart<=end&&qEnd>=start){const dueDate=qEnd>end?new Date(end):qEnd;targets.push({year,q,dueDate})}
+   }
    const dueTargets=targets.filter(x=>x.dueDate<=today);
    const targetKeys=new Set(targets.map(x=>x.year+'_Q'+x.q)),dueKeys=new Set(dueTargets.map(x=>x.year+'_Q'+x.q));
    const receivedKeys=new Set((reports||[]).filter(r=>{const y=Number(r.annual_period),q=Number(String(r.quarter||'').replace(/\\D/g,''));return y&&q>=1&&q<=4&&targetKeys.has(y+'_Q'+q)}).map(r=>Number(r.annual_period)+'_Q'+Number(String(r.quarter||'').replace(/\\D/g,''))));
