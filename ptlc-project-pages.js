@@ -254,6 +254,9 @@ async function renderEntitiesV2(){
  });
 }
 
+// Ensure the later routing layer uses the redesigned government-entities page.
+window.icvEntitiesPage=renderEntitiesV2;
+
 window.icvViewEntityCard=async id=>{
  const r=await dbx.from('government_entities').select('*').eq('id',id).maybeSingle();
  const e=r.data;if(!e)return;
