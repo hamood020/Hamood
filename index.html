@@ -150,6 +150,11 @@ function renderDashboard(){
  const quarterKeys=Object.keys(quarters).sort().slice(-8);
  const maxQ=Math.max(1,...quarterKeys.flatMap(k=>[quarters[k].spend,quarters[k].lc]));
  const qBars=quarterKeys.length?quarterKeys.map(k=>'<div class="icv-q-col"><div class="icv-q-bars"><i class="spend" style="height:'+Math.max(2,quarters[k].spend/maxQ*100)+'%" title="الصرف '+money(quarters[k].spend)+'"></i><i class="local" style="height:'+Math.max(2,quarters[k].lc/maxQ*100)+'%" title="المحتوى المحلي '+money(quarters[k].lc)+'"></i></div><small>'+esc(k)+'</small></div>').join(''):'<div class="icv-empty">ستظهر البيانات بعد تسجيل التقارير الربع سنوية.</div>';
+ const stalledCount=dashboardProjects.filter(p=>String(p.project_status||'').includes('متعثر')).length;
+ const plannedProjectIds=new Set((plans||[]).map(p=>String(p.project_id)).filter(Boolean));
+ const noPlanCount=dashboardProjects.filter(p=>!plannedProjectIds.has(String(p.id))).length;
+ const reportedProjectIds=new Set(dashboardReports.map(r=>String(r.project_id)).filter(Boolean));
+ const noReportCount=dashboardProjects.filter(p=>!reportedProjectIds.has(String(p.id))).length;
  const stateCounts=[...new Set(dashboardProjects.map(p=>p.project_status||'غير محدد'))].map(st=>[st,dashboardProjects.filter(p=>(p.project_status||'غير محدد')===st).length]);
  const stateHtml=stateCounts.map(x=>'<div class="icv-state-row"><span>'+esc(x[0])+'</span><div class="icv-track"><i style="width:'+(dashboardProjects.length?x[1]/dashboardProjects.length*100:0)+'%"></i></div><b>'+x[1]+'</b></div>').join('')||'<div class="icv-empty">لا توجد مشاريع مسجلة.</div>';
  const rankRows=rows=>rows.length?rows.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(x[0])+'</td><td>'+money(x[1])+'</td></tr>').join(''):'<tr><td colspan="3">لا توجد بيانات</td></tr>';
@@ -200,10 +205,10 @@ function renderDashboard(){
  '<div><small>استيفاء SME</small><b>'+smeOK+' / '+smeProjects.length+'</b><small>مشاريع مستوفية</small></div>'+
  '</div><div style="height:14px"></div><h2>حالة المشاريع</h2>'+stateHtml+'</div>'+
  '</div>'+
- '<div class="icv-panel"><h2>مؤشرات الاستيفاء</h2><div class="icv-subtitle">عدد المشاريع المستوفية حسب المؤشر</div><div class="icv-compliance">'+
- '<div><small>التعمين</small><b>'+pct(oman/100)+'</b><small>متوسط النسبة المسجلة</small></div>'+
- '<div><small>السلع المحلية</small><b>'+goodsOK+' / '+goodsProjects.length+'</b><small>مشاريع مستوفية</small></div>'+
- '<div><small>خدمات وعقود SME</small><b>'+smeOK+' / '+smeProjects.length+'</b><small>مشاريع مستوفية</small></div>'+
+ '<div class="icv-panel"><h2>تنبيهات ومتابعة المشاريع</h2><div class="icv-subtitle">عناصر تحتاج إلى متابعة إدارية — حسب البيانات المسجلة</div><div class="icv-compliance">'+
+ '<div><small>مشاريع متعثرة</small><b>'+stalledCount+'</b><small>تحتاج إلى متابعة حالة التنفيذ</small></div>'+
+ '<div><small>مشاريع بدون خطة محتوى محلي</small><b>'+noPlanCount+'</b><small>الخطة اختيارية ويمكن استكمالها عند الحاجة</small></div>'+
+ '<div><small>مشاريع بدون تقارير ربع سنوية</small><b>'+noReportCount+'</b><small>لم يُسجّل لها تقرير حتى الآن</small></div>'+
  '</div></div>'+
  '<div class="icv-bottom">'+
  '<div class="icv-panel"><h2>الجهات الأعلى صرفًا</h2><div class="icv-subtitle">حسب مجموع الصرف المسجل</div><table class="icv-mini-table"><thead><tr><th>#</th><th>الجهة الحكومية</th><th>الصرف</th></tr></thead><tbody>'+rankRows(topEntities)+'</tbody></table></div>'+
