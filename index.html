@@ -136,6 +136,9 @@ function renderDashboard(){
  const targetLC=dashboardProjects.reduce((a,p)=>a+Number(p.target_local_content||p.total_local_content_target||0),0);
  const pctSafe=(a,b)=>b?Math.max(0,Math.min(100,a/b*100)):0;
  const avgSpend=pctSafe(lc,spend);
+ const complianceLC=complianceProjects.reduce((a,p)=>a+Number(p.total_local_content||0),0);
+ const complianceSpend=complianceProjects.reduce((a,p)=>a+Number(p.total_spend||0),0);
+ const complianceAvgSpend=pctSafe(complianceLC,complianceSpend);
  const avgTarget=pctSafe(lc,targetLC);
  const oman=complianceProjects.length?complianceProjects.reduce((a,p)=>a+Number(p.omanization_pct||0),0)/complianceProjects.length:0;
  const smeProjects=complianceProjects.filter(p=>p.sme_10_status&&p.sme_10_status!=='-');
@@ -201,7 +204,7 @@ function renderDashboard(){
  '<div class="icv-home-grid">'+
  '<div class="icv-panel"><h2>الصرف والمحتوى المحلي عبر الأرباع</h2><div class="icv-subtitle">مقارنة التقارير المسجلة في النظام</div><div class="icv-legend"><span><i style="background:#b9cbd2"></i>الصرف الفعلي</span><span><i style="background:#087f78"></i>المحتوى المحلي الفعلي</span></div><div class="icv-q-chart">'+qBars+'</div></div>'+
  '<div class="icv-panel"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px"><h2 style="margin:0">مستوى الالتزام</h2><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><label for="icv-dashboard-entity-filter" style="font-size:12px;font-weight:700;color:#20333b">الجهة الحكومية:</label><select id="icv-dashboard-entity-filter" onchange="renderDashboard()" style="min-width:180px;max-width:100%;border:1px solid #d7e1e5;border-radius:10px;padding:7px 10px;background:#fff;color:#20333b"><option value="all">جميع الجهات الحكومية</option>'+entitiesForFilter.map(e=>'<option value="'+esc(e[0])+'" '+(String(e[0])===String(selectedEntityId)?'selected':'')+'>'+esc(e[1])+'</option>').join('')+'</select></div></div><div class="icv-subtitle">مؤشرات الالتزام للجهة المختارة فقط</div><div class="icv-compliance">'+
- '<div><small>المعدل العام للمحتوى المحلي</small><b>'+pct(avgSpend/100)+'</b><small>من الصرف الفعلي</small></div>'+
+ '<div><small>المعدل العام للمحتوى المحلي</small><b>'+pct(complianceAvgSpend)+'</b><small>من الصرف الفعلي للجهة المختارة</small></div>'+
  '<div><small>متوسط التعمين</small><b>'+pct(oman/100)+'</b><small>حسب بيانات المشاريع</small></div>'+
  '<div><small>استيفاء SME</small><b>'+smeOK+' / '+smeProjects.length+'</b><small>مشاريع مستوفية</small></div>'+
  '</div><div style="height:14px"></div><h2>حالة المشاريع</h2>'+stateHtml+'</div>'+
