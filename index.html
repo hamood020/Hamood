@@ -124,30 +124,34 @@ function showPage(name,btn){
 }
 function renderDashboard(){
  const root=document.getElementById('page-dashboard');if(!root)return;
- const value=projects.reduce((a,p)=>a+Number(p.total_project_value||0),0);
- const lc=projects.reduce((a,p)=>a+Number(p.total_local_content||0),0);
- const spend=projects.reduce((a,p)=>a+Number(p.total_spend||0),0);
- const targetLC=projects.reduce((a,p)=>a+Number(p.target_local_content||p.total_local_content_target||0),0);
+ const entitiesForFilter=[...new Map(projects.filter(p=>p.government_entity_id).map(p=>[p.government_entity_id,p.government_entities?.name||'جهة حكومية']))].sort((a,b)=>String(a[1]).localeCompare(String(b[1]),'ar'));
+ const selectedEntityId=document.getElementById('icv-dashboard-entity-filter')?.value||'all';
+ const dashboardProjects=selectedEntityId==='all'?projects:projects.filter(p=>String(p.government_entity_id)===String(selectedEntityId));
+ const dashboardReports=(reports||[]).filter(r=>selectedEntityId==='all'||String(r.government_entity_id||r.projects?.government_entity_id||'')===String(selectedEntityId)||dashboardProjects.some(p=>String(p.id)===String(r.project_id)));
+ const value=dashboardProjects.reduce((a,p)=>a+Number(p.total_project_value||0),0);
+ const lc=dashboardProjects.reduce((a,p)=>a+Number(p.total_local_content||0),0);
+ const spend=dashboardProjects.reduce((a,p)=>a+Number(p.total_spend||0),0);
+ const targetLC=dashboardProjects.reduce((a,p)=>a+Number(p.target_local_content||p.total_local_content_target||0),0);
  const pctSafe=(a,b)=>b?Math.max(0,Math.min(100,a/b*100)):0;
  const avgSpend=pctSafe(lc,spend);
  const avgTarget=pctSafe(lc,targetLC);
- const oman=projects.length?projects.reduce((a,p)=>a+Number(p.omanization_pct||0),0)/projects.length:0;
- const smeProjects=projects.filter(p=>p.sme_10_status&&p.sme_10_status!=='-');
+ const oman=dashboardProjects.length?dashboardProjects.reduce((a,p)=>a+Number(p.omanization_pct||0),0)/dashboardProjects.length:0;
+ const smeProjects=dashboardProjects.filter(p=>p.sme_10_status&&p.sme_10_status!=='-');
  const smeOK=smeProjects.filter(p=>p.sme_10_status==='مستوفي').length;
- const goodsProjects=projects.filter(p=>p.made_in_oman_status&&p.made_in_oman_status!=='-');
+ const goodsProjects=dashboardProjects.filter(p=>p.made_in_oman_status&&p.made_in_oman_status!=='-');
  const goodsOK=goodsProjects.filter(p=>p.made_in_oman_status==='مستوفي').length;
  const entityTotals={};projects.forEach(p=>{const n=p.government_entities?.name||'غير محدد';entityTotals[n]=(entityTotals[n]||0)+Number(p.total_spend||0)});
  const companyTotals={};projects.forEach(p=>{const n=p.companies?.name||'غير محددة';companyTotals[n]=(companyTotals[n]||0)+Number(p.total_spend||0)});
  const topEntities=Object.entries(entityTotals).sort((a,b)=>b[1]-a[1]).slice(0,5);
  const topCompanies=Object.entries(companyTotals).filter(x=>x[0]!=='غير محددة').sort((a,b)=>b[1]-a[1]).slice(0,5);
- const bestProjects=[...projects].sort((a,b)=>Number(b.local_content_project_pct||0)-Number(a.local_content_project_pct||0)).slice(0,3);
+ const bestProjects=[...dashboardProjects].sort((a,b)=>Number(b.local_content_project_pct||0)-Number(a.local_content_project_pct||0)).slice(0,3);
  const quarters={};
- (reports||[]).forEach(r=>{const d=r.report_data||{},year=Number(r.annual_period||d.year||new Date().getFullYear()),q=String(r.quarter||d.quarter||'').match(/[1-4]/)?.[0];if(!q)return;const key=year+'-Q'+q;if(!quarters[key])quarters[key]={spend:0,lc:0};quarters[key].spend+=Number(d.total_spend||d.actual_spend||d.spend||0);quarters[key].lc+=Number(d.total_local_content||d.local_content_actual||d.local_content||0)});
+ dashboardReports.forEach(r=>{if(selectedEntityId!=='all'&&!dashboardProjects.some(p=>String(p.id)===String(r.project_id)))return;const d=r.report_data||{},year=Number(r.annual_period||d.year||new Date().getFullYear()),q=String(r.quarter||d.quarter||'').match(/[1-4]/)?.[0];if(!q)return;const key=year+'-Q'+q;if(!quarters[key])quarters[key]={spend:0,lc:0};quarters[key].spend+=Number(d.total_spend||d.actual_spend||d.spend||0);quarters[key].lc+=Number(d.total_local_content||d.local_content_actual||d.local_content||0)});
  const quarterKeys=Object.keys(quarters).sort().slice(-8);
  const maxQ=Math.max(1,...quarterKeys.flatMap(k=>[quarters[k].spend,quarters[k].lc]));
  const qBars=quarterKeys.length?quarterKeys.map(k=>'<div class="icv-q-col"><div class="icv-q-bars"><i class="spend" style="height:'+Math.max(2,quarters[k].spend/maxQ*100)+'%" title="الصرف '+money(quarters[k].spend)+'"></i><i class="local" style="height:'+Math.max(2,quarters[k].lc/maxQ*100)+'%" title="المحتوى المحلي '+money(quarters[k].lc)+'"></i></div><small>'+esc(k)+'</small></div>').join(''):'<div class="icv-empty">ستظهر البيانات بعد تسجيل التقارير الربع سنوية.</div>';
- const stateCounts=[...new Set(projects.map(p=>p.project_status||'غير محدد'))].map(st=>[st,projects.filter(p=>(p.project_status||'غير محدد')===st).length]);
- const stateHtml=stateCounts.map(x=>'<div class="icv-state-row"><span>'+esc(x[0])+'</span><div class="icv-track"><i style="width:'+(projects.length?x[1]/projects.length*100:0)+'%"></i></div><b>'+x[1]+'</b></div>').join('')||'<div class="icv-empty">لا توجد مشاريع مسجلة.</div>';
+ const stateCounts=[...new Set(dashboardProjects.map(p=>p.project_status||'غير محدد'))].map(st=>[st,dashboardProjects.filter(p=>(p.project_status||'غير محدد')===st).length]);
+ const stateHtml=stateCounts.map(x=>'<div class="icv-state-row"><span>'+esc(x[0])+'</span><div class="icv-track"><i style="width:'+(dashboardProjects.length?x[1]/dashboardProjects.length*100:0)+'%"></i></div><b>'+x[1]+'</b></div>').join('')||'<div class="icv-empty">لا توجد مشاريع مسجلة.</div>';
  const rankRows=rows=>rows.length?rows.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(x[0])+'</td><td>'+money(x[1])+'</td></tr>').join(''):'<tr><td colspan="3">لا توجد بيانات</td></tr>';
  root.innerHTML='<style>'+
  '#page-dashboard .icv-home{display:flex;flex-direction:column;gap:18px}'+
@@ -181,7 +185,7 @@ function renderDashboard(){
  '@media(max-width:760px){#page-dashboard .icv-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#page-dashboard .icv-home-grid,#page-dashboard .icv-bottom{grid-template-columns:1fr}#page-dashboard .icv-compliance{grid-template-columns:repeat(3,minmax(0,1fr))}#page-dashboard .icv-kpi,#page-dashboard .icv-panel{padding:13px}}'+
  '</style><div class="icv-home">'+
  '<div class="icv-kpis">'+
- '<div class="icv-kpi"><div class="icv-label">عدد المشاريع</div><strong>'+projects.length+'</strong><small>مشروع مسجل</small></div>'+
+ '<div class="icv-kpi"><div class="icv-label">عدد المشاريع</div><strong>'+dashboardProjects.length+'</strong><small>مشروع مسجل</small></div>'+
  '<div class="icv-kpi"><div class="icv-label">إجمالي قيمة المشاريع</div><strong>'+money(value)+'</strong><small>ريال عماني</small></div>'+
  '<div class="icv-kpi"><div class="icv-label">إجمالي الصرف</div><strong>'+money(spend)+'</strong><small>الصرف المسجل للمشاريع</small></div>'+
  '<div class="icv-kpi"><div class="icv-label">المحتوى المحلي المستهدف</div><strong>'+money(targetLC)+'</strong><small>وفق بيانات الخطط المتاحة</small></div>'+
