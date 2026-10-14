@@ -52,7 +52,10 @@ async function projectPage(id){ if(window.icvLoadPlatformSettings)await window.i
  const planDisplayPeriod=periodKey?(pd.periods?.[periodKey]||pd.periods?.[periodKey.split('_')[0]]||null):null;
  const planDisplayOm=planWorkTotals.omani;
  const planDisplayForeign=planWorkTotals.foreign;
- const selectedSalary=salaryRecords[periodKey]||{};
+ const salaryPeriodKeys=Object.keys(salaryRecords).filter(k=>salaryRecords[k]&&(n(salaryRecords[k].omani_salary)!==0||n(salaryRecords[k].foreign_salary)!==0));
+ const salarySortKey=k=>{const m=k.match(/Year\s*(\d+)_Q(\d+)/i);return m?(Number(m[1])*10+Number(m[2])):0};
+ const latestSalaryKey=salaryPeriodKeys.sort((a,b)=>salarySortKey(a)-salarySortKey(b)).at(-1)||'';
+ const selectedSalary=(periodKey&&salaryRecords[periodKey])||salaryRecords[latestSalaryKey]||{};
  const planDisplayOmaniSalary=n(selectedSalary.omani_salary);
  const planDisplayForeignSalary=n(selectedSalary.foreign_salary);
  const planPeriod=(pd.periods&&pd.periods[periodKey])||{};
