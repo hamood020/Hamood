@@ -39,8 +39,10 @@ async function projectPage(id){ if(window.icvLoadPlatformSettings)await window.i
  const n=v=>Number(v||0), money=v=>n(v).toLocaleString('en-US',{maximumFractionDigits:0})+' ر.ع', pct=v=>n(v).toFixed(1)+'%', esc2=E;
  const om=n(ld.omani_total), foreign=n(ld.foreign_total), total=om+foreign, omPct=total?om/total*100:0;
  const yearNo=(String(p.annual_update||'').match(/\\d+/)||[''])[0], qNo=String(p.current_quarter||'').replace(/\\D/g,'')||'', periodKey=yearNo&&qNo?(yearNo+'_'+qNo):'';
- const planWorkforce=Object.values(pd.workforce||{});
- const planWorkTotals=planWorkforce.reduce((a,v)=>{const cats=v.categories||[];return {omani:a.omani+cats.reduce((x,c)=>x+n(c.omani),0),foreign:a.foreign+cats.reduce((x,c)=>x+n(c.foreign),0),omani_salary:a.omani_salary+n(v.omani_salary),foreign_salary:a.foreign_salary+n(v.foreign_salary)}},{omani:0,foreign:0,omani_salary:0,foreign_salary:0});
+ const workforceData=pd.workforce||{};
+ const workforceCategories=Array.isArray(workforceData.categories)?workforceData.categories:[];
+ const salaryRecords=workforceData.salaries||{};
+ const planWorkTotals={omani:workforceCategories.reduce((a,c)=>a+n(c.omani),0),foreign:workforceCategories.reduce((a,c)=>a+n(c.foreign),0),omani_salary:0,foreign_salary:0};
  const planPurchaseRows=pd.purchases||[], planServiceRows=pd.services||[], planSubRows=pd.subcontracts||[];
  const sumPlanRows=(rows,typeValue)=>rows.filter(x=>!typeValue||((x.supply_type||x.supplier_type)===typeValue)).reduce((a,x)=>a+n(x.value),0);
  const planPurchaseTotals={made_in_oman:sumPlanRows(planPurchaseRows,'صنع في عمان'),local_supplier:sumPlanRows(planPurchaseRows,'مورد محلي'),direct_import:sumPlanRows(planPurchaseRows,'استيراد مباشر'),sme_purchase:sumPlanRows(planPurchaseRows,'مورد المؤسسات الصغيرة والمتوسطة')};
@@ -48,27 +50,18 @@ async function projectPage(id){ if(window.icvLoadPlatformSettings)await window.i
  const planSubTotals={local:sumPlanRows(planSubRows,'مزود محلي'),foreign:sumPlanRows(planSubRows,'مزود أجنبي'),sme:sumPlanRows(planSubRows,'مؤسسة صغيرة ومتوسطة')};
  const planTrainingRows=pd.training||[], planTrainingTotal=planTrainingRows.reduce((a,x)=>a+n(x.ojt)+n(x.tfe)+n(x.tfq),0);
  const planDisplayPeriod=periodKey?(pd.periods?.[periodKey]||pd.periods?.[periodKey.split('_')[0]]||null):null;
- const planDisplayOm=planDisplayPeriod?n(planDisplayPeriod.omani):planWorkTotals.omani;
- const planDisplayForeign=planDisplayPeriod?n(planDisplayPeriod.foreign):planWorkTotals.foreign;
- const planDisplayOmaniSalary=planDisplayPeriod?n(planDisplayPeriod.omani_salary):planWorkTotals.omani_salary;
- const planDisplayForeignSalary=planDisplayPeriod?n(planDisplayPeriod.foreign_salary):planWorkTotals.foreign_salary;
+ const planDisplayOm=planWorkTotals.omani;
+ const planDisplayForeign=planWorkTotals.foreign;
+ const selectedSalary=salaryRecords[periodKey]||{};
+ const planDisplayOmaniSalary=n(selectedSalary.omani_salary);
+ const planDisplayForeignSalary=n(selectedSalary.foreign_salary);
  const planPeriod=(pd.periods&&pd.periods[periodKey])||{};
  const pickPlan=planDisplayPeriod;
  const planOm=planDisplayOm, planForeign=planDisplayForeign;
  const catPlan=(cat,who)=>{
    const idx=Number(String(cat).replace('cat',''))-1;
-   const workforce=pd.workforce||{}, keys=Object.keys(workforce);
-   const readCat=w=>w?.categories?.[idx]?.[who]??w?.categories?.[idx]?.[who==='foreign'?'non_omani':who];
-   const exact=periodKey?(workforce[periodKey]||workforce[periodKey.split('_')[0]]):null;
-   if(exact?.categories?.[idx]) return n(readCat(exact));
-   // Plan selector stores Year N_QN, whereas project metadata can store calendar year + quarter.
-   // For repeated quarters across multiple plan years, display the latest entered plan year.
-   const quarter=periodKey.match(/(?:^|_)(Q[1-4])$/)?.[1];
-   let candidates=quarter?keys.filter(k=>k.endsWith('_'+quarter)):keys;
-   if(!candidates.length)candidates=keys;
-   candidates.sort((a,b)=>(Number((a.match(/Year\s*(\d+)/i)||[])[1])||0)-(Number((b.match(/Year\s*(\d+)/i)||[])[1])||0));
-   const chosen=candidates[candidates.length-1];
-   return n(readCat(workforce[chosen]));
+   const row=workforceCategories[idx]||{};
+   return n(row[who]??row[who==='foreign'?'non_omani':who]);
  };
  const latestReport=latest||null, latestData=latestReport?.report_data||{};
  const reportCats=Array.isArray(latestData.workforce_categories)?latestData.workforce_categories:[];
