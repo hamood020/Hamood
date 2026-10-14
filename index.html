@@ -160,6 +160,9 @@ function renderDashboard(){
  const noPlanCount=dashboardProjects.filter(p=>!plannedProjectIds.has(String(p.id))).length;
  const reportedProjectIds=new Set(dashboardReports.map(r=>String(r.project_id)).filter(Boolean));
  const noReportCount=dashboardProjects.filter(p=>!reportedProjectIds.has(String(p.id))).length;
+ const reportsReceived=new Set(dashboardReports.map(r=>[String(r.project_id||''),String(r.annual_period||r.report_data?.year||''),String(r.quarter||r.report_data?.quarter||'')].join('|'))).size;
+ const reportsTargeted=dashboardProjects.length*4;
+ const reportCompletionPct=reportsTargeted?Math.min(100,reportsReceived/reportsTargeted*100):0;
  const stateCounts=[...new Set(dashboardProjects.map(p=>p.project_status||'غير محدد'))].map(st=>[st,dashboardProjects.filter(p=>(p.project_status||'غير محدد')===st).length]);
  const stateHtml=stateCounts.map(x=>'<div class="icv-state-row"><span>'+esc(x[0])+'</span><div class="icv-track"><i style="width:'+(dashboardProjects.length?x[1]/dashboardProjects.length*100:0)+'%"></i></div><b>'+x[1]+'</b></div>').join('')||'<div class="icv-empty">لا توجد مشاريع مسجلة.</div>';
  const rankRows=rows=>rows.length?rows.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(x[0])+'</td><td>'+money(x[1])+'</td></tr>').join(''):'<tr><td colspan="3">لا توجد بيانات</td></tr>';
@@ -200,6 +203,7 @@ function renderDashboard(){
  '<div class="icv-kpi"><div class="icv-label">إجمالي الصرف</div><strong>'+money(spend)+'</strong><small>الصرف المسجل للمشاريع</small></div>'+
  '<div class="icv-kpi"><div class="icv-label">المحتوى المحلي المستهدف</div><strong>'+money(targetLC)+'</strong><small>وفق بيانات الخطط المتاحة</small></div>'+
  '<div class="icv-kpi"><div class="icv-label">المحتوى المحلي الفعلي</div><strong>'+money(lc)+'</strong><small>وفق بيانات المشاريع الحالية</small></div>'+
+ '<div class="icv-kpi"><div class="icv-label">نسبة إنجاز التقارير</div><strong>'+reportCompletionPct.toFixed(1)+'%</strong><small>'+reportsReceived+' من '+reportsTargeted+' تقريرًا مستهدفًا</small></div>'+
  '</div>'+
  '<div class="icv-home-grid">'+
  '<div class="icv-panel"><h2>الصرف والمحتوى المحلي عبر الأرباع</h2><div class="icv-subtitle">مقارنة التقارير المسجلة في النظام</div><div class="icv-legend"><span><i style="background:#b9cbd2"></i>الصرف الفعلي</span><span><i style="background:#087f78"></i>المحتوى المحلي الفعلي</span></div><div class="icv-q-chart">'+qBars+'</div></div>'+
