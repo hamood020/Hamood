@@ -112,10 +112,97 @@ function exportCompanyExcel(company,projects,allReports){
   }catch(err){console.error(err);alert('تعذر إنشاء ملف Excel: '+(err.message||err));}
 }
 
+function companyContactsHtml(contacts){
+  contacts=Array.isArray(contacts)?contacts:[];
+  if(!contacts.length)return '<div class="muted" style="padding:10px 0">لا توجد نقاط تواصل مسجلة لهذه الشركة.</div>';
+  return contacts.map(function(c){
+    return '<div style="background:#f8fafc;border:1px solid var(--line);border-radius:11px;padding:12px;margin:8px 0"><b style="display:block;margin-bottom:5px">'+esc(c.name||'—')+'</b>'+
+      (c.job_title||c.job?'<div style="font-size:12px;color:var(--muted);margin:3px 0">الوظيفة: '+esc(c.job_title||c.job)+'</div>':'')+
+      (c.phone?'<div style="font-size:12px;color:var(--muted);margin:3px 0">📞 '+esc(c.phone)+'</div>':'')+
+      (c.email?'<div style="font-size:12px;color:var(--muted);margin:3px 0">✉ '+esc(c.email)+'</div>':'')+
+      (c.project?'<div style="font-size:12px;color:var(--muted);margin:3px 0">المشروع / الجهة في الملف: '+esc(c.project)+'</div>':'')+
+      '</div>';
+  }).join('');
+}
+function companyContactEditorRow(c){
+  c=c||{};
+  return '<div class="icv-co-contact-edit-row" style="border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0">'+
+    '<div class="form-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">'+
+    '<div class="field"><label>اسم الموظف</label><input class="co-contact-name" value="'+esc(c.name||'')+'" maxlength="200"></div>'+
+    '<div class="field"><label>المسمى الوظيفي</label><input class="co-contact-job" value="'+esc(c.job_title||c.job||'')+'" maxlength="200"></div>'+
+    '<div class="field"><label>البريد الإلكتروني</label><input class="co-contact-email" type="text" value="'+esc(c.email||'')+'" maxlength="500"></div>'+
+    '<div class="field"><label>رقم الهاتف</label><input class="co-contact-phone" type="text" value="'+esc(c.phone||'')+'" maxlength="80"></div>'+
+    '<div class="field" style="grid-column:1/-1"><label>المشروع / الجهة المرتبطة (إن وجدت)</label><input class="co-contact-project" value="'+esc(c.project||'')+'" maxlength="250"></div></div>'+
+    '<button type="button" class="btn" data-co-contact-remove style="margin-top:8px">إزالة نقطة التواصل</button></div>';
+}
+function openCompanyContactsEditor(company,projects,allReports){
+  if(!['admin','editor'].includes(window.__icvProfile&&window.__icvProfile.role)){
+    alert('تعديل نقاط التواصل متاح لمدير النظام والمحرر فقط.');
+    return;
+  }
+  var db=window.__icvAccessClient||window.__icvDb;
+  if(!db){alert('تعذر الاتصال بقاعدة البيانات.');return;}
+  var current=Array.isArray(company.contact_points)?company.contact_points:[];
+  var editor=document.createElement('div');
+  editor.className='icv-co-modal';editor.id='icvCompanyContactEditor';editor.style.zIndex='10010';
+  editor.innerHTML='<div class="panel" dir="rtl"><div class="toolbar"><div><h2>نقاط التواصل — '+esc(company.name)+'</h2><div class="muted">أضف أو عدّل أو أزل نقاط التواصل الخاصة بالشركة.</div></div><button type="button" class="btn" id="icvCoContactClose">إغلاق</button></div>'+
+    '<div id="icvCoContactRows">'+current.map(companyContactEditorRow).join('')+'</div>'+
+    '<button type="button" class="btn" id="icvCoContactAdd">+ إضافة نقطة تواصل</button>'+
+    '<div id="icvCoContactStatus" class="muted" aria-live="polite" style="margin-top:12px"></div>'+
+    '<div class="icv-co-actions"><button type="button" class="btn primary" id="icvCoContactSave">حفظ نقاط التواصل</button><button type="button" class="btn" id="icvCoContactCancel">إلغاء</button></div></div>';
+  document.body.appendChild(editor);
+  var rows=document.getElementById('icvCoContactRows');
+  var status=document.getElementById('icvCoContactStatus');
+  editor.querySelector('#icvCoContactClose').onclick=function(){editor.remove();};
+  editor.querySelector('#icvCoContactCancel').onclick=function(){editor.remove();};
+  editor.onclick=function(ev){if(ev.target===editor)editor.remove();};
+  editor.querySelector('#icvCoContactAdd').onclick=function(){
+    rows.insertAdjacentHTML('beforeend',companyContactEditorRow({}));
+    bindRemoveButtons();
+  };
+  function bindRemoveButtons(){
+    rows.querySelectorAll('[data-co-contact-remove]').forEach(function(btn){
+      if(btn.dataset.bound==='1')return;
+      btn.dataset.bound='1';
+      btn.onclick=function(){btn.closest('.icv-co-contact-edit-row')?.remove();};
+    });
+  }
+  bindRemoveButtons();
+  editor.querySelector('#icvCoContactSave').onclick=async function(){
+    var contactRows=[].slice.call(rows.querySelectorAll('.icv-co-contact-edit-row'));
+    var contacts=contactRows.map(function(row){
+      var c={
+        name:(row.querySelector('.co-contact-name')?.value||'').trim(),
+        job_title:(row.querySelector('.co-contact-job')?.value||'').trim(),
+        email:(row.querySelector('.co-contact-email')?.value||'').trim(),
+        phone:(row.querySelector('.co-contact-phone')?.value||'').trim(),
+        project:(row.querySelector('.co-contact-project')?.value||'').trim()
+      };
+      Object.keys(c).forEach(function(k){if(!c[k])delete c[k];});
+      return c;
+    }).filter(function(c){return Object.keys(c).length>0;});
+    var saveBtn=editor.querySelector('#icvCoContactSave');
+    saveBtn.disabled=true;saveBtn.textContent='جارٍ الحفظ...';
+    try{
+      var result=await db.from('companies').update({contact_points:contacts}).eq('id',company.id).select('*').single();
+      if(result.error)throw result.error;
+      company.contact_points=Array.isArray(result.data?.contact_points)?result.data.contact_points:contacts;
+      editor.remove();
+      document.getElementById('icvCompanyModal')?.remove();
+      if(typeof window.icvSaveSuccess==='function')window.icvSaveSuccess('تم حفظ نقاط التواصل للشركة.');
+      openModal(company,projects,allReports);
+    }catch(error){
+      status.textContent='تعذر حفظ نقاط التواصل: '+String(error?.message||error);
+      saveBtn.disabled=false;saveBtn.textContent='حفظ نقاط التواصل';
+    }
+  };
+}
 function openModal(company,projects,allReports){
   var ps=projects.filter(function(p){return String(p.implementing_company_id||'')===String(company.id);});
   var ok=ps.filter(function(p){return metric(p).ok;}).length;
   var total=ps.reduce(function(a,p){return a+Number(p.total_project_value||0);},0);
+  var contactPoints=Array.isArray(company.contact_points)?company.contact_points:[];
+  var contactEditButton=['admin','editor'].includes(window.__icvProfile&&window.__icvProfile.role)?'<button type="button" class="btn" id="icvCoManageContacts">إدارة نقاط التواصل</button>':'';
   var ov=document.createElement('div');ov.className='icv-co-modal';ov.id='icvCompanyModal';
   var rows=ps.map(function(p,i){
     var m=metric(p);
@@ -124,9 +211,11 @@ function openModal(company,projects,allReports){
   ov.innerHTML='<div class="panel"><div class="toolbar"><div><h2>شركة '+esc(company.name)+'</h2><div class="muted">تفاصيل مشاريع الشركة ومؤشرات المحتوى المحلي</div></div><button class="btn" id="icvCoClose">إغلاق</button></div>'+
     '<div class="icv-co-actions"><button class="btn primary" id="icvCoPdf">تصدير تقرير PDF</button><button class="btn" id="icvCoExcel">تصدير Excel — التقرير الكامل</button></div>'+
     '<div class="icv-co-summary"><div><small>المشاريع</small><b>'+ps.length+'</b></div><div><small>قيمة المشاريع</small><b>'+money(total)+' ر.ع</b></div><div><small>مستوفٍ</small><b class="icv-co-ok">'+ok+'</b></div><div><small>غير مستوفٍ</small><b class="icv-co-bad">'+(ps.length-ok)+'</b></div><div><small>نسبة الاستيفاء</small><b>'+pct(ps.length?ok/ps.length*100:0)+'</b></div></div>'+
-    '<div class="table-wrap"><table><thead><tr><th>م</th><th>المشروع</th><th>الجهة الحكومية</th><th>القيمة</th><th>التعمين</th><th>SME</th><th>المحتوى المحلي</th><th>الحالة</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+    '<div class="panel" style="margin:14px 0"><div class="toolbar"><div><h3 style="margin:0">نقاط التواصل</h3><div class="muted">بيانات المختصين المسجلة لهذه الشركة أو المقاول.</div></div>'+contactEditButton+'</div><div id="icvCoContactView">'+companyContactsHtml(contactPoints)+'</div></div>'+
+    '<div class="panel"><div class="toolbar"><div><h3 style="margin:0">مشاريع الشركة</h3><div class="muted">'+ps.length+' مشروع</div></div></div><div class="table-wrap"><table><thead><tr><th>م</th><th>المشروع</th><th>الجهة الحكومية</th><th>القيمة</th><th>التعمين</th><th>SME</th><th>المحتوى المحلي</th><th>الحالة</th></tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="muted">لا توجد مشاريع مرتبطة بهذه الشركة.</td></tr>')+'</tbody></table></div></div></div>';
   document.body.appendChild(ov);
   document.getElementById('icvCoClose').onclick=function(){ov.remove();};
+  document.getElementById('icvCoManageContacts')?.addEventListener('click',function(){openCompanyContactsEditor(company,projects,allReports);});
   ov.onclick=function(e){if(e.target===ov)ov.remove();};
   document.getElementById('icvCoPdf').onclick=function(){
     var w=window.open('','_blank','width=1200,height=900');
@@ -152,12 +241,12 @@ async function renderCompanies(){
     var rr=await db.from('quarterly_reports').select('*').order('annual_period').order('quarter');
     if(rr.error)throw rr.error;
     var companies=cr.data||[],projects=pr.data||[],allReports=rr.data||[];
-    companies=companies.filter(function(c){return projects.some(function(p){return String(p.implementing_company_id||'')===String(c.id);});});
+    
     var totalValue=projects.reduce(function(a,p){return a+Number(p.total_project_value||0);},0);
     var totalOk=projects.filter(function(p){return metric(p).ok;}).length;
     var totalBad=projects.length-totalOk;
-    root.innerHTML='<div class="icv-co-kpis"><div class="card"><div class="label">إجمالي الشركات المنفذة</div><div class="value">'+companies.length+'</div></div><div class="card"><div class="label">إجمالي المشاريع</div><div class="value">'+projects.length+'</div></div><div class="card"><div class="label">إجمالي قيمة المشاريع</div><div class="value">'+money(totalValue)+'</div><div class="muted">ر.ع</div></div><div class="card"><div class="label">المشاريع المستوفية</div><div class="value icv-co-ok">'+totalOk+'</div></div><div class="card"><div class="label">المشاريع غير المستوفية</div><div class="value icv-co-bad">'+totalBad+'</div></div></div>'+
-      '<div class="panel"><div class="toolbar"><div><h2>الشركات المنفذة</h2><div class="muted">متابعة الشركات ومشاريعها ومؤشرات المحتوى المحلي.</div></div></div>'+
+    root.innerHTML='<div class="icv-co-kpis"><div class="card"><div class="label">إجمالي الشركات</div><div class="value">'+companies.length+'</div></div><div class="card"><div class="label">إجمالي المشاريع</div><div class="value">'+projects.length+'</div></div><div class="card"><div class="label">إجمالي قيمة المشاريع</div><div class="value">'+money(totalValue)+'</div><div class="muted">ر.ع</div></div><div class="card"><div class="label">المشاريع المستوفية</div><div class="value icv-co-ok">'+totalOk+'</div></div><div class="card"><div class="label">المشاريع غير المستوفية</div><div class="value icv-co-bad">'+totalBad+'</div></div></div>'+
+      '<div class="panel"><div class="toolbar"><div><h2>دليل الشركات</h2><div class="muted">متابعة الشركات ومشاريعها ومؤشرات المحتوى المحلي.</div></div></div>'+
       '<div class="icv-co-filters"><div class="field"><label>البحث باسم الشركة</label><input id="icvCoSearch" placeholder="اسم الشركة"></div><div class="field"><label>حالة الاستيفاء</label><select id="icvCoFilter"><option value="">الكل</option><option value="ok">مستوفٍ</option><option value="bad">غير مستوفٍ</option></select></div></div>'+
       '<div id="icvCoTable" class="table-wrap"></div></div>';
     function draw(){
