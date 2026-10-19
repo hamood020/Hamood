@@ -127,9 +127,13 @@ Deno.serve(async (req: Request) => {
         p_role: role,
         p_is_active: isActive,
         p_access_starts_at: start,
-        p_access_expires_at: end
+        p_access_expires_at: end,
+        p_actor_user_id: user.id
       });
       if (profileUpdateError) {
+        if (profileUpdateError.message?.includes("INVALID_ACTOR")) {
+          return json({ ok: false, error: "انتهت صلاحية الجلسة أو لم تعد تملك صلاحية مدير النظام" }, 403, cors.headers);
+        }
         if (profileUpdateError.message?.includes("LAST_ACTIVE_ADMIN")) {
           return json({ ok: false, error: "لا يمكن تعطيل أو تخفيض صلاحية آخر مدير نشط" }, 400, cors.headers);
         }
