@@ -1,4 +1,4 @@
--- Manual rollback for migration 20261019061100.
+-- Manual rollback for migration 20261019061203.
 -- Drops only the audit triggers added by that migration; existing project/report/plan audit triggers remain.
 DROP TRIGGER IF EXISTS audit_sensitive_changes ON public.companies;
 DROP TRIGGER IF EXISTS audit_sensitive_changes ON public.employee_followups;
