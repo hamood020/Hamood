@@ -197,6 +197,28 @@ function openCompanyContactsEditor(company,projects,allReports){
     }
   };
 }
+
+window.icvOpenCompanyContactsEditor=async function(id){
+  if(!['admin','editor'].includes(window.__icvProfile&&window.__icvProfile.role)){
+    alert('تعديل نقاط التواصل متاح لمدير النظام والمحرر فقط.');
+    return;
+  }
+  var db=window.__icvAccessClient||window.__icvDb;
+  if(!db){alert('تعذر الاتصال بقاعدة البيانات.');return;}
+  try{
+    var cr=await db.from('companies').select('*').eq('id',id).maybeSingle();
+    if(cr.error)throw cr.error;
+    if(!cr.data)throw new Error('الشركة غير موجودة.');
+    var results=await Promise.all([
+      db.from('projects').select('*,government_entities(name)').order('project_name'),
+      db.from('quarterly_reports').select('*').order('annual_period').order('quarter')
+    ]);
+    if(results[0].error)throw results[0].error;
+    if(results[1].error)throw results[1].error;
+    openCompanyContactsEditor(cr.data,results[0].data||[],results[1].data||[]);
+  }catch(error){alert('تعذر فتح نقاط التواصل: '+String(error&&error.message||error));}
+};
+
 function openModal(company,projects,allReports){
   var ps=projects.filter(function(p){return String(p.implementing_company_id||'')===String(company.id);});
   var ok=ps.filter(function(p){return metric(p).ok;}).length;
