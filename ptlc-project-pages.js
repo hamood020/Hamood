@@ -303,7 +303,7 @@ async function renderEntityProfiles(){
    const contacts=Array.isArray(e.contact_points)?e.contact_points:[];
    const contactHtml=contacts.length?contacts.map(c=>'<div class="entity-contact"><b>'+E(c.name||'—')+'</b><span>📞 '+E(c.phone||'—')+' &nbsp; | &nbsp; ✉ '+E(c.email||'—')+'</span></div>').join(''):'<div class="entity-profile-empty">لا توجد نقاط تواصل مضافة.</div>';
    const projectsHtml=projectsFor.length?projectsFor.map((p,i)=>'<div class="entity-profile-project"><b>'+String(i+1)+'.</b> <a class="project-link" href="#" data-project-id="'+E(p.id)+'">'+E(p.project_name)+'</a></div>').join(''):'<div class="entity-profile-empty">لا توجد مشاريع تابعة لهذه الجهة.</div>';
-   return '<article class="entity-profile-card"><button class="entity-profile-edit" title="تعديل" onclick="window.icvEditEntityProfile(\''+E(e.id)+'\')">✎</button><h3>'+E(e.name)+'</h3>'+contactHtml+
+   return '<article class="entity-profile-card">' +(canEdit()?'<button class="entity-profile-edit" title="تعديل" onclick="window.icvEditEntityProfile(\''+E(e.id)+'\')">✎</button>':'')+'<h3>'+E(e.name)+'</h3>'+contactHtml+
      '<button class="btn entity-profile-show" onclick="window.icvToggleEntityProjects(\''+E(e.id)+'\',this)">إظهار المشاريع ('+projectsFor.length+')</button>'+
      '<div id="entity-profile-projects-'+E(e.id)+'" class="entity-profile-projects"><div class="entity-contact-head"><span>المشاريع التابعة للجهة</span><span class="muted">'+projectsFor.length+' مشروع</span></div>'+projectsHtml+'</div></article>';
  }).join('');
