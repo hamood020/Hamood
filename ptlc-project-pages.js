@@ -270,7 +270,7 @@ window.icvViewEntityCard=async id=>{
    '<div class="card"><div class="label">عدد المشاريع</div><div class="value">'+pp.length+'</div></div>'+
    '<div class="card"><div class="label">قيمة المشاريع</div><div class="value">'+N(pp.reduce((a,p)=>a+Number(p.total_project_value||0),0))+'</div></div>'+
    '<div class="card"><div class="label">الإنفاق</div><div class="value">'+N(pp.reduce((a,p)=>a+Number(p.total_spend||0),0))+'</div></div></div>'+
-   '<div class="section-card" style="margin-top:12px"><div class="section-card-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><h2>نقاط التواصل</h2><p>بيانات التواصل المسجلة للجهة.</p></div><button type="button" class="btn primary" id="entityCardAddContact">+ إضافة نقطة تواصل</button></div>'+contactHtml+'</div>'+
+   '<div class="section-card" style="margin-top:12px"><div class="section-card-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><h2>نقاط التواصل</h2><p>بيانات التواصل المسجلة للجهة.</p></div>'+(canEdit()?'<button type="button" class="btn primary" id="entityCardAddContact">+ إضافة نقطة تواصل</button>':'')+'</div>'+contactHtml+'</div>'+
    '<div class="section-card" style="margin-top:12px"><div class="section-card-head"><div><h2>مشاريع الجهة</h2><p>'+pp.length+' مشروع</p></div></div>'+projectsHtml+'</div>'
  );
  document.getElementById('entityCardAddContact')?.addEventListener('click',()=>window.icvEditEntityProfile(e.id));
