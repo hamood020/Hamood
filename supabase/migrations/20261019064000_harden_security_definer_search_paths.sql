@@ -3,3 +3,4 @@
 ALTER FUNCTION public.is_admin() SET search_path = '';
 ALTER FUNCTION public.has_entity_access(uuid) SET search_path = '';
 ALTER FUNCTION public.set_my_entity_assignments(uuid[]) SET search_path = '';
+ALTER FUNCTION public.set_user_entity_assignments(uuid, uuid[]) SET search_path = '';
