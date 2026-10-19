@@ -92,13 +92,16 @@ Deno.serve(async (req: Request) => {
         return json({ ok: false, error: "تعذر إنشاء الحساب. تحقق من اسم المستخدم وأنه غير مستخدم مسبقًا." }, 400, cors.headers);
       }
 
-      const { error: insertError } = await admin.from("user_profiles").insert({
+      const { error: insertError } = await admin.from("user_profiles").upsert({
         id: created.user.id, username, full_name: displayName, role, is_active: true,
         access_starts_at: start, access_expires_at: end
-      });
+      }, { onConflict: "id" });
       if (insertError) {
         await admin.auth.admin.deleteUser(created.user.id);
-        return json({ ok: false, error: "تعذر حفظ ملف المستخدم؛ تم التراجع عن إنشاء الحساب." }, 500, cors.headers);
+        const message = insertError.code === "23505"
+          ? "اسم المستخدم مستخدم مسبقًا. اختر اسمًا آخر."
+          : "تعذر حفظ ملف المستخدم؛ تم التراجع عن إنشاء الحساب.";
+        return json({ ok: false, error: message }, 500, cors.headers);
       }
       return json({ ok: true, user_id: created.user.id }, 200, cors.headers);
     }
