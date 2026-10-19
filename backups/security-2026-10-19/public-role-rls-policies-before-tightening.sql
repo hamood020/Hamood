@@ -1,0 +1,28 @@
+-- RLS policy role snapshot before tightening PUBLIC -> authenticated.
+-- Supabase project: bmwtrnosqosbkezdswcx
+-- Captured 2026-10-19. Predicates intentionally retained unchanged.
+
+-- companies
+-- companies valid users read: SELECT USING (user_access_valid(auth.uid()))
+-- employee_followups
+-- followups admin editor insert: INSERT WITH CHECK user_access_valid(auth.uid()) AND created_by=auth.uid() AND role in ('admin','editor')
+-- followups admin editor read: SELECT USING user_access_valid(auth.uid()) AND role in ('admin','editor')
+-- followups admin editor update: UPDATE USING/WITH CHECK user_access_valid(auth.uid()) AND role in ('admin','editor')
+-- government_entities
+-- entities valid users read: SELECT USING (user_access_valid(auth.uid()))
+-- local_content_plans
+-- plans editor write: ALL USING/WITH CHECK user_access_valid(auth.uid()) AND role in ('admin','editor')
+-- plans valid users read: SELECT USING (user_access_valid(auth.uid()))
+-- project_baselines
+-- baseline editor write: ALL USING/WITH CHECK user_access_valid(auth.uid()) AND role in ('admin','editor')
+-- baseline valid users read: SELECT USING (user_access_valid(auth.uid()))
+-- project_end_date_history
+-- project end history editors insert: INSERT WITH CHECK user_access_valid(auth.uid()) AND role in ('admin','editor')
+-- project end history valid users read: SELECT USING (user_access_valid(auth.uid()))
+-- projects
+-- projects editor insert: INSERT WITH CHECK user_access_valid(auth.uid()) AND role in ('admin','editor')
+-- projects editor update: UPDATE USING/WITH CHECK user_access_valid(auth.uid()) AND role in ('admin','editor')
+-- projects valid users read: SELECT USING (user_access_valid(auth.uid()))
+-- quarterly_reports
+-- reports editor write: ALL USING/WITH CHECK user_access_valid(auth.uid()) AND role in ('admin','editor')
+-- reports valid users read: SELECT USING (user_access_valid(auth.uid()))
