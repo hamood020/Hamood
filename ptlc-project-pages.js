@@ -228,7 +228,7 @@ async function renderEntitiesV2(){
   '</div></td></tr>';
  }).join('');
  b.innerHTML='<div class="panel"><div class="toolbar"><div><h2>الجهات الحكومية</h2><div class="muted">اضغط على اسم الجهة لعرض مشاريعها أو إخفائها.</div></div>'+(canEdit()?'<button class="btn primary" onclick="window.icvAddEntityV2()">+ إضافة جهة</button>':'')+'</div>'+
- '<div class="entities-filter"><div class="field"><label>فلتر الجهة</label><select id="entityFilter"><option value="">جميع الجهات</option>'+entities.map(x=>'<option value="'+E(x.id)+'">'+E(x.name)+'</option>').join('')+'</select></div></div>'+
+ '<div class="entities-filter"><div class="field"><label for="entitySearch">البحث عن جهة حكومية</label><input id="entitySearch" type="search" autocomplete="off" placeholder="اكتب اسم المؤسسة أو جزءًا منه..." aria-label="البحث عن جهة حكومية"></div></div>'+
  '<div class="table-wrap"><table><thead><tr><th>الجهة الحكومية</th><th>عدد المشاريع</th><th>قيمة المشاريع</th><th>الإنفاق</th><th>المحتوى المحلي</th><th>بطاقة الجهة</th></tr></thead><tbody id="entityRows">'+rows+'</tbody></table></div></div>';
  const tbody=document.getElementById('entityRows');
  tbody.querySelectorAll('.entity-row').forEach(row=>row.addEventListener('click',e=>{
@@ -240,13 +240,27 @@ async function renderEntitiesV2(){
   e.preventDefault();e.stopPropagation();const id=a.dataset.projectId;
   if(window.openICVProject)window.openICVProject(id);else if(window.viewProject)window.viewProject(id);
  }));
- document.getElementById('entityFilter')?.addEventListener('change',e=>{
-  const v=e.target.value;
-  [...tbody.querySelectorAll('.entity-row')].forEach(row=>{
-   const ix=Number(row.dataset.target.replace('entity-projects-','')),match=!v||String(entities[ix]?.id)===String(v),target=document.getElementById(row.dataset.target);
-   row.style.display=match?'':'none';if(target){target.style.display=match?'':'none';if(!match)target.hidden=true;}
+ const normalizeEntitySearch=value=>String(value||'')
+  .normalize('NFD')
+  .replace(/[\\u064B-\\u065F\\u0670\\u0640]/g,'')
+  .replace(/[أإآٱ]/g,'ا')
+  .replace(/ى/g,'ي')
+  .replace(/ة/g,'ه')
+  .replace(/ؤ/g,'و')
+  .replace(/ئ/g,'ي')
+  .replace(/[\\s\\u200f\\u200e]+/g,'')
+  .toLowerCase();
+ const applyEntitySearch=()=>{
+  const query=normalizeEntitySearch(document.getElementById('entitySearch')?.value);
+  [...tbody.querySelectorAll('.entity-row')].forEach((row,ix)=>{
+   const entity=entities[ix],target=document.getElementById(row.dataset.target);
+   const match=!query||normalizeEntitySearch(entity?.name).includes(query);
+   row.style.display=match?'':'none';
+   if(target){target.style.display=match?'':'none';if(!match)target.hidden=true;}
+   if(!match)row.classList.remove('expanded');
   });
- });
+ };
+ document.getElementById('entitySearch')?.addEventListener('input',applyEntitySearch);
 }
 
 // Ensure the later routing layer uses the redesigned government-entities page.
