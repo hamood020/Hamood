@@ -184,9 +184,9 @@ function openCompanyContactsEditor(company,projects,allReports){
     var saveBtn=editor.querySelector('#icvCoContactSave');
     saveBtn.disabled=true;saveBtn.textContent='جارٍ الحفظ...';
     try{
-      var result=await db.from('companies').update({contact_points:contacts}).eq('id',company.id).select('*').single();
+      var result=await db.rpc('set_company_contact_points',{p_company_id:company.id,p_contact_points:contacts});
       if(result.error)throw result.error;
-      company.contact_points=Array.isArray(result.data?.contact_points)?result.data.contact_points:contacts;
+      company.contact_points=contacts;
       editor.remove();
       document.getElementById('icvCompanyModal')?.remove();
       if(typeof window.icvSaveSuccess==='function')window.icvSaveSuccess('تم حفظ نقاط التواصل للشركة.');
