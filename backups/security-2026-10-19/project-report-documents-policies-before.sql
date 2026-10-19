@@ -1,0 +1,6 @@
+-- Snapshot before attachment policy hardening (2026-10-19)
+-- Bucket: project-report-documents (private)
+-- Previous policies:
+-- SELECT authenticated: bucket_id = 'project-report-documents'
+-- INSERT authenticated WITH CHECK: bucket_id = 'project-report-documents'
+-- No UPDATE/DELETE policies were present for this bucket.
