@@ -121,23 +121,26 @@ Deno.serve(async (req: Request) => {
       if (start && end && Date.parse(end) <= Date.parse(start)) return json({ ok: false, error: "نهاية الصلاحية يجب أن تكون بعد البداية" }, 400, cors.headers);
       if (userId === user.id && (!isActive || role !== "admin")) return json({ ok: false, error: "لا يمكن تعطيل حسابك الحالي أو إزالة صلاحية المدير منه" }, 400, cors.headers);
 
-      const { data: target, error: targetError } = await admin.from("user_profiles")
-        .select("id,role,is_active").eq("id", userId).maybeSingle();
-      if (targetError) return json({ ok: false, error: "تعذر تحميل حساب المستخدم" }, 500, cors.headers);
-      if (!target) return json({ ok: false, error: "المستخدم غير موجود" }, 404, cors.headers);
-
-      if (target.role === "admin" && (role !== "admin" || !isActive)) {
-        const { count, error: countError } = await admin.from("user_profiles")
-          .select("id", { count: "exact", head: true }).eq("role", "admin").eq("is_active", true);
-        if (countError) return json({ ok: false, error: "تعذر التحقق من عدد المديرين النشطين" }, 500, cors.headers);
-        if ((count || 0) <= 1) return json({ ok: false, error: "لا يمكن تعطيل أو تخفيض صلاحية آخر مدير نشط" }, 400, cors.headers);
+      const { error: profileUpdateError } = await admin.rpc("admin_update_user_profile_guarded", {
+        p_user_id: userId,
+        p_full_name: displayName,
+        p_role: role,
+        p_is_active: isActive,
+        p_access_starts_at: start,
+        p_access_expires_at: end
+      });
+      if (profileUpdateError) {
+        if (profileUpdateError.message?.includes("LAST_ACTIVE_ADMIN")) {
+          return json({ ok: false, error: "لا يمكن تعطيل أو تخفيض صلاحية آخر مدير نشط" }, 400, cors.headers);
+        }
+        if (profileUpdateError.message?.includes("USER_NOT_FOUND")) {
+          return json({ ok: false, error: "المستخدم غير موجود" }, 404, cors.headers);
+        }
+        if (profileUpdateError.message?.includes("INVALID_ACCESS_PERIOD")) {
+          return json({ ok: false, error: "نهاية الصلاحية يجب أن تكون بعد البداية" }, 400, cors.headers);
+        }
+        return json({ ok: false, error: "تعذر تحديث ملف المستخدم" }, 500, cors.headers);
       }
-
-      const { error: profileUpdateError } = await admin.from("user_profiles").update({
-        full_name: displayName, role, is_active: isActive,
-        access_starts_at: start, access_expires_at: end, updated_at: new Date().toISOString()
-      }).eq("id", userId);
-      if (profileUpdateError) return json({ ok: false, error: "تعذر تحديث ملف المستخدم" }, 500, cors.headers);
 
       const { error: authUpdateError } = await admin.auth.admin.updateUserById(userId, {
         user_metadata: { full_name: displayName }
