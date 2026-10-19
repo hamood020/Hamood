@@ -334,11 +334,13 @@ window.icvToggleEntityProjects=(id,btn)=>{
 };
 
 window.icvEditEntityProfile=async id=>{
+ if(!['admin','editor'].includes(window.__icvProfile?.role))return alert('إدارة نقاط التواصل متاحة لمدير النظام والمحرر فقط.');
  const r=await dbx.from('government_entities').select('*').eq('id',id).maybeSingle();
+ if(r.error)return alert('تعذر تحميل بيانات الجهة: '+E(r.error.message));
  const e=r.data;if(!e)return;
  const contacts=Array.isArray(e.contact_points)?e.contact_points:[];
  const rows=contacts.length?contacts.map(c=>'<div class="entity-contact-edit-row"><input class="ec-name" placeholder="الاسم" value="'+E(c.name||'')+'"><input class="ec-job" placeholder="الوظيفة" value="'+E(c.job_title||c.job||'')+'"><input class="ec-phone" placeholder="رقم الهاتف" value="'+E(c.phone||'')+'"><input class="ec-email" placeholder="البريد الإلكتروني" value="'+E(c.email||'')+'"><button type="button" onclick="this.parentElement.remove()">×</button></div>').join(''):'';
- const html='<div class="entity-profile-modal"><div class="field entity-profile-form"><label>اسم الجهة</label><input id="entityProfileName" value="'+E(e.name||'')+'"></div><div class="entity-profile-form"><label>نقاط التواصل</label><div id="entityProfileContacts">'+rows+'</div><button type="button" class="btn entity-profile-add-contact" onclick="window.icvAddEntityContactRow()">+ إضافة نقطة تواصل</button></div><div id="entityProfileMsg" class="muted" style="margin-top:10px"></div><div class="entity-profile-save-row"><button class="btn primary" onclick="window.icvSaveEntityProfile(\''+E(e.id)+'\')">حفظ التعديلات</button><button class="btn" onclick="document.getElementById(\'icvV2Modal\')?.remove()">إلغاء</button></div></div>';
+ const html='<div class="entity-profile-modal"><div class="field entity-profile-form"><label>اسم الجهة</label><input id="entityProfileName" data-original-name="'+E(e.name||'')+'" value="'+E(e.name||'')+'" '+(window.__icvProfile?.role==='admin'?'':'readonly')+'></div><div class="entity-profile-form"><label>نقاط التواصل</label><div id="entityProfileContacts">'+rows+'</div><button type="button" class="btn entity-profile-add-contact" onclick="window.icvAddEntityContactRow()">+ إضافة نقطة تواصل</button></div><div id="entityProfileMsg" class="muted" style="margin-top:10px"></div><div class="entity-profile-save-row"><button class="btn primary" onclick="window.icvSaveEntityProfile(\''+E(e.id)+'\')">حفظ التعديلات</button><button class="btn" onclick="document.getElementById(\'icvV2Modal\')?.remove()">إلغاء</button></div></div>';
  modal('تعديل ملف الجهة',html);
  if(!contacts.length)window.icvAddEntityContactRow();
 };
@@ -351,7 +353,9 @@ window.icvAddEntityContactRow=()=>{
 };
 
 window.icvSaveEntityProfile=async id=>{
- const name=document.getElementById('entityProfileName')?.value.trim();
+ if(!['admin','editor'].includes(window.__icvProfile?.role))return msg('entityProfileMsg','إدارة نقاط التواصل متاحة لمدير النظام والمحرر فقط.');
+ const nameInput=document.getElementById('entityProfileName');
+ const name=window.__icvProfile?.role==='admin'?(nameInput?.value||'').trim():(nameInput?.dataset.originalName||'').trim();
  if(!name)return msg('entityProfileMsg','اسم الجهة مطلوب.');
  const contacts=[...document.querySelectorAll('#entityProfileContacts .entity-contact-edit-row')].map(r=>({
    name:r.querySelector('.ec-name')?.value.trim()||'',
@@ -359,7 +363,7 @@ window.icvSaveEntityProfile=async id=>{
    phone:r.querySelector('.ec-phone')?.value.trim()||'',
    email:r.querySelector('.ec-email')?.value.trim()||''
  })).filter(x=>x.name||x.job_title||x.phone||x.email);
- const r=await dbx.from('government_entities').update({name,contact_points:contacts}).eq('id',id);
+ const r=await dbx.rpc('set_government_entity_contact_details',{p_entity_id:id,p_name:name,p_contact_points:contacts});
  if(r.error)return msg('entityProfileMsg',r.error.message);window.icvSaveSuccess?.('تم حفظ تعديلات الجهة الحكومية بنجاح');
  (window.projects||[]).forEach(p=>{if(String(p.government_entity_id)===String(id))p.government_entities={...(p.government_entities||{}),name};});
  document.getElementById('icvV2Modal')?.remove();
