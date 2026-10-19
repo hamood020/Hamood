@@ -1,0 +1,167 @@
+{
+  "projects": [
+    {
+      "id": "94b81e01-5458-4ae6-a12f-76edd93294dc",
+      "serial_no": null,
+      "project_name": "00",
+      "project_status": "مسند",
+      "total_project_value": 2,
+      "government_entity_id": "6792f194-d519-4aa6-90a2-77f8eed9dcfa",
+      "implementing_company_id": "7da05e1c-b52f-4eda-a4e8-de862d074b69"
+    },
+    {
+      "id": "7022f5ea-8dfb-453b-b1e6-8a7665b0a19a",
+      "serial_no": null,
+      "project_name": "مشروع انشاء منظومة الحماية من مخاطر الفيضانات بنيابة ليما بولاية خصب بمحافظة مسندم",
+      "project_status": "قيد التنفيذ",
+      "total_project_value": 23998850,
+      "government_entity_id": "68a312e7-6696-47fb-baed-57efc28ade1f",
+      "implementing_company_id": "b2400540-91d7-46b5-9fb4-7cc38a948cdd"
+    }
+  ],
+  "companies": [
+    {
+      "id": "7da05e1c-b52f-4eda-a4e8-de862d074b69",
+      "name": "aa",
+      "created_at": "2026-10-01T12:23:38.992499+00:00",
+      "company_type": null
+    },
+    {
+      "id": "451b4f0b-f7c2-44ff-9f63-1346febc9e13",
+      "name": "bb",
+      "created_at": "2026-10-01T12:23:38.992499+00:00",
+      "company_type": null
+    },
+    {
+      "id": "d8d0e38b-c8de-4a23-a2ea-4a68446b2b8e",
+      "name": "إئتلاف شركة الأولى العالمية و شركة بورتكس المحدودة للإنشاءات و التجارة و الصناعية",
+      "created_at": "2026-10-01T19:10:35.323997+00:00",
+      "company_type": null
+    },
+    {
+      "id": "f2b21d9c-dea1-4047-8fad-12fa2ef7e24a",
+      "name": "إئتلاف شركة سيف الحراصي وشركة سمبل كونستركشن",
+      "created_at": "2026-10-01T19:10:35.323997+00:00",
+      "company_type": null
+    },
+    {
+      "id": "deb48808-6a17-485a-a018-7694cab33f56",
+      "name": "الادراك",
+      "created_at": "2026-10-01T19:10:35.323997+00:00",
+      "company_type": null
+    },
+    {
+      "id": "3f92a39d-93ad-4272-93b3-ff0c149a35f0",
+      "name": "الخليلي للإنشاءات",
+      "created_at": "2026-10-01T19:10:35.323997+00:00",
+      "company_type": null
+    },
+    {
+      "id": "9ef8fc84-b3be-496f-8a3d-54579c7fbca5",
+      "name": "المكتب الوطني الهندسي",
+      "created_at": "2026-10-01T12:23:38.992499+00:00",
+      "company_type": null
+    },
+    {
+      "id": "8bea72f7-a8d8-479a-b2e5-f44c5ef559f6",
+      "name": "بر عمان للتجارة والمقاولات",
+      "created_at": "2026-10-01T19:10:35.323997+00:00",
+      "company_type": null
+    },
+    {
+      "id": "fb4ba911-6dd8-46d4-8f98-e92cd4a7b54d",
+      "name": "سيف الحراصي وشركاه",
+      "created_at": "2026-10-01T19:10:35.323997+00:00",
+      "company_type": null
+    },
+    {
+      "id": "b2400540-91d7-46b5-9fb4-7cc38a948cdd",
+      "name": "شركة الأولى العالمية للمشروعات",
+      "created_at": "2026-10-14T06:00:35.458195+00:00",
+      "company_type": "شركة منفذة"
+    },
+    {
+      "id": "b7d770f6-3251-4d33-897c-c4e2f221e417",
+      "name": "شركة التسنيم",
+      "created_at": "2026-10-01T19:10:35.323997+00:00",
+      "company_type": null
+    },
+    {
+      "id": "4755355c-87c1-4851-919d-7241846971c8",
+      "name": "شركة زين ",
+      "created_at": "2026-10-01T12:23:38.992499+00:00",
+      "company_type": null
+    },
+    {
+      "id": "7c29f12c-9fc1-48c5-8c56-81d167d31b1c",
+      "name": "مؤسسة أبوغزلان للتجارة و المقاولات و النقل",
+      "created_at": "2026-10-01T19:10:35.323997+00:00",
+      "company_type": null
+    }
+  ],
+  "captured_at": "2026-10-19T08:42:35.730471+00:00",
+  "government_entities": [
+    {
+      "id": "741380c0-d72c-40e8-8910-1446f8ccdcc5",
+      "code": null,
+      "name": "الادعاء العام",
+      "created_at": "2026-10-01T19:10:35.323997+00:00",
+      "contact_points": [
+        {
+          "name": "حمود",
+          "email": "سشي",
+          "phone": "95123088"
+        }
+      ]
+    },
+    {
+      "id": "6792f194-d519-4aa6-90a2-77f8eed9dcfa",
+      "code": null,
+      "name": "بلدية مسقط",
+      "created_at": "2026-10-06T10:19:20.204611+00:00",
+      "contact_points": []
+    },
+    {
+      "id": "585683d6-a841-4243-bd7f-f4febc93e23b",
+      "code": null,
+      "name": "وزارة التعليم",
+      "created_at": "2026-10-01T19:10:35.323997+00:00",
+      "contact_points": []
+    },
+    {
+      "id": "68a312e7-6696-47fb-baed-57efc28ade1f",
+      "code": null,
+      "name": "وزارة الثروة الزراعية والسمكية وموارد المياه",
+      "created_at": "2026-10-01T19:10:35.323997+00:00",
+      "contact_points": []
+    },
+    {
+      "id": "6480e515-8290-4490-b78f-0b60dc041a51",
+      "code": null,
+      "name": "وزارة الثقافة والرياضة والشباب",
+      "created_at": "2026-10-01T19:10:35.323997+00:00",
+      "contact_points": []
+    },
+    {
+      "id": "343d4ed3-6b4e-43d0-ac69-572ebb8a339c",
+      "code": null,
+      "name": "وزارة الصحة",
+      "created_at": "2026-10-01T19:10:35.323997+00:00",
+      "contact_points": []
+    },
+    {
+      "id": "e0b3f428-8f09-430c-8477-41dff86f3aa8",
+      "code": null,
+      "name": "وزارة الصحة ",
+      "created_at": "2026-10-01T12:23:38.992499+00:00",
+      "contact_points": []
+    },
+    {
+      "id": "4f9106c6-3f5f-43c4-aa87-c60393aac177",
+      "code": null,
+      "name": "وزارة النقل والإتصالات وتقنية المعلومات",
+      "created_at": "2026-10-01T19:10:35.323997+00:00",
+      "contact_points": []
+    }
+  ]
+}
