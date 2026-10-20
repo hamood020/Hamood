@@ -183,7 +183,53 @@
       ? '<div class="hm-noloc">' + noLoc.length + " " + T("مشروع بلا موقع محدد، لا يظهر في الخريطة. أضف الموقع من «تعديل بيانات المشروع»: ", "projects have no location and are not on the map. Add it from “Edit project”: ") +
         noLoc.slice(0, 5).map((p) => link(p)).join("، ") + (noLoc.length > 5 ? " …" : "") + "</div>"
       : "";
-    return '<div class="hm-mapwrap"><div><div class="hm-tilemap">' + tiles + "</div>" + scale + '</div><div class="hm-gov">' + detail + "</div></div>" + missing;
+    const M = window.ICV_OMAN_MAP;
+    let mapBody = '<div class="hm-tilemap">' + tiles + "</div>";
+    if (M) {
+      const fmt = (s) => (state.metric === "count" ? String(s.count) : short(s.value));
+      const shapes = stats
+        .map((s) => {
+          const geo = M.g[s.g.k];
+          if (!geo) return "";
+          const v = s[state.metric];
+          return (
+            '<path class="hm-gpath' + (s.g.k === state.gov ? " sel" : "") + '" data-hm-gov="' + esc(s.g.k) + '" d="' + geo.d + '" fill="' + (v ? shade(0.15 + (v / max) * 0.85) : "#eef2f5") + '"><title>' +
+            esc(L.govName(s.g.k)) + ": " + s.count + " " + T("مشروع", "projects") + " · " + money(s.value) + " " + cur() + "</title></path>"
+          );
+        })
+        .join("");
+      // Selected outline drawn last so its border is not hidden by neighbours.
+      const selGeo = M.g[state.gov];
+      const outline = selGeo ? '<path d="' + selGeo.d + '" fill="none" stroke="var(--ink)" stroke-width="2.2" pointer-events="none"/>' : "";
+      const labels = stats
+        .map((s) => {
+          const geo = M.g[s.g.k];
+          if (!geo) return "";
+          const [bx, by] = geo.b,
+            [lx, ly] = geo.l;
+          const v = s[state.metric],
+            dark = v && v / max > 0.45;
+          const pw = Math.max(22, 10 + fmt(s).length * 7.5);
+          const lead = geo.a !== "middle" ? '<line x1="' + bx + '" y1="' + by + '" x2="' + lx + '" y2="' + ly + '" stroke="#94a3b8" stroke-width="1"/>' : "";
+          return (
+            '<g class="hm-glabel" data-hm-gov="' + esc(s.g.k) + '">' + lead +
+            '<rect x="' + (bx - pw / 2) + '" y="' + (by - 11) + '" width="' + pw + '" height="22" rx="11" fill="' + (dark ? "#fff" : "var(--primary2)") + '" stroke="' + (dark ? "var(--primary2)" : "#fff") + '" stroke-width="1.5"/>' +
+            '<text x="' + bx + '" y="' + (by + 4.5) + '" text-anchor="middle" font-size="12.5" font-weight="800" fill="' + (dark ? "var(--primary2)" : "#fff") + '">' + fmt(s) + "</text>" +
+            '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="' + geo.a + '" font-size="14" font-weight="700" fill="var(--ink)" paint-order="stroke" stroke="#fff" stroke-width="3" stroke-linejoin="round">' + esc(L.govName(s.g.k)) + "</text></g>"
+          );
+        })
+        .join("");
+      mapBody =
+        '<div class="hm-svgmap"><svg viewBox="' + M.viewBox + '" role="img" aria-label="' + T("خريطة سلطنة عُمان حسب المحافظات", "Map of Oman by governorate") + '">' + shapes + outline + labels + "</svg></div>" +
+        '<div class="hm-govchips">' +
+        stats
+          .slice()
+          .sort((a, b) => b[state.metric] - a[state.metric])
+          .map((s) => '<button type="button" class="hm-chip' + (s.g.k === state.gov ? " on" : "") + '" data-hm-gov="' + esc(s.g.k) + '">' + esc(L.govName(s.g.k)) + " <b>" + fmt(s) + "</b></button>")
+          .join("") +
+        "</div>";
+    }
+    return '<div class="hm-mapwrap"><div>' + mapBody + scale + '</div><div class="hm-gov">' + detail + "</div></div>" + missing;
   }
 
   function pipelineHtml(list) {
@@ -434,8 +480,8 @@
       T("اضغط أي محافظة لتظهر ولاياتها ومشاريعها.", "Click a governorate to see its wilayats and projects."),
       mapHtml(list),
       T(
-        "خريطة مبسطة: كل مربع محافظة في موقعها التقريبي، ولونه أغمق كلما زاد عدد المشاريع أو قيمتها. المشروع الممتد على أكثر من محافظة (مثل مشاريع الطرق) يُحسب في كل محافظة يمر بها، لذلك قد يزيد مجموع المحافظات عن إجمالي المشاريع، والقيمة لا تُقسَّم بينها. الموقع يُحدَّد من نموذج المشروع.",
-        "Simplified map: each tile is a governorate in its approximate place, darker for more projects or value. A project spanning several governorates (e.g. roads) counts in each, so governorate totals can exceed the project total and the value is not split. The location is set in the project form.",
+        "خريطة السلطنة بحدود المحافظات (حدود تقريبية للعرض فقط، المصدر: Natural Earth). لون المحافظة أغمق كلما زاد عدد مشاريعها أو قيمتها، والرقم في الدائرة هو العدد أو القيمة. المشروع الممتد على أكثر من محافظة (مثل مشاريع الطرق) يُحسب في كل محافظة يمر بها، لذلك قد يزيد مجموع المحافظات عن إجمالي المشاريع، والقيمة لا تُقسَّم بينها. الموقع يُحدَّد من نموذج المشروع.",
+        "Map of Oman by governorate (approximate boundaries for display only; source: Natural Earth). Darker means more projects or value; the number in the circle is the count or value. A project spanning several governorates (e.g. roads) counts in each, so governorate totals can exceed the project total and the value is not split. The location is set in the project form.",
       ),
       '<div class="hm-toggle"><button type="button" class="btn' + (state.metric === "count" ? " primary" : "") + '" data-hm-metric="count">' + T("العدد", "Count") + '</button><button type="button" class="btn' + (state.metric === "value" ? " primary" : "") + '" data-hm-metric="value">' + T("القيمة", "Value") + "</button></div>",
     );
@@ -586,6 +632,14 @@
       ".hm-tile{border-radius:12px;border:2px solid transparent;padding:8px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;align-items:stretch;direction:rtl;text-align:start;font:inherit;transition:transform .12s;min-width:0}",
       ".hm-tile:hover{transform:translateY(-2px)}.hm-tile.sel{border-color:var(--ink)}",
       ".hm-tile b{font-size:12px;line-height:1.3}.hm-tile span{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}.hm-tile small{font-size:10px;opacity:.85}",
+      ".hm-svgmap{max-width:600px;margin:0 auto;width:100%}",
+      ".hm-svgmap svg{display:block;width:100%;height:auto;direction:ltr}",
+      ".hm-svgmap text{font-family:inherit;direction:ltr;pointer-events:none}",
+      ".hm-gpath{stroke:#fff;stroke-width:1.2;cursor:pointer;transition:opacity .12s}.hm-gpath:hover{opacity:.82}",
+      ".hm-glabel{cursor:pointer}",
+      ".hm-govchips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}",
+      ".hm-chip{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:4px 10px;font:inherit;font-size:11px;cursor:pointer}",
+      ".hm-chip b{color:var(--primary2);margin-inline-start:3px}.hm-chip.on{background:var(--primary);border-color:var(--primary);color:#fff}.hm-chip.on b{color:#fff}",
       ".hm-scale{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-top:10px;justify-content:center}.hm-scale i{width:26px;height:10px;border-radius:3px;display:inline-block}",
       ".hm-gov{border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}",
       ".hm-gov h3{margin:0 0 4px;font-size:15px}",
