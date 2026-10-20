@@ -1820,8 +1820,7 @@
           .join("");
         root.innerHTML =
           '<div class="panel"><div class="toolbar"><div><h2>الجهات الحكومية</h2><div class="muted">عرض الجهات الحكومية وعدد مشاريعها وقيمتها والإنفاق، مع إمكانية فتح بطاقة كل جهة.</div></div>' +
-          (window.ICV.canEdit(window.__icvProfile) &&
-          typeof window.icvAddEntityV2 === "function"
+          (window.ICV.canEdit(window.__icvProfile) && typeof window.icvAddEntityV2 === "function"
             ? '<button class="btn primary" onclick="window.icvAddEntityV2()">+ إضافة جهة</button>'
             : "") +
           '</div><div class="entities-filter"><div class="field"><label>فلتر الجهة</label><select id="entityFilter"><option value="">جميع الجهات</option>' +
@@ -1985,15 +1984,13 @@
         modal.classList.remove("hidden");
       }
       async function savePlan() {
-        const r = await db
-          .from("local_content_plans")
-          .insert({
-            project_id: pl_project.value,
-            version: pl_ver.value,
-            source_file: pl_source.value,
-            status: pl_status.value,
-            created_by: session.user.id,
-          });
+        const r = await db.from("local_content_plans").insert({
+          project_id: pl_project.value,
+          version: pl_ver.value,
+          source_file: pl_source.value,
+          status: pl_status.value,
+          created_by: session.user.id,
+        });
         if (r.error) return toast(r.error.message);
         closeModal();
         await loadAll();
@@ -2221,11 +2218,12 @@
         window.icvThemeSettings = { applyTheme, applySize, applyFont, open: openPanel, close: closePanel };
       })();
     </script>
-    <script src="ptlc-access.js?v=20261013-viewer-profile-minimal-01"></script>
-    <script src="ptlc-project-pages.js?v=20261019-entity-search-01"></script>
-    <script src="icv-structure-v13.js?v=20261012-formulas-01"></script>
-    <script src="companies-page-final.js?v=20261019-company-contacts-03"></script>
-    <script src="settings-page.js?v=20261019-admin-project-management-01"></script>
+    <script src="ptlc-access.js?v=20261020-01"></script>
+    <script src="ptlc-project-pages.js?v=20261020-01"></script>
+    <script src="icv-structure-v13.js?v=20261020-01"></script>
+    <script src="companies-page-final.js?v=20261020-01"></script>
+    <script src="settings-page.js?v=20261020-01"></script>
+    <script src="icv-team.js?v=20261020-01"></script>
     <script id="icvSequentialNumberingPatch">
       (function () {
         function renumberProjectRows() {
@@ -2467,6 +2465,9 @@
             return Promise.resolve(window.icvEntitiesPage());
           if (name === "companies" && typeof window.icvCompaniesPage === "function")
             return Promise.resolve(window.icvCompaniesPage());
+          // Pages registered by later modules (e.g. icv-team.js: audit).
+          if (window.icvPages && typeof window.icvPages[name] === "function")
+            return Promise.resolve(window.icvPages[name]());
           if (name === "entity-profiles" && typeof window.renderEntityProfiles === "function")
             return Promise.resolve(window.renderEntityProfiles());
         };
