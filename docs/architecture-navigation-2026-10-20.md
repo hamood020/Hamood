@@ -36,7 +36,9 @@ The shell had two separate `popstate` listeners. Both could invoke route restora
 - Project statuses are loaded from saved platform settings in both the project creation and edit forms.
 - Project creation/editing checks required entity, company, project value, and dates according to saved settings; end date cannot precede start date.
 - The report form reads configured report years, quarters, default report type, and report statuses from the settings cache.
+- The `reports.multiReport` setting now controls database enforcement: disabled preserves one report per project/quarter/year with an advisory-lock-protected trigger; enabled allows multiple reports for that period. A rollback script is stored under `backups/multi-report-setting-2026-10-20/`.
 - The approved status `معتمد` is preserved in configuration because database metrics intentionally aggregate approved reports only.
+- Changes to `settings.local` trigger database recalculation for project metrics; report approval changes trigger recalculation as well.
 - Calculation coefficients and compliance thresholds are read by the database calculation function; changing local-content settings triggers recalculation for projects.
 - Notification deadlines use `reports.dueDays`; the `reports.lateAfter` grace period is now applied before a report changes from due to overdue.
 
