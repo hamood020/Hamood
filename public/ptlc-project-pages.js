@@ -198,9 +198,17 @@
     if (!root) return;
     root.classList.remove("hidden");
     const [er, cr, pr, rr, hr, fr] = await Promise.all([
-      dbx.from("government_entities").select("*").eq("id", p.government_entity_id).maybeSingle(),
+      dbx
+        .from("government_entities")
+        .select(window.ICV.ENTITY_COLS)
+        .eq("id", p.government_entity_id)
+        .maybeSingle(),
       p.implementing_company_id
-        ? dbx.from("companies").select("*").eq("id", p.implementing_company_id).maybeSingle()
+        ? dbx
+            .from("companies")
+            .select(window.ICV.COMPANY_COLS)
+            .eq("id", p.implementing_company_id)
+            .maybeSingle()
         : Promise.resolve({ data: null }),
       dbx
         .from("local_content_plans")
@@ -1308,7 +1316,7 @@
   async function renderEntitiesV2() {
     let b = document.getElementById("page-entities");
     if (!b) return;
-    const r = await dbx.from("government_entities").select("*").order("name");
+    const r = await dbx.from("government_entities").select(window.ICV.ENTITY_COLS).order("name");
     const entities = r.data || [],
       allProjects = window.projects || [],
       allReports = window.reports || [];
@@ -1470,9 +1478,10 @@
   window.icvEntitiesPage = renderEntitiesV2;
 
   window.icvViewEntityCard = async (id) => {
-    const r = await dbx.from("government_entities").select("*").eq("id", id).maybeSingle();
+    const r = await dbx.from("government_entities").select(window.ICV.ENTITY_COLS).eq("id", id).maybeSingle();
     const e = r.data;
     if (!e) return;
+    await window.ICV.attachContacts(dbx, "government_entities", e);
     const pp = (window.projects || []).filter((p) => String(p.government_entity_id) === String(id));
     const contacts = Array.isArray(e.contact_points) ? e.contact_points : [];
     const contactHtml = contacts.length
@@ -1527,13 +1536,14 @@
         '<div class="card"><div class="label">الإنفاق</div><div class="value">' +
         N(pp.reduce((a, p) => a + Number(p.total_spend || 0), 0)) +
         "</div></div></div>" +
-        '<div class="section-card" style="margin-top:12px"><div class="section-card-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><h2>نقاط التواصل</h2><p>بيانات التواصل المسجلة للجهة.</p></div>' +
+        // Contact points are for staff only.
         (canEdit()
-          ? '<button type="button" class="btn primary" id="entityCardAddContact">+ إضافة نقطة تواصل</button>'
+          ? '<div class="section-card" style="margin-top:12px"><div class="section-card-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><h2>نقاط التواصل</h2><p>بيانات التواصل المسجلة للجهة.</p></div>' +
+            '<button type="button" class="btn primary" id="entityCardAddContact">+ إضافة نقطة تواصل</button>' +
+            "</div>" +
+            contactHtml +
+            "</div>"
           : "") +
-        "</div>" +
-        contactHtml +
-        "</div>" +
         '<div class="section-card" style="margin-top:12px"><div class="section-card-head"><div><h2>مشاريع الجهة</h2><p>' +
         pp.length +
         " مشروع</p></div></div>" +
@@ -1558,11 +1568,12 @@
     const b = document.getElementById("page-entity-profiles");
     if (!b) return;
     const [er, pr] = await Promise.all([
-      dbx.from("government_entities").select("*").order("name"),
+      dbx.from("government_entities").select(window.ICV.ENTITY_COLS).order("name"),
       dbx.from("projects").select("*,companies(name)").order("serial_no"),
     ]);
     const entities = er.data || [],
       pp = pr.data || [];
+    await window.ICV.attachContacts(dbx, "government_entities", entities);
     if (er.error) {
       b.innerHTML = '<div class="panel"><div class="empty">تعذر تحميل ملفات الجهات الحكومية.</div></div>';
       return;
@@ -1619,7 +1630,7 @@
           "<h3>" +
           E(e.name) +
           "</h3>" +
-          contactHtml +
+          (canEdit() ? contactHtml : "") +
           '<button class="btn entity-profile-show" onclick="window.icvToggleEntityProjects(\'' +
           E(e.id) +
           "',this)\">إظهار المشاريع (" +
@@ -1674,10 +1685,11 @@
   window.icvEditEntityProfile = async (id) => {
     if (!window.ICV.canEdit(window.__icvProfile))
       return alert("إدارة نقاط التواصل متاحة لموظفي القسم ومدير النظام فقط.");
-    const r = await dbx.from("government_entities").select("*").eq("id", id).maybeSingle();
+    const r = await dbx.from("government_entities").select(window.ICV.ENTITY_COLS).eq("id", id).maybeSingle();
     if (r.error) return alert("تعذر تحميل بيانات الجهة: " + E(r.error.message));
     const e = r.data;
     if (!e) return;
+    await window.ICV.attachContacts(dbx, "government_entities", e);
     const contacts = Array.isArray(e.contact_points) ? e.contact_points : [];
     const rows = contacts.length
       ? contacts
@@ -1753,7 +1765,8 @@
     await renderEntityProfiles();
   };
   window.icvEntityProjects = async (id) => {
-    let e = (await dbx.from("government_entities").select("*").eq("id", id).maybeSingle()).data;
+    let e = (await dbx.from("government_entities").select(window.ICV.ENTITY_COLS).eq("id", id).maybeSingle())
+      .data;
     if (!e) return;
     let pp = (window.projects || []).filter((p) => p.government_entity_id === id);
     let b = document.getElementById("entityProjectsBox");
@@ -1803,10 +1816,11 @@
     renderEntitiesV2();
   };
   window.icvCompanyProjects = async (id) => {
-    let result = await dbx.from("companies").select("*").eq("id", id).maybeSingle();
+    let result = await dbx.from("companies").select(window.ICV.COMPANY_COLS).eq("id", id).maybeSingle();
     if (result.error) return alert("تعذر تحميل ملف الشركة: " + E(result.error.message));
     const c = result.data;
     if (!c) return;
+    await window.ICV.attachContacts(dbx, "companies", c);
     const pp = (window.projects || []).filter((p) => String(p.implementing_company_id) === String(id));
     const contacts = Array.isArray(c.contact_points) ? c.contact_points : [];
     const contactHtml = contacts.length
@@ -1851,11 +1865,13 @@
       : '<tr><td colspan="6" class="muted">لا توجد مشاريع مرتبطة بهذه الشركة.</td></tr>';
     modal(
       "ملف الشركة: " + E(c.name),
-      '<div class="section-card"><div class="section-card-head"><div><h2>نقاط التواصل</h2><p>بيانات المختصين المسجلة لهذه الشركة أو المقاول.</p></div>' +
-        editButton +
-        "</div>" +
-        contactHtml +
-        "</div>" +
+      (canEdit()
+        ? '<div class="section-card"><div class="section-card-head"><div><h2>نقاط التواصل</h2><p>بيانات المختصين المسجلة لهذه الشركة أو المقاول.</p></div>' +
+          editButton +
+          "</div>" +
+          contactHtml +
+          "</div>"
+        : "") +
         '<div class="section-card" style="margin-top:12px"><div class="section-card-head"><div><h2>مشاريع الشركة</h2><p>' +
         pp.length +
         ' مشروع</p></div></div><div class="table-wrap"><table><thead><tr><th>المشروع</th><th>الجهة</th><th>القيمة</th><th>الإنجاز</th><th>الحالة</th><th></th></tr></thead><tbody>' +
@@ -1865,7 +1881,7 @@
   };
   async function renderCompaniesV2() {
     let b = document.getElementById("page-companies"),
-      r = await dbx.from("companies").select("*").order("name");
+      r = await dbx.from("companies").select(window.ICV.COMPANY_COLS).order("name");
     if (!b) return;
     b.innerHTML =
       '<div class="panel"><div class="toolbar"><div><h2>الشركات</h2><div class="muted">الشركات المنفذة والموردون.</div></div>' +

@@ -104,6 +104,23 @@
     return msg || "حدث خطأ غير متوقع.";
   }
 
+  // Contact points (names, phones, e-mails) are visible to staff only. The database does not let
+  // viewers read the contact_points column, so pages list the other columns explicitly and staff
+  // pages add the contacts through get_contact_points.
+  const ENTITY_COLS = "id,name,code,created_at";
+  const COMPANY_COLS = "id,name,company_type,created_at";
+  async function attachContacts(db, table, rows) {
+    const list = Array.isArray(rows) ? rows : rows ? [rows] : [];
+    list.forEach((r) => (r.contact_points = []));
+    if (!list.length || !canEdit(window.__icvProfile)) return rows;
+    const r = await db.rpc("get_contact_points", { p_table: table, p_ids: list.map((x) => x.id) });
+    const map = {};
+    (r.data || []).forEach((x) => (map[x.id] = Array.isArray(x.contact_points) ? x.contact_points : []));
+    list.forEach((x) => (x.contact_points = map[x.id] || []));
+    return rows;
+  }
+  const canSeeContacts = () => canEdit(window.__icvProfile);
+
   const style = document.createElement("style");
   style.textContent =
     ".icv-message{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:100000;max-width:min(560px,calc(100vw - 32px));padding:12px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.15);direction:rtl}" +
@@ -125,6 +142,10 @@
     fromLocalInput,
     showMessage,
     friendlyError,
+    ENTITY_COLS,
+    COMPANY_COLS,
+    attachContacts,
+    canSeeContacts,
   };
   // Success messages used throughout the pages.
   window.icvSaveSuccess = (text) => showMessage(text || "تم الحفظ بنجاح.", "success");
