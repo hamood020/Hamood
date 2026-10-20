@@ -1046,7 +1046,7 @@
             const raw = localStorage.getItem("icv-settings-v1");
             const settings = raw ? JSON.parse(raw) : null;
             const years = String(settings?.reports?.years || "2026,2027,2028,2029,2030,2031,2032,2033,2034,2035")
-              .split(",").map((x) => x.trim()).filter((x) => /^\\d{4}$/.test(x));
+              .split(",").map((x) => x.trim()).filter((x) => /^\d{4}$/.test(x));
             const list = document.getElementById("rYearOptions");
             if (list && years.length) list.innerHTML = years.map((year) => '<option value="' + year + '"></option>').join("");
           } catch (_) {}
