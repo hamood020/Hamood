@@ -696,7 +696,7 @@
   function mount() {
     if (!document.body) return;
     const style = document.createElement("style");
-    style.textContent = "html[dir=ltr] body{font-family:Arial,sans-serif}html[dir=ltr] .side{right:auto;left:0}html[dir=ltr] .main{margin-right:0;margin-left:250px}html[dir=ltr] .nav button{text-align:left}html[dir=ltr] .side .logout{right:14px;left:14px}html[dir=ltr] .is-nav button{text-align:left}html[dir=ltr] .icv-message{direction:ltr}.icv-language-switch{display:flex;align-items:center;gap:4px;margin:7px 0 5px;direction:ltr;flex-wrap:nowrap}.icv-language-choice{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 8px;border:1px solid rgba(255,255,255,.24);border-radius:8px;background:rgba(255,255,255,.07);color:var(--nav-ink,#fff);font:700 12px/1.2 Arial,sans-serif;cursor:pointer;white-space:nowrap;min-width:58px}.icv-language-choice.active{background:#fff;color:#0c514b;border-color:#fff;box-shadow:0 2px 7px #0002}.icv-language-choice:focus-visible{outline:2px solid #d9a441;outline-offset:2px}.brand .icv-language-switch{margin-top:8px;margin-bottom:8px}.brand .icv-language-choice{flex:0 0 auto}";
+    style.textContent = "html[dir=ltr] body{font-family:Arial,sans-serif}html[dir=ltr] .side{right:auto;left:0}html[dir=ltr] .main{margin-right:0;margin-left:250px}html[dir=ltr] .nav button{text-align:left}html[dir=ltr] .side .logout{right:14px;left:14px}html[dir=ltr] .is-nav button{text-align:left}html[dir=ltr] .icv-message{direction:ltr}.icv-language-switch{display:flex;align-items:center;gap:4px;margin:7px 0 5px;direction:ltr;flex-wrap:nowrap}.icv-language-choice{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 8px;border:1px solid rgba(255,255,255,.24);border-radius:8px;background:rgba(255,255,255,.07);color:var(--nav-ink,#fff);font:700 12px/1.2 Arial,sans-serif;cursor:pointer;white-space:nowrap;min-width:58px}.icv-language-choice.active{background:#fff;color:#0c514b;border-color:#fff;box-shadow:0 2px 7px #0002}.icv-language-choice:focus-visible{outline:2px solid #d9a441;outline-offset:2px}.brand{gap:8px}.brand .brand-mark{width:100%;height:76px;min-height:76px;display:flex;align-items:center;justify-content:center;overflow:hidden}.brand .brand-logo{width:100%;height:100%;object-fit:contain;filter:brightness(0) invert(1)}.brand>div:last-child{display:flex;flex-direction:column;align-items:center;gap:5px;width:100%}.brand>div:last-child>b{order:1}.brand>div:last-child>small{order:2}.brand .icv-language-switch{order:3;margin:4px 0 0;width:100%;justify-content:center}.brand .icv-language-choice{flex:0 0 auto}.side{overflow-y:auto;overflow-x:hidden;height:100vh;min-height:0;padding-bottom:18px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.28) transparent}.side .nav{padding-bottom:4px}.side .logout{position:static;display:block;width:100%;margin-top:14px;right:auto;bottom:auto;left:auto}";
     document.head.appendChild(style);
     const brand = document.querySelector(".side .brand");
     const brandTitle = brand && brand.querySelector(":scope > div:last-child > b");
@@ -720,7 +720,10 @@
         });
         group.appendChild(btn);
       });
-      brandTitle.insertAdjacentElement("afterend",group);
+      const brandDetails = brandTitle.parentElement;
+      const brandSubtitle = brandDetails && brandDetails.querySelector("small");
+      if (brandSubtitle) brandSubtitle.insertAdjacentElement("afterend",group);
+      else brandTitle.insertAdjacentElement("afterend",group);
     }
     apply();
     const observer = new MutationObserver(mutations => { if(lang === "en") mutations.forEach(m => m.addedNodes.forEach(n => { if(n.nodeType===Node.ELEMENT_NODE) walk(n); else if(n.nodeType===Node.TEXT_NODE && dict[n.nodeValue.trim()]) n.nodeValue=dict[n.nodeValue.trim()]; })); });
