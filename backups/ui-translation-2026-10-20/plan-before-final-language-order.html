@@ -1,0 +1,2291 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://bmwtrnosqosbkezdswcx.supabase.co wss://bmwtrnosqosbkezdswcx.supabase.co; img-src 'self' data: blob: https:; object-src 'none'; base-uri 'self'; frame-src 'none'; form-action 'self'" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>خطة المحتوى المحلي — ICV New</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
+    <script src="icv-common.js?v=20261020-02"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap");
+      :root {
+        --icv-font-scale: 1;
+        --bg: #f5f7fb;
+        --card: #fff;
+        --ink: #162033;
+        --muted: #6b7280;
+        --line: #e8edf4;
+        --primary: #0f766e;
+        --primary2: #0b5f59;
+        --blue: #2563eb;
+        --green: #16a34a;
+        --red: #dc2626;
+        --amber: #d97706;
+        --soft: #eef7f5;
+        --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        --radius: 18px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        min-height: 100%;
+        margin: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Cairo, Arial, sans-serif;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .login {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #0e2f2c, #115e59);
+        padding: 20px;
+      }
+      .login-card {
+        width: min(430px, 100%);
+        background: #fff;
+        border-radius: 22px;
+        padding: 34px;
+        box-shadow: 0 25px 70px #0004;
+      }
+      .logo {
+        width: 58px;
+        height: 58px;
+        border-radius: 16px;
+        background: var(--primary);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 20px;
+        font-weight: 800;
+        margin-bottom: 18px;
+      }
+      .login h1 {
+        margin: 0 0 8px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .app {
+        display: flex;
+        min-height: 100vh;
+      }
+      .side {
+        width: 250px;
+        background: var(--nav-bg);
+        color: var(--nav-ink);
+        position: fixed;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        padding: 22px 14px;
+        z-index: 10;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 16px;
+      }
+      .brand-mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: var(--nav-mark-bg);
+        color: var(--primary);
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+      }
+      .brand b {
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      .brand small {
+        display: block;
+        color: var(--nav-muted);
+        font-size: 10px;
+      }
+      .nav {
+        display: grid;
+        gap: 6px;
+      }
+      .nav button {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: var(--nav-ink);
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-align: right;
+      }
+      .nav button:hover,
+      .nav button.active {
+        background: var(--nav-hover);
+        color: var(--nav-ink);
+      }
+      .nav .ico {
+        width: 24px;
+        text-align: center;
+        font-size: 15px;
+      }
+      .side .logout {
+        position: absolute;
+        bottom: 22px;
+        right: 14px;
+        left: 14px;
+      }
+      .main {
+        margin-right: 250px;
+        width: calc(100% - 250px);
+        padding: 28px 32px 48px;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 22px;
+      }
+      .top h1 {
+        margin: 0;
+        font-size: 26px;
+      }
+      .top .muted {
+        margin-top: 4px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        background: #eef7f5;
+        color: var(--primary2);
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        margin-right: 5px;
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+        border-radius: 11px;
+        padding: 10px 14px;
+        font-family: inherit;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 12px;
+      }
+      .btn.primary {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
+      }
+      .btn.danger {
+        background: #feecec;
+        color: #b91c1c;
+        border-color: #feecec;
+      }
+      .btn.ghost {
+        background: #f8fafc;
+      }
+      .field {
+        margin: 0 0 12px;
+      }
+      .field label {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+      .field input,
+      .field select,
+      .field textarea,
+      .search {
+        width: 100%;
+        height: 40px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        padding: 0 10px;
+        font-family: inherit;
+        font-size: 12px;
+        outline: none;
+      }
+      .field textarea {
+        height: 100px;
+        padding: 10px;
+      }
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        border-color: #9bc9c4;
+      }
+      .link {
+        border: 0;
+        background: none;
+        color: var(--blue);
+        font-weight: 700;
+        margin-top: 10px;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+      .card,
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 18px;
+        box-shadow: var(--shadow);
+      }
+      .card .label {
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .card .value {
+        font-size: 24px;
+        font-weight: 800;
+        margin: 7px 0;
+      }
+      .card .sub {
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+      }
+      .grid3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .panel h2,
+      .card h2 {
+        margin: 0 0 5px;
+        font-size: 16px;
+      }
+      .desc {
+        color: var(--muted);
+        font-size: 11px;
+        margin-bottom: 15px;
+      }
+      .metric {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 11px;
+      }
+      .metric:last-child {
+        border-bottom: 0;
+      }
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .toolbar h2 {
+        margin: 0;
+      }
+      .table-wrap {
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 15px;
+      }
+      .table-wrap table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: #fff;
+      }
+      .table-wrap th {
+        background: #f8fafc;
+        color: #667085;
+        font-size: 10px;
+        font-weight: 800;
+        padding: 11px;
+        text-align: right;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+      .table-wrap td {
+        padding: 11px;
+        font-size: 11px;
+        border-bottom: 1px solid #f0f2f6;
+        vertical-align: middle;
+      }
+      .table-wrap tr:last-child td {
+        border-bottom: 0;
+      }
+      .table-wrap tr:hover td {
+        background: #fbfdfd;
+      }
+      .status {
+        font-weight: 700;
+      }
+      .ok {
+        color: var(--green);
+      }
+      .bad {
+        color: var(--red);
+      }
+      .warn {
+        color: var(--amber);
+      }
+      .project-link {
+        font-weight: 800;
+        color: var(--primary2);
+      }
+      .progress {
+        height: 8px;
+        background: #edf1f5;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .progress span {
+        display: block;
+        height: 100%;
+        background: var(--primary);
+        border-radius: 999px;
+      }
+      .bar-list {
+        display: grid;
+        gap: 12px;
+      }
+      .bar-row {
+        display: grid;
+        grid-template-columns: 150px 1fr 75px;
+        gap: 10px;
+        align-items: center;
+        font-size: 11px;
+      }
+      .bar {
+        height: 10px;
+        background: #edf1f5;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .bar i {
+        display: block;
+        height: 100%;
+        background: var(--primary);
+        border-radius: 999px;
+      }
+      .bar-row b {
+        text-align: left;
+      }
+      .donut {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: conic-gradient(var(--primary) 0 62%, #cbd5e1 62% 100%);
+        position: relative;
+        margin: auto;
+      }
+      .donut:after {
+        content: "";
+        position: absolute;
+        inset: 30px;
+        background: #fff;
+        border-radius: 50%;
+      }
+      .donut-center {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: 20px;
+        z-index: 1;
+      }
+      .chart-flex {
+        display: flex;
+        gap: 25px;
+        align-items: center;
+      }
+      .legend {
+        display: grid;
+        gap: 9px;
+        font-size: 11px;
+      }
+      .legend span {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .dot.primary {
+        background: var(--primary);
+      }
+      .dot.gray {
+        background: #cbd5e1;
+      }
+      .split-status {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+      .status-box {
+        text-align: center;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 13px;
+      }
+      .status-box b {
+        display: block;
+        margin: 4px 0;
+        font-size: 16px;
+      }
+      .section {
+        margin-top: 20px;
+      }
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .section-head h2 {
+        font-size: 18px;
+        margin: 0;
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: #0008;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        z-index: 20;
+      }
+      .modal-card {
+        background: #fff;
+        border-radius: 18px;
+        width: min(1050px, 100%);
+        max-height: 90vh;
+        overflow: auto;
+        padding: 22px;
+        box-shadow: var(--shadow);
+      }
+      .modal-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .close {
+        border: 0;
+        background: #eef2f7;
+        border-radius: 50%;
+        width: 34px;
+        height: 34px;
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      .project-filter-card {
+        padding: 22px;
+      }
+      .project-filter-grid {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+        align-items: end;
+      }
+      .project-filter-grid-main {
+        grid-template-columns: 2fr 1.35fr 1fr 1.1fr 1.25fr;
+      }
+      .project-filter-grid-secondary {
+        grid-template-columns: 1.2fr 1.15fr 1fr 1fr 1fr 1fr;
+      }
+      .project-filter-grid .field {
+        margin: 0;
+      }
+      .project-filter-grid .field input,
+      .project-filter-grid .field select {
+        height: 44px;
+      }
+      .project-expiry-filter {
+        height: 44px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--ink);
+        white-space: nowrap;
+      }
+      .project-expiry-filter input {
+        width: 18px;
+        height: 18px;
+      }
+      .project-filter-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+      }
+      .full {
+        grid-column: 1/-1;
+      }
+      .toast {
+        position: fixed;
+        left: 20px;
+        bottom: 20px;
+        background: #172033;
+        color: #fff;
+        padding: 12px 16px;
+        border-radius: 10px;
+        z-index: 50;
+      }
+      @media (max-width: 1050px) {
+        .cards {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .grid2 {
+          grid-template-columns: 1fr;
+        }
+        .form-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .project-filter-grid-main,
+        .project-filter-grid-secondary {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 760px) {
+        .side {
+          position: static;
+          width: 100%;
+          height: auto;
+          padding: 14px;
+        }
+        .app {
+          display: block;
+        }
+        .main {
+          margin: 0;
+          width: 100%;
+          padding: 18px;
+        }
+        .side .logout {
+          position: static;
+          margin-top: 10px;
+        }
+        .nav {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .top {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .cards {
+          grid-template-columns: 1fr 1fr;
+        }
+        .project-filter-grid-main,
+        .project-filter-grid-secondary {
+          grid-template-columns: 1fr;
+        }
+        .project-filter-actions {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+        .split-status {
+          grid-template-columns: 1fr;
+        }
+        .bar-row {
+          grid-template-columns: 110px 1fr 45px;
+        }
+        .chart-flex {
+          flex-direction: column;
+        }
+        .pill {
+          margin: 0 4px 4px 0;
+        }
+      }
+      /* ICV New - Appearance settings */
+      .theme-nav-btn {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: var(--nav-ink);
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-align: right;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .theme-nav-btn:hover,
+      .theme-nav-btn.active {
+        background: var(--nav-hover);
+        color: var(--nav-ink);
+      }
+      .theme-panel {
+        position: fixed;
+        right: 265px;
+        top: 20px;
+        width: 370px;
+        max-width: calc(100vw - 285px);
+        background: var(--card);
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: 0 18px 45px #0003;
+        z-index: 1000;
+        overflow: hidden;
+      }
+      .theme-panel.hidden {
+        display: none !important;
+      }
+      .theme-panel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--card);
+      }
+      .theme-panel-head b {
+        display: block;
+        font-size: 16px;
+      }
+      .theme-panel-head small {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 3px;
+      }
+      .theme-panel-head button {
+        border: 0;
+        background: var(--soft);
+        color: var(--ink);
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        font-size: 21px;
+        cursor: pointer;
+      }
+      .theme-panel-body {
+        padding: 16px;
+        max-height: calc(100vh - 40px);
+        overflow: auto;
+      }
+      .theme-group {
+        margin: 0 0 18px;
+      }
+      .theme-group > label {
+        display: block;
+        font-size: 12px;
+        font-weight: 800;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .theme-options {
+        display: grid;
+        gap: 7px;
+      }
+      .theme-option {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+        padding: 10px 11px;
+        border-radius: 11px;
+        cursor: pointer;
+        font-family: inherit;
+        text-align: right;
+      }
+      .theme-option:hover,
+      .theme-option.active {
+        border-color: var(--primary);
+        background: var(--soft);
+        color: var(--primary2);
+      }
+      .theme-option span {
+        display: flex;
+        gap: 4px;
+      }
+      .theme-option i {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        display: block;
+      }
+      .theme-size {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+      }
+      .theme-size button,
+      #themeFont {
+        height: 40px;
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 10px;
+        color: var(--ink);
+        font-family: inherit;
+        cursor: pointer;
+      }
+      .theme-size button:hover {
+        background: var(--soft);
+        color: var(--primary2);
+      }
+      #themeFont {
+        width: 100%;
+        padding: 0 10px;
+      }
+      @media (max-width: 900px) {
+        .theme-panel {
+          right: 235px;
+          max-width: calc(100vw - 250px);
+        }
+      }
+      @media (max-width: 760px) {
+        .theme-panel {
+          right: 82px;
+          width: 330px;
+          max-width: calc(100vw - 95px);
+        }
+      }
+      /* readable-fonts */
+      /* Readability: enlarge content text without changing header/sidebar */
+      .main .panel h2,
+      .main .card h2 {
+        font-size: 18px;
+      }
+      .main .panel h3,
+      .main .card h3 {
+        font-size: 15px;
+      }
+      .main .desc,
+      .main .muted {
+        font-size: 12px;
+      }
+      .main .card .label,
+      .main .card .sub {
+        font-size: 12px;
+      }
+      .main .metric {
+        font-size: 13px;
+      }
+      .main .metric b {
+        font-size: 13px;
+      }
+      .main .table-wrap th {
+        font-size: 14px;
+        padding: 13px 11px;
+      }
+      .main .table-wrap td {
+        font-size: 14px;
+        padding: 13px 11px;
+      }
+      .main .table-wrap td b,
+      .main .table-wrap td .project-link {
+        font-size: 14px;
+      }
+      .main .btn {
+        font-size: 13px;
+      }
+      .main .field label {
+        font-size: 12px;
+      }
+      .main .field input,
+      .main .field select,
+      .main .field textarea,
+      .main .search {
+        font-size: 13px;
+      }
+      .main .project-expiry-filter {
+        font-size: 12px;
+      }
+      .main .bar-row,
+      .main .legend {
+        font-size: 12px;
+      }
+      .main .section-head h2 {
+        font-size: 19px;
+      }
+      /* Project page */
+      .main .comparison-card {
+        font-size: 13px;
+      }
+      .main .compare-row {
+        font-size: 13px;
+      }
+      .main .compare-label {
+        font-size: 13px;
+      }
+      .main .compare-value b {
+        font-size: 14px;
+      }
+      .main .compare-value small,
+      .main .compare-result small {
+        font-size: 11px;
+      }
+      .main .compare-result span {
+        font-size: 11px;
+      }
+      .main .compare-head {
+        font-size: 11px;
+      }
+      .main .workforce-main-card .compare-row,
+      .main .workforce-category-card .compare-row {
+        font-size: 13px;
+      }
+      .main .workforce-main-card .compare-label,
+      .main .workforce-category-card .compare-label {
+        font-size: 13px;
+      }
+      .main .workforce-main-card .compare-value b,
+      .main .workforce-category-card .compare-value b {
+        font-size: 14px;
+      }
+      .main .workforce-main-card .compare-value small,
+      .main .workforce-category-card .compare-value small,
+      .main .workforce-main-card .compare-result small,
+      .main .workforce-category-card .compare-result small {
+        font-size: 11px;
+      }
+      .main .workforce-main-card .compare-result span,
+      .main .workforce-category-card .compare-result span {
+        font-size: 11px;
+      }
+      .main .workforce-main-card .compare-head,
+      .main .workforce-category-card .compare-head {
+        font-size: 11px;
+      }
+
+      /* Global page typography scale. Excludes sidebar and top chrome. */
+      .main .panel,
+      .main .section-head,
+      .main .section-head h2,
+      .main .section-head .muted,
+      .main .table-wrap,
+      .main .table-wrap th,
+      .main .table-wrap td,
+      .main .table-wrap .project-link,
+      .main .btn,
+      .main .field label,
+      .main .field input,
+      .main .field select,
+      .main .field textarea,
+      .main .muted,
+      .main .pill,
+      .main .note,
+      .main .card,
+      .main .kpi,
+      .main .kpi-value,
+      .main .kpi-label,
+      .main .stat,
+      .main .stat-value,
+      .main .stat-label {
+        font-size: var(--icv-page-font-size) !important;
+        line-height: 1.45 !important;
+      }
+      .icv-shell .project-meta-item small,
+      .icv-shell .project-meta-item b,
+      .icv-shell .compliance-title,
+      .icv-shell .compliance-card .label,
+      .icv-shell .status-text,
+      .icv-shell .project-nav a,
+      .icv-shell .project-kpi small,
+      .icv-shell .project-kpi b,
+      .icv-shell .project-kpi span,
+      .icv-shell .section-card-head h2,
+      .icv-shell .section-card-head p,
+      .icv-shell .section-tag,
+      .icv-shell .compare-head,
+      .icv-shell .compare-row,
+      .icv-shell .compare-label,
+      .icv-shell .compare-value,
+      .icv-shell .compare-result,
+      .icv-shell .detail-item,
+      .icv-shell .detail-item small,
+      .icv-shell .detail-item b,
+      .icv-shell .hero-btn {
+        font-size: var(--icv-page-font-size) !important;
+        line-height: 1.5 !important;
+      }
+      .icv-shell .project-kpi b,
+      .icv-shell .compliance-card .percent {
+        font-size: var(--icv-page-font-size) !important;
+      }
+
+      /* Plan page only */
+      .plan-page {
+        padding-bottom: 60px;
+      }
+      .plan-card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 18px;
+        box-shadow: var(--shadow);
+        margin-bottom: 16px;
+      }
+      .plan-card h2 {
+        margin: 0 0 5px;
+        font-size: 18px;
+      }
+      .plan-card .desc {
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 15px;
+      }
+      .plan-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .plan-grid .full {
+        grid-column: 1/-1;
+      }
+      .plan-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .plan-table th {
+        background: #f8fafc;
+        color: #667085;
+        font-size: 14px;
+        font-weight: 800;
+        padding: 13px 11px;
+        text-align: right;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+      .plan-table td {
+        padding: 13px 11px;
+        font-size: 14px;
+        border-bottom: 1px solid #f0f2f6;
+        vertical-align: middle;
+      }
+      .plan-table input,
+      .plan-table select,
+      .plan-table textarea {
+        width: 100%;
+        height: 40px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        padding: 0 10px;
+        font-family: inherit;
+        font-size: 18px;
+        outline: none;
+      }
+      .plan-table textarea {
+        height: 70px;
+        padding: 8px;
+      }
+      .plan-table .btn {
+        font-size: 18px;
+      }
+      .salary-plan-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 14px;
+      }
+      .salary-plan-box {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 13px;
+        background: #fbfcfe;
+      }
+      .salary-plan-box label {
+        display: block;
+        font-size: 18px;
+        font-weight: 800;
+        margin-bottom: 7px;
+      }
+      .salary-plan-box input {
+        width: 100%;
+        height: 40px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 0 10px;
+        font-family: inherit;
+        font-size: 18px;
+      }
+      .plan-file-name {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .note {
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: var(--soft);
+        border: 1px solid #ccece7;
+        color: var(--primary2);
+        font-size: 14px;
+      }
+      .plan-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-start;
+      }
+      .empty-cell {
+        text-align: center !important;
+        color: var(--muted);
+      }
+      .document-open-link {
+        color: var(--primary2);
+        text-decoration: underline;
+        cursor: pointer;
+        font-weight: 800;
+      }
+      .support-upload-table input[type="file"] {
+        width: 100%;
+      }
+      @media (max-width: 1050px) {
+        .plan-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 760px) {
+        .plan-grid,
+        .salary-plan-grid {
+          grid-template-columns: 1fr;
+        }
+        .plan-grid .full {
+          grid-column: auto;
+        }
+      }
+    </style>
+    <style id="icv-top-save-message">
+      #msg {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        z-index: 99999 !important;
+        margin: 0 !important;
+        padding: 13px 20px !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
+        pointer-events: none !important;
+      }
+      #msg:empty {
+        display: none !important;
+      }
+      #msg .status {
+        margin: 0 !important;
+        background: #eaf8ef !important;
+        color: #087443 !important;
+        border: 0 !important;
+        border-bottom: 2px solid #12a150 !important;
+        border-radius: 0 !important;
+        padding: 11px 20px !important;
+        font-weight: 800 !important;
+      }
+      #msg .error {
+        margin: 0 !important;
+        background: #fff1f1 !important;
+        color: #b42318 !important;
+        border: 0 !important;
+        border-bottom: 2px solid #dc2626 !important;
+        border-radius: 0 !important;
+        padding: 11px 20px !important;
+        font-weight: 800 !important;
+      }
+    </style>
+    <style id="icv-top-save-message-v2">
+      #icvTopSaveMessage {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        z-index: 2147483647;
+        background: #eaf8ef;
+        color: #087443;
+        border-bottom: 3px solid #12a150;
+        padding: 14px 20px;
+        box-sizing: border-box;
+        text-align: center;
+        font-weight: 800;
+        font-size: 14px;
+        direction: rtl;
+        display: none;
+      }
+    </style>
+    <script>
+      function showTopSaveMessage(message) {
+        let e = document.getElementById("icvTopSaveMessage");
+        if (!e) {
+          e = document.createElement("div");
+          e.id = "icvTopSaveMessage";
+          document.body.appendChild(e);
+        }
+        e.textContent = "✓ " + message;
+        e.style.display = "block";
+        clearTimeout(window.__topSaveTimer);
+        window.__topSaveTimer = setTimeout(() => (e.style.display = "none"), 3000);
+      }
+    </script>
+  </head>
+  <body data-page="projects">
+    <div class="app">
+      <aside class="side">
+        <div class="brand">
+          <div class="brand-mark">م</div>
+          <div><b>ICV New</b><small>متابعة المشاريع والمحتوى المحلي</small></div>
+        </div>
+        <div class="nav">
+          <button data-theme-settings class="theme-nav-btn" type="button">
+            <span class="ico">⚙</span><span>المظهر</span>
+          </button>
+          <button data-page="dashboard" type="button" onclick="goPlatform('dashboard')">
+            <span class="ico">⌂</span><span>لوحة المؤشرات</span>
+          </button>
+          <button data-page="projects" class="active" type="button" onclick="goPlatform('projects')">
+            <span class="ico">▦</span><span>المشاريع</span>
+          </button>
+          <button data-page="entities" type="button" onclick="goPlatform('entities')">
+            <span class="ico">🏛</span><span>الجهات الحكومية</span>
+          </button>
+          <button data-page="companies" type="button" onclick="goPlatform('companies')">
+            <span class="ico">▣</span><span>الشركات</span>
+          </button>
+          <button data-page="profile" type="button" onclick="goPlatform('profile')">
+            <span class="ico">◉</span><span>ملفي الشخصي</span>
+          </button>
+          <button data-page="users" id="userAdminNav" type="button" onclick="goPlatform('users')">
+            <span class="ico">⚙</span><span>إدارة المستخدمين</span>
+          </button>
+        </div>
+        <button class="btn logout" type="button" onclick="logoutFromPlan()">تسجيل الخروج</button>
+      </aside>
+      <div id="themePanel" class="theme-panel hidden" dir="rtl">
+        <div class="theme-panel-head">
+          <div><b>إعدادات المظهر</b><small>الثيم والخط وحجم النص</small></div>
+          <button type="button" data-theme-close>×</button>
+        </div>
+        <div class="theme-panel-body">
+          <div class="theme-group">
+            <label>اختيار الثيم</label>
+            <div class="theme-options">
+              <button type="button" class="theme-option active" data-theme="green">
+                <b>1. أخضر مؤسسي</b
+                ><span
+                  ><i style="background: #0f766e"></i><i style="background: #0b5f59"></i
+                  ><i style="background: #d9a441"></i
+                ></span></button
+              ><button type="button" class="theme-option" data-theme="navy">
+                <b>2. كحلي فاخر</b
+                ><span
+                  ><i style="background: #315b91"></i><i style="background: #172f52"></i
+                  ><i style="background: #c9a35b"></i
+                ></span></button
+              ><button type="button" class="theme-option" data-theme="sand">
+                <b>3. رملي رسمي</b
+                ><span
+                  ><i style="background: #9a6b3f"></i><i style="background: #5f4329"></i
+                  ><i style="background: #c79a53"></i
+                ></span></button
+              ><button type="button" class="theme-option" data-theme="teal">
+                <b>4. تركوازي عصري</b
+                ><span
+                  ><i style="background: #0d8b87"></i><i style="background: #075f60"></i
+                  ><i style="background: #e2b85b"></i
+                ></span></button
+              ><button type="button" class="theme-option" data-theme="slate">
+                <b>5. رمادي احترافي</b
+                ><span
+                  ><i style="background: #566575"></i><i style="background: #303b48"></i
+                  ><i style="background: #b7955b"></i
+                ></span>
+              </button>
+            </div>
+          </div>
+          <div class="theme-group">
+            <label>حجم الخط</label>
+            <div class="theme-size">
+              <button type="button" data-font-minus>A−</button><button type="button" data-font-reset>A</button
+              ><button type="button" data-font-plus>A+</button>
+            </div>
+          </div>
+          <div class="theme-group">
+            <label>نوع الخط</label
+            ><select id="themeFont">
+              <option value="Cairo,Arial,sans-serif">Cairo</option>
+              <option value="Tahoma,Arial,sans-serif">Tahoma</option>
+              <option value="Segoe UI,Tahoma,Arial,sans-serif">Segoe UI</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <main class="main">
+        <div class="plan-page">
+          <div class="top">
+            <div class="title">
+              <h1 id="pageTitle">خطة المحتوى المحلي</h1>
+              <div class="muted">إدخال مستهدفات الخطة بصورة مبسطة حسب السنة والربع</div>
+            </div>
+            <div class="top-actions">
+              <button type="button" class="btn" onclick="goPlatform('project')">العودة للمشروع</button
+              ><span id="userName" class="pill"></span><span id="userRole" class="pill"></span>
+            </div>
+          </div>
+          <div id="loading" class="plan-card">جارٍ تحميل بيانات المشروع...</div>
+          <form id="planForm" hidden>
+            <div class="plan-card">
+              <div class="plan-grid">
+                <div class="field"><label>المشروع</label><input id="pProject" readonly /></div>
+                <div class="field"><label>تاريخ الخطة</label><input id="planDate" type="date" /></div>
+                <div class="field">
+                  <label>إصدار الخطة</label><input id="version" placeholder="مثال: V1" />
+                </div>
+                <div class="field">
+                  <label>مدة المشروع</label
+                  ><input id="duration" readonly placeholder="تحسب من بيانات المشروع" />
+                </div>
+                <div class="field">
+                  <label>حالة الخطة</label
+                  ><select id="status">
+                    <option>مسودة</option>
+                    <option>قيد المراجعة</option>
+                    <option>معتمدة</option>
+                    <option>مرفوضة</option>
+                    <option>محدث</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>ملاحظات</label><input id="notes" placeholder="ملاحظات الخطة" />
+                </div>
+                <div class="field full">
+                  <label>إرفاق ملف الخطة</label
+                  ><input id="planFile" type="file" accept=".xlsx,.xls,.pdf,.doc,.docx" />
+                  <div id="planFileName" class="plan-file-name">لم يتم اختيار ملف</div>
+                </div>
+                <div class="field full">
+                  <label>المستندات الداعمة</label>
+                  <table class="plan-table support-upload-table">
+                    <thead>
+                      <tr>
+                        <th>اختيار الملف</th>
+                        <th>اسم الملف</th>
+                        <th style="width: 130px">رفع</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <input
+                            id="supportFile"
+                            type="file"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                          />
+                        </td>
+                        <td><input id="supportFileName" placeholder="اكتب اسم الملف" /></td>
+                        <td>
+                          <button
+                            type="button"
+                            id="uploadSupportBtn"
+                            class="btn primary"
+                            style="width: 100%; margin: 0"
+                          >
+                            📎 رفع
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div id="supportFileDisplay" class="plan-file-name"></div>
+                  <div style="margin-top: 14px; font-weight: 800">المستندات المرفوعة</div>
+                  <table class="plan-table" style="margin-top: 8px">
+                    <thead>
+                      <tr>
+                        <th>اسم الملف</th>
+                        <th>اسم المستند</th>
+                        <th style="width: 150px">الإجراء</th>
+                      </tr>
+                    </thead>
+                    <tbody id="supportDocumentsList">
+                      <tr>
+                        <td colspan="3" class="empty-cell">لا توجد مستندات مرفوعة</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="note" style="margin-top: 12px">
+                الخطة اختيارية. إذا لم توجد خطة للمشروع، تقبل التقارير وتظهر المستهدفات كـغير متوفر/غير منطبق.
+              </div>
+            </div>
+
+            <div class="plan-card">
+              <h2>القوى العاملة والرواتب</h2>
+              <div class="desc">
+                الفئات ثابتة. يتم إدخال الأرقام للعمانيين والأجانب فقط، والإجماليات تحسب تلقائيًا.
+              </div>
+              <div class="desc" style="margin-bottom: 12px">
+                أدخل إجمالي أعداد العاملين في كل فئة مرة واحدة فقط، ولا تكرر الأعداد حسب السنة والربع.
+              </div>
+              <table class="plan-table" id="work">
+                <thead>
+                  <tr>
+                    <th>الفئة الوظيفية</th>
+                    <th>عدد العمانيين</th>
+                    <th>عدد الأجانب</th>
+                    <th>إجمالي الموظفين</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><b>الفئة الأولى</b></td>
+                    <td><input type="number" min="0" class="om" /></td>
+                    <td><input type="number" min="0" class="fo" /></td>
+                    <td><input class="emp" readonly /></td>
+                  </tr>
+                  <tr>
+                    <td><b>الفئة الثانية</b></td>
+                    <td><input type="number" min="0" class="om" /></td>
+                    <td><input type="number" min="0" class="fo" /></td>
+                    <td><input class="emp" readonly /></td>
+                  </tr>
+                  <tr>
+                    <td><b>الفئة الثالثة</b></td>
+                    <td><input type="number" min="0" class="om" /></td>
+                    <td><input type="number" min="0" class="fo" /></td>
+                    <td><input class="emp" readonly /></td>
+                  </tr>
+                  <tr>
+                    <td><b>الإجمالي</b></td>
+                    <td><input id="totOm" readonly /></td>
+                    <td><input id="totFo" readonly /></td>
+                    <td><input id="totEmp" readonly /></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="plan-grid" style="grid-template-columns: 1fr 1fr; margin: 14px 0">
+                <div class="field">
+                  <label>سنة الرواتب</label
+                  ><select id="salaryYear"></select>
+                </div>
+                <div class="field">
+                  <label>ربع الرواتب</label
+                  ><select id="salaryQuarter">
+                    <option>Q1</option>
+                    <option>Q2</option>
+                    <option>Q3</option>
+                    <option>Q4</option>
+                  </select>
+                </div>
+              </div>
+              <div class="salary-plan-grid">
+                <div class="salary-plan-box">
+                  <label>رواتب العمانيين</label
+                  ><input id="omanSalary" type="number" min="0" placeholder="القيمة الإجمالية للرواتب" />
+                </div>
+                <div class="salary-plan-box">
+                  <label>رواتب الأجانب</label
+                  ><input id="foreignSalary" type="number" min="0" placeholder="القيمة الإجمالية للرواتب" />
+                </div>
+              </div>
+            </div>
+
+            <div class="plan-card">
+              <h2>المشتريات</h2>
+              <div class="desc">السنة، الربع، نوع التوريد، القيمة الإجمالية.</div>
+              <table class="plan-table">
+                <thead>
+                  <tr>
+                    <th>السنة</th>
+                    <th>الربع</th>
+                    <th>نوع التوريد</th>
+                    <th>القيمة الإجمالية</th>
+                    <th style="width: 70px"></th>
+                  </tr>
+                </thead>
+                <tbody id="purchaseRows"></tbody>
+              </table>
+              <button type="button" class="btn" onclick="addRow('purchaseRows', 'purchase')">
+                + إضافة سجل
+              </button>
+            </div>
+            <div class="plan-card">
+              <h2>الخدمات</h2>
+              <div class="desc">السنة، الربع، نوع المورد، القيمة الإجمالية.</div>
+              <table class="plan-table">
+                <thead>
+                  <tr>
+                    <th>السنة</th>
+                    <th>الربع</th>
+                    <th>نوع المورد</th>
+                    <th>القيمة الإجمالية</th>
+                    <th style="width: 70px"></th>
+                  </tr>
+                </thead>
+                <tbody id="serviceRows"></tbody>
+              </table>
+              <button type="button" class="btn" onclick="addRow('serviceRows', 'service')">
+                + إضافة سجل
+              </button>
+            </div>
+            <div class="plan-card">
+              <h2>عقود الباطن</h2>
+              <div class="desc">السنة، الربع، نوع المورد، القيمة الإجمالية.</div>
+              <table class="plan-table">
+                <thead>
+                  <tr>
+                    <th>السنة</th>
+                    <th>الربع</th>
+                    <th>نوع المورد</th>
+                    <th>القيمة الإجمالية</th>
+                    <th style="width: 70px"></th>
+                  </tr>
+                </thead>
+                <tbody id="subRows"></tbody>
+              </table>
+              <button type="button" class="btn" onclick="addRow('subRows', 'sub')">+ إضافة سجل</button>
+            </div>
+            <div class="plan-card">
+              <h2>التدريب</h2>
+              <div class="desc">السنة، الربع، المصدر، OJT، TFE، TFQ وبيانات المتدربين.</div>
+              <table class="plan-table">
+                <thead>
+                  <tr>
+                    <th>السنة</th>
+                    <th>الربع</th>
+                    <th>المصدر</th>
+                    <th>OJT</th>
+                    <th>TFE</th>
+                    <th>TFQ</th>
+                    <th>بيانات المتدربين</th>
+                    <th style="width: 70px"></th>
+                  </tr>
+                </thead>
+                <tbody id="trainingRows"></tbody>
+              </table>
+              <button type="button" class="btn" onclick="addTraining()">+ إضافة سجل</button>
+            </div>
+            <div id="msg"></div>
+            <div class="plan-card plan-actions">
+              <button type="button" class="btn" id="draftBtn">حفظ كمسودة</button
+              ><button type="button" class="btn primary" id="saveBtn">حفظ الخطة</button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+    <script>
+      const SUPABASE_URL = "https://bmwtrnosqosbkezdswcx.supabase.co",
+        SUPABASE_KEY = "sb_publishable_Ge88ZuNnqW89l0SMfw_mvQ_nY2BzpPr",
+        db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const $ = (id) => document.getElementById(id),
+        esc = (v) =>
+          String(v ?? "").replace(
+            /[&<>"']/g,
+            (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[m],
+          ),
+        n = (v) => Number(v || 0);
+      const params = new URLSearchParams(location.search),
+        pid = params.get("id"),
+        existingId = params.get("plan");
+      let profile = null,
+        project = null,
+        current = null,
+        selectedSupportFile = null,
+        selectedPlanFile = null;
+      const years = Array.from({ length: 10 }, (_, i) => "Year " + (i + 1));
+      function months(a, b) {
+        if (!a || !b) return 48;
+        return Math.max(1, Math.round((new Date(b) - new Date(a)) / 86400000 / 30.4375));
+      }
+      function entityName() {
+        return project?.government_entity_name || "—";
+      }
+      async function getProfile() {
+        const s = await db.auth.getSession();
+        if (!s.data.session) throw Error("يجب تسجيل الدخول أولاً.");
+        const p = await db.from("user_profiles").select("*").eq("id", s.data.session.user.id).single();
+        if (p.error) throw p.error;
+        profile = p.data;
+        if (document.getElementById("userName"))
+          userName.textContent = profile?.full_name || s.data.session.user.email;
+        const roleLabels = {
+          admin: "مدير النظام",
+          section_head: "رئيس قسم",
+          editor: "أخصائي دعم ومتابعة",
+          viewer: "مشاهد",
+          temporary_viewer: "مشاهد مؤقت",
+        };
+        if (document.getElementById("userRole")) userRole.textContent = roleLabels[profile?.role] || "مشاهد";
+        if (!["admin", "section_head", "editor"].includes(profile.role))
+          throw Error("صلاحية المستخدم لا تسمح بإضافة أو تعديل الخطط.");
+      }
+      function makeSelect(options, value = "") {
+        return (
+          "<select>" +
+          options
+            .map(
+              (x) =>
+                "<option " + (String(x) === String(value) ? "selected" : "") + ">" + esc(x) + "</option>",
+            )
+            .join("") +
+          "</select>"
+        );
+      }
+      function rowHtml(type, d = {}) {
+        const y = makeSelect(years, d.year || "Year 1"),
+          q = makeSelect(["Q1", "Q2", "Q3", "Q4"], d.quarter || "Q1");
+        let third = "";
+        if (type === "purchase")
+          third = makeSelect(
+            ["صنع في عمان", "مورد محلي", "استيراد مباشر", "مورد المؤسسات الصغيرة والمتوسطة"],
+            d.supply_type || "صنع في عمان",
+          );
+        else
+          third = makeSelect(
+            ["مزود محلي", "مزود أجنبي", "مؤسسة صغيرة ومتوسطة"],
+            d.supplier_type || "مزود محلي",
+          );
+        return (
+          "<tr><td>" +
+          y +
+          "</td><td>" +
+          q +
+          "</td><td>" +
+          third +
+          '</td><td><input type="number" min="0" value="' +
+          n(d.value || 0) +
+          '"></td><td><button type="button" class="btn danger" onclick="this.closest(\'tr\').remove()">حذف</button></td></tr>'
+        );
+      }
+      function addRow(id, type, d = {}) {
+        $(id).insertAdjacentHTML("beforeend", rowHtml(type, d));
+      }
+      function addTraining(d = {}) {
+        $("trainingRows").insertAdjacentHTML(
+          "beforeend",
+          "<tr><td>" +
+            makeSelect(years, d.year || "Year 1") +
+            "</td><td>" +
+            makeSelect(["Q1", "Q2", "Q3", "Q4"], d.quarter || "Q1") +
+            '</td><td><input value="' +
+            esc(d.source || "") +
+            '" placeholder="مصدر التدريب"></td><td><input type="number" min="0" value="' +
+            n(d.ojt) +
+            '"></td><td><input type="number" min="0" value="' +
+            n(d.tfe) +
+            '"></td><td><input type="number" min="0" value="' +
+            n(d.tfq) +
+            '"></td><td><textarea rows="2" placeholder="أسماء المتدربين وتفاصيلهم">' +
+            esc(d.trainees || "") +
+            '</textarea></td><td><button type="button" class="btn danger" onclick="this.closest(\'tr\').remove()">حذف</button></td></tr>',
+        );
+      }
+      function calcWork() {
+        let om = 0,
+          fo = 0,
+          emp = 0;
+        document.querySelectorAll("#work tbody tr").forEach((r, i) => {
+          if (i > 2) return;
+          const o = n(r.querySelector(".om")?.value),
+            f = n(r.querySelector(".fo")?.value),
+            e = o + f;
+          r.querySelector(".emp").value = e;
+          om += o;
+          fo += f;
+          emp += e;
+        });
+        $("totOm").value = om;
+        $("totFo").value = fo;
+        $("totEmp").value = emp;
+      }
+      function getSalaryKey() {
+        return $("salaryYear").value + "_" + $("salaryQuarter").value;
+      }
+      function getWorkCategories() {
+        const cats = [];
+        document.querySelectorAll("#work tbody tr").forEach((r, i) => {
+          if (i > 2) return;
+          cats.push({ omani: n(r.querySelector(".om").value), foreign: n(r.querySelector(".fo").value) });
+        });
+        return cats;
+      }
+      function setWorkCategories(cats = []) {
+        document.querySelectorAll("#work tbody tr").forEach((r, i) => {
+          if (i > 2) return;
+          r.querySelector(".om").value = n(cats[i]?.omani);
+          r.querySelector(".fo").value = n(cats[i]?.foreign);
+        });
+        calcWork();
+      }
+      function getSalaryRecord() {
+        const all = current?.plan_data?.workforce?.salaries || {};
+        return all[getSalaryKey()] || {};
+      }
+      function setSalary(v = {}) {
+        $("omanSalary").value = n(v.omani_salary);
+        $("foreignSalary").value = n(v.foreign_salary);
+      }
+      function saveSalaryForKey(key = getSalaryKey()) {
+        if (!key) return;
+        if (!current) current = { plan_data: {} };
+        if (!current.plan_data) current.plan_data = {};
+        if (!current.plan_data.workforce) current.plan_data.workforce = {};
+        if (!current.plan_data.workforce.salaries) current.plan_data.workforce.salaries = {};
+        current.plan_data.workforce.categories = getWorkCategories();
+        current.plan_data.workforce.salaries[key] = {
+          omani_salary: n($("omanSalary").value),
+          foreign_salary: n($("foreignSalary").value),
+        };
+      }
+      let activeSalaryKey = "",
+        workSaveTimer = null,
+        workSavePromise = Promise.resolve();
+      function saveWorkCategories() {
+        if (!current) current = { plan_data: {} };
+        if (!current.plan_data) current.plan_data = {};
+        if (!current.plan_data.workforce) current.plan_data.workforce = {};
+        current.plan_data.workforce.categories = getWorkCategories();
+      }
+      async function persistWorkforce() {
+        if (!current?.plan_data?.workforce) return;
+        const workforce = JSON.parse(JSON.stringify(current.plan_data.workforce));
+        const id = await ensurePlan();
+        current.plan_data = { ...(current.plan_data || {}), workforce };
+        const r = await db
+          .from("local_content_plans")
+          .update({ plan_data: current.plan_data })
+          .eq("id", id)
+          .select("*")
+          .single();
+        if (r.error) throw r.error;
+        current = r.data;
+      }
+      function queueWorkforceSave() {
+        clearTimeout(workSaveTimer);
+        workSaveTimer = setTimeout(() => {
+          workSavePromise = workSavePromise
+            .then(() => persistWorkforce())
+            .catch((e) => {
+              const msg = $("msg");
+              if (msg)
+                msg.innerHTML =
+                  '<div class="error">تعذر حفظ بيانات القوى العاملة والرواتب تلقائيًا: ' +
+                  esc(e.message) +
+                  "</div>";
+            });
+        }, 4000);
+      }
+      async function switchSalaryPeriod() {
+        clearTimeout(workSaveTimer);
+        saveSalaryForKey(activeSalaryKey);
+        try {
+          workSavePromise = workSavePromise.then(() => persistWorkforce());
+          await workSavePromise;
+          activeSalaryKey = getSalaryKey();
+          setSalary(getSalaryRecord());
+        } catch (e) {
+          const msg = $("msg");
+          if (msg)
+            msg.innerHTML =
+              '<div class="error">تعذر حفظ الرواتب للفترة السابقة، لذلك أبقينا المدخلات ظاهرة: ' +
+              esc(e.message) +
+              "</div>";
+        }
+      }
+      function renderRows() {
+        const pd = current?.plan_data || {};
+        $("purchaseRows").innerHTML = "";
+        $("serviceRows").innerHTML = "";
+        $("subRows").innerHTML = "";
+        $("trainingRows").innerHTML = "";
+        (pd.purchases || []).forEach((x) => addRow("purchaseRows", "purchase", x));
+        (pd.services || []).forEach((x) => addRow("serviceRows", "service", x));
+        (pd.subcontracts || []).forEach((x) => addRow("subRows", "sub", x));
+        (pd.training || []).forEach((x) => addTraining(x));
+        if (!$("purchaseRows").children.length) addRow("purchaseRows", "purchase");
+        if (!$("serviceRows").children.length) addRow("serviceRows", "service");
+        if (!$("subRows").children.length) addRow("subRows", "sub");
+        if (!$("trainingRows").children.length) addTraining();
+      }
+      function collectRows(id, type) {
+        return [...$(id).querySelectorAll("tr")]
+          .map((r) => {
+            const c = r.querySelectorAll("td");
+            const inp = c[3]?.querySelector("input");
+            const selects = [...r.querySelectorAll("select")];
+            const obj = {
+              year: selects[0]?.value || "Year 1",
+              quarter: selects[1]?.value || "Q1",
+              value: n(inp?.value),
+            };
+            if (type === "purchase") obj.supply_type = selects[2]?.value || "";
+            else obj.supplier_type = selects[2]?.value || "";
+            return obj;
+          })
+          .filter((x) => x.value || x.supply_type || x.supplier_type);
+      }
+      function collectTraining() {
+        return [...$("trainingRows").querySelectorAll("tr")].map((r) => {
+          const s = [...r.querySelectorAll("select")],
+            i = r.querySelectorAll("input"),
+            ta = r.querySelector("textarea");
+          return {
+            year: s[0]?.value || "Year 1",
+            quarter: s[1]?.value || "Q1",
+            source: i[0]?.value || "",
+            ojt: n(i[1]?.value),
+            tfe: n(i[2]?.value),
+            tfq: n(i[3]?.value),
+            trainees: ta?.value || "",
+          };
+        });
+      }
+      function buildPeriods(pd) {
+        const ps = { ...(pd.periods || {}) };
+        const wf = pd.workforce || {};
+        Object.entries(wf.salaries || {}).forEach(([k, v]) => {
+          ps[k] = { ...(ps[k] || {}), omani_salary: n(v.omani_salary), foreign_salary: n(v.foreign_salary) };
+        });
+        ps.workforce_categories = wf.categories || [];
+        ps.workforce_omani = (wf.categories || []).reduce((a, x) => a + n(x.omani), 0);
+        ps.workforce_foreign = (wf.categories || []).reduce((a, x) => a + n(x.foreign), 0);
+        return ps;
+      }
+      async function renderDocs(planId) {
+        const r = await db
+          .from("project_plan_documents")
+          .select("*")
+          .eq("plan_id", planId)
+          .order("created_at", { ascending: false });
+        if (r.error) {
+          $("supportDocumentsList").innerHTML = '<tr><td colspan="3">' + esc(r.error.message) + "</td></tr>";
+          return;
+        }
+        const docs = r.data || [];
+        $("supportDocumentsList").innerHTML = docs.length
+          ? docs
+              .map(
+                (d) =>
+                  '<tr><td><a class="document-open-link" href="#" onclick="openDoc(\'' +
+                  d.id +
+                  "');return false\">" +
+                  esc(d.original_file_name) +
+                  "</a></td><td>" +
+                  esc(d.display_name) +
+                  '</td><td><button type="button" class="btn" onclick="renameDoc(\'' +
+                  d.id +
+                  '\')">إعادة تسمية</button> <button type="button" class="btn danger" onclick="deleteDoc(\'' +
+                  d.id +
+                  "')\">حذف</button></td></tr>",
+              )
+              .join("")
+          : '<tr><td colspan="3" class="empty-cell">لا توجد مستندات مرفوعة</td></tr>';
+      }
+      async function ensurePlan() {
+        if (current?.id) return current.id;
+        const pay = {
+          project_id: pid,
+          version: $("version").value || "V1",
+          received_at: $("planDate").value || null,
+          status: $("status").value || "مسودة",
+          created_by: profile.id,
+          plan_data: {
+            duration_months: n($("duration").value),
+            notes: $("notes").value || null,
+            periods: {},
+            workforce: {},
+            purchases: [],
+            services: [],
+            subcontracts: [],
+            training: [],
+          },
+        };
+        const r = await db.from("local_content_plans").insert(pay).select("*").single();
+        if (r.error) throw r.error;
+        current = r.data;
+        await db.from("projects").update({ local_content_plan: true }).eq("id", pid);
+        return current.id;
+      }
+      async function uploadDocument(file, displayName) {
+        const planId = await ensurePlan();
+        const safe = file.name.replace(/[^a-zA-Z0-9._-]+/g, "_"),
+          path = pid + "/" + crypto.randomUUID() + "-" + safe;
+        const up = await db.storage.from("project-plan-documents").upload(path, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type || "application/octet-stream",
+        });
+        if (up.error) throw up.error;
+        const ins = await db.from("project_plan_documents").insert({
+          project_id: pid,
+          plan_id: planId,
+          display_name: displayName,
+          original_file_name: file.name,
+          storage_path: path,
+          mime_type: file.type || null,
+          file_size: file.size,
+          created_by: profile.id,
+        });
+        if (ins.error) {
+          await db.storage.from("project-plan-documents").remove([path]);
+          throw ins.error;
+        }
+        return planId;
+      }
+      async function openDoc(id) {
+        const r = await db.from("project_plan_documents").select("storage_path").eq("id", id).single();
+        if (r.error) return alert(r.error.message);
+        const s = await db.storage.from("project-plan-documents").createSignedUrl(r.data.storage_path, 300);
+        if (s.error) return alert(s.error.message);
+        window.open(s.data.signedUrl, "_blank", "noopener,noreferrer");
+      }
+      async function renameDoc(id) {
+        const r = await db.from("project_plan_documents").select("display_name").eq("id", id).single();
+        if (r.error) return alert(r.error.message);
+        const name = prompt("اكتب الاسم الجديد للمستند:", r.data.display_name);
+        if (name === null) return;
+        if (!name.trim()) return alert("يرجى إدخال اسم للمستند.");
+        const u = await db.from("project_plan_documents").update({ display_name: name.trim() }).eq("id", id);
+        if (u.error) return alert(u.error.message);
+        renderDocs(current.id);
+      }
+      async function deleteDoc(id) {
+        const r = await db
+          .from("project_plan_documents")
+          .select("storage_path,display_name")
+          .eq("id", id)
+          .single();
+        if (r.error) return alert(r.error.message);
+        if (!confirm('هل أنت متأكد من حذف المستند "' + r.data.display_name + '"?')) return;
+        const rm = await db.storage.from("project-plan-documents").remove([r.data.storage_path]);
+        if (rm.error) return alert(rm.error.message);
+        const d = await db.from("project_plan_documents").delete().eq("id", id);
+        if (d.error) return alert(d.error.message);
+        renderDocs(current.id);
+      }
+      $("salaryYear").innerHTML = years.map((x) => "<option>" + x + "</option>").join("");
+      activeSalaryKey = getSalaryKey();
+      $("salaryYear").onchange = switchSalaryPeriod;
+      $("salaryQuarter").onchange = switchSalaryPeriod;
+      document.querySelectorAll("#work .om,#work .fo").forEach((x) =>
+        x.addEventListener("input", () => {
+          calcWork();
+          saveWorkCategories();
+          queueWorkforceSave();
+        }),
+      );
+      document.querySelectorAll("#omanSalary,#foreignSalary").forEach((x) =>
+        x.addEventListener("input", () => {
+          saveSalaryForKey(activeSalaryKey);
+          queueWorkforceSave();
+        }),
+      );
+      $("planFile").addEventListener("change", () => {
+        selectedPlanFile = $("planFile").files?.[0] || null;
+        $("planFileName").textContent = selectedPlanFile ? selectedPlanFile.name : "لم يتم اختيار ملف";
+      });
+      $("supportFile").addEventListener("change", () => {
+        selectedSupportFile = $("supportFile").files?.[0] || null;
+        if (selectedSupportFile && !$("supportFileName").value)
+          $("supportFileName").value = selectedSupportFile.name;
+        $("supportFileDisplay").textContent = selectedSupportFile
+          ? "تم اختيار الملف: " + selectedSupportFile.name
+          : "";
+      });
+      $("uploadSupportBtn").onclick = async () => {
+        try {
+          if (!selectedSupportFile) throw Error("يرجى اختيار ملف أولاً.");
+          $("uploadSupportBtn").disabled = true;
+          const planId = await uploadDocument(
+            selectedSupportFile,
+            $("supportFileName").value.trim() || selectedSupportFile.name,
+          );
+          $("supportFile").value = "";
+          $("supportFileName").value = "";
+          selectedSupportFile = null;
+          $("supportFileDisplay").textContent = "تم رفع المستند.";
+          await renderDocs(planId);
+        } catch (e) {
+          $("supportFileDisplay").textContent = e.message;
+        } finally {
+          $("uploadSupportBtn").disabled = false;
+        }
+      };
+      $("saveBtn").onclick = () => savePlan("حفظ الخطة");
+      $("draftBtn").onclick = () => savePlan("حفظ كمسودة");
+      let planSaving = false;
+      async function savePlan(mode) {
+        if (planSaving) return;
+        planSaving = true;
+        ["saveBtn", "draftBtn"].forEach((id) => ($(id).disabled = true));
+        try {
+          saveWorkCategories();
+          saveSalaryForKey(activeSalaryKey);
+          clearTimeout(workSaveTimer);
+          const pd = {
+            ...(current?.plan_data || {}),
+            last_updated_at: new Date().toISOString(),
+            duration_months: n($("duration").value),
+            notes: $("notes").value || null,
+            workforce: current?.plan_data?.workforce || {},
+            purchases: collectRows("purchaseRows", "purchase"),
+            services: collectRows("serviceRows", "service"),
+            subcontracts: collectRows("subRows", "sub"),
+            training: collectTraining(),
+          };
+          pd.periods = buildPeriods(pd);
+          const pay = {
+            project_id: pid,
+            version: $("version").value || "V1",
+            received_at: $("planDate").value || null,
+            status: mode === "حفظ كمسودة" ? "مسودة" : $("status").value || "مسودة",
+            plan_data: pd,
+          };
+          if (!current?.id) pay.created_by = profile.id;
+          let r = current?.id
+            ? await db.from("local_content_plans").update(pay).eq("id", current.id).select("*").single()
+            : await db.from("local_content_plans").insert(pay).select("*").single();
+          if (r.error) throw r.error;
+          current = r.data;
+          await db.from("projects").update({ local_content_plan: true }).eq("id", pid);
+          if (selectedPlanFile) {
+            await uploadDocument(selectedPlanFile, "ملف الخطة");
+            selectedPlanFile = null;
+            $("planFile").value = "";
+            $("planFileName").textContent = "تم رفع ملف الخطة";
+            await renderDocs(current.id);
+          }
+          showTopSaveMessage("تم " + mode + " بنجاح.");
+          $("msg").innerHTML = "";
+        } catch (e) {
+          $("msg").innerHTML = '<div class="error">' + esc(e.message) + "</div>";
+        } finally {
+          planSaving = false;
+          ["saveBtn", "draftBtn"].forEach((id) => ($(id).disabled = false));
+        }
+      }
+      async function load() {
+        if (!pid) throw Error("لم يتم تحديد المشروع.");
+        const s = await db.auth.getSession();
+        if (!s.data.session) {
+          sessionStorage.setItem("icv-return-after-login", location.href);
+          window.location.href = "index.html";
+          return;
+        }
+        await getProfile();
+        const pr = await db.from("projects").select("*").eq("id", pid).single();
+        if (pr.error) throw pr.error;
+        project = pr.data;
+        let en = null;
+        if (project.government_entity_id) {
+          const er = await db
+            .from("government_entities")
+            .select("name")
+            .eq("id", project.government_entity_id)
+            .single();
+          en = er.data;
+        }
+        $("pProject").value = project.project_name || "";
+        $("duration").value = months(project.start_date, project.end_date);
+        const backBtn = $("backBtn");
+        if (backBtn) {
+          backBtn.href = "index.html?project=" + encodeURIComponent(pid);
+          backBtn.onclick = function (e) {
+            e.preventDefault();
+            goPlatform("project");
+          };
+        }
+        $("planDate").value = new Date().toISOString().slice(0, 10);
+        const qr = await db
+          .from("local_content_plans")
+          .select("*")
+          .eq("project_id", pid)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        current = qr.data;
+        if (existingId) {
+          const rr = await db.from("local_content_plans").select("*").eq("id", existingId).maybeSingle();
+          if (rr.data) current = rr.data;
+        }
+        if (current) {
+          $("planDate").value = current.received_at || $("planDate").value;
+          $("version").value = current.version || "V1";
+          $("status").value = current.status || "مسودة";
+          $("notes").value = current.plan_data?.notes || "";
+          const wf = current.plan_data?.workforce || {};
+          let cats = Array.isArray(wf.categories) ? wf.categories : null;
+          const legacyKeys = Object.keys(wf).filter((k) => k !== "categories" && k !== "salaries");
+          if (!cats) {
+            const first = legacyKeys
+              .map((k) => wf[k])
+              .find(
+                (v) => Array.isArray(v?.categories) && v.categories.some((c) => n(c.omani) || n(c.foreign)),
+              );
+            cats = first?.categories || [{}, {}, {}];
+            wf.categories = cats;
+            wf.salaries = wf.salaries || {};
+            legacyKeys.forEach((k) => {
+              const v = wf[k] || {};
+              wf.salaries[k] = { omani_salary: n(v.omani_salary), foreign_salary: n(v.foreign_salary) };
+            });
+            current.plan_data.workforce = wf;
+          }
+          const sk = Object.keys(wf.salaries || {})[0];
+          if (sk) {
+            const [y, q] = sk.split("_");
+            $("salaryYear").value = y;
+            $("salaryQuarter").value = q;
+          }
+          activeSalaryKey = getSalaryKey();
+          setWorkCategories(cats);
+          setSalary(getSalaryRecord());
+          renderRows();
+          await renderDocs(current.id);
+        } else {
+          activeSalaryKey = getSalaryKey();
+          setWorkCategories([]);
+          setSalary({});
+          renderRows();
+        }
+        $("loading").hidden = true;
+        $("planForm").hidden = false;
+      }
+      load().catch((e) => {
+        $("loading").innerHTML = '<div class="error">' + esc(e.message) + "</div>";
+      });
+    </script>
+    <script>
+      (function () {
+        const root = document.documentElement,
+          panel = document.getElementById("themePanel"),
+          trigger = document.querySelector("[data-theme-settings]");
+        const themes = {
+          green: [
+            "#0f766e",
+            "#0b5f59",
+            "#eef7f5",
+            "#f5f7fb",
+            "#162033",
+            "#0e2f2c",
+            "#dce9e7",
+            "#b8ceca",
+            "#fff",
+            "rgba(255,255,255,.1)",
+          ],
+          navy: [
+            "#315b91",
+            "#172f52",
+            "#edf2f8",
+            "#f4f6f9",
+            "#17263a",
+            "#172f52",
+            "#e7edf6",
+            "#b9c8dc",
+            "#fff",
+            "rgba(255,255,255,.09)",
+          ],
+          sand: [
+            "#9a6b3f",
+            "#5f4329",
+            "#f7f0e5",
+            "#f7f4ef",
+            "#34281f",
+            "#5f4329",
+            "#f5eadb",
+            "#dcc8ae",
+            "#fff",
+            "rgba(255,255,255,.12)",
+          ],
+          teal: [
+            "#0d8b87",
+            "#075f60",
+            "#e7f6f5",
+            "#f1f7f7",
+            "#153b3b",
+            "#075f60",
+            "#dff6f4",
+            "#b8dcda",
+            "#fff",
+            "rgba(255,255,255,.10)",
+          ],
+          slate: [
+            "#566575",
+            "#303b48",
+            "#edf0f3",
+            "#f3f5f7",
+            "#222b34",
+            "#303b48",
+            "#e6ebef",
+            "#bdc7d0",
+            "#fff",
+            "rgba(255,255,255,.10)",
+          ],
+        };
+        let size = Number(localStorage.getItem("icv-font-size") || 18);
+        function applyTheme(k) {
+          const v = themes[k] || themes.green;
+          [
+            "primary",
+            "primary2",
+            "soft",
+            "bg",
+            "ink",
+            "nav-bg",
+            "nav-ink",
+            "nav-muted",
+            "nav-mark-bg",
+            "nav-hover",
+          ].forEach((x, i) => root.style.setProperty("--" + x, v[i]));
+          document
+            .querySelectorAll(".theme-option")
+            .forEach((x) => x.classList.toggle("active", x.dataset.theme === k));
+          localStorage.setItem("icv-theme", k);
+        }
+        function scaleTableFonts() {
+          const scale = size / 16;
+          document.querySelectorAll(".main table th,.main table td").forEach((el) => {
+            if (!el.dataset.icvBaseTableFont) {
+              const cs = getComputedStyle(el);
+              const px = parseFloat(cs.fontSize);
+              if (Number.isFinite(px) && px > 0) el.dataset.icvBaseTableFont = String(px);
+            }
+            const base = parseFloat(el.dataset.icvBaseTableFont);
+            if (Number.isFinite(base) && base > 0) el.style.fontSize = base * scale + "px";
+          });
+        }
+        function applySize() {
+          document.documentElement.style.setProperty("--icv-font-scale", (size / 18).toFixed(3));
+          document.documentElement.style.setProperty("--icv-page-font-size", size + "px");
+          scaleTableFonts();
+          localStorage.setItem("icv-font-size", size);
+        }
+        function applyFont(v) {
+          document.body.style.fontFamily = v;
+          localStorage.setItem("icv-font", v);
+        }
+        function openPanel() {
+          panel.classList.remove("hidden");
+          trigger.classList.add("active");
+        }
+        function closePanel() {
+          panel.classList.add("hidden");
+          trigger.classList.remove("active");
+        }
+        trigger.addEventListener("click", (e) => {
+          e.stopPropagation();
+          panel.classList.contains("hidden") ? openPanel() : closePanel();
+        });
+        panel.addEventListener("click", (e) => e.stopPropagation());
+        document.addEventListener("click", (e) => {
+          if (!panel.classList.contains("hidden") && !panel.contains(e.target) && !trigger.contains(e.target))
+            closePanel();
+        });
+        document.querySelector("[data-theme-close]").onclick = closePanel;
+        document
+          .querySelectorAll(".theme-option")
+          .forEach((x) => (x.onclick = () => applyTheme(x.dataset.theme)));
+        document.querySelector("[data-font-minus]").onclick = () => {
+          size = Math.max(14, size - 1);
+          applySize();
+        };
+        document.querySelector("[data-font-plus]").onclick = () => {
+          size = Math.min(22, size + 1);
+          applySize();
+        };
+        document.querySelector("[data-font-reset]").onclick = () => {
+          size = 18;
+          applySize();
+        };
+        const fontSel = document.getElementById("themeFont");
+        fontSel.onchange = (e) => applyFont(e.target.value);
+        applyTheme(localStorage.getItem("icv-theme") || "green");
+        applySize();
+        const fontObserver = new MutationObserver(() => scaleTableFonts());
+        fontObserver.observe(document.querySelector(".main"), { childList: true, subtree: true });
+        const savedFont = localStorage.getItem("icv-font") || "Cairo,Arial,sans-serif";
+        fontSel.value = savedFont;
+        applyFont(savedFont);
+        window.icvThemeSettings = { applyTheme, applySize, applyFont, open: openPanel, close: closePanel };
+      })();
+    </script>
+    <script>
+      window.goPlatform = async function (page) {
+        const s = await db.auth.getSession();
+        if (!s.data.session) {
+          sessionStorage.setItem("icv-return-after-login", location.href);
+          window.location.href = "index.html";
+          return;
+        }
+        let target = "index.html";
+        if (page === "project") target += "?project=" + encodeURIComponent(pid);
+        else if (page) target += "?page=" + encodeURIComponent(page);
+        window.location.href = target;
+      };
+      window.logoutFromPlan = async function () {
+        await db.auth.signOut();
+        window.location.href = "index.html";
+      };
+    </script>
+      <script src="icv-i18n.js?v=20261020-20"></script>
+  </body>
+</html>
