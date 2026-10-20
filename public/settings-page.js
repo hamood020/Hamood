@@ -815,7 +815,7 @@
         lateAfter: +v("lateAfter"),
         lockApproved: c("lockApproved"),
         multiReport: c("multiReport"),
-        statuses: arr("reportStatuses"),
+        statuses: [...new Set([...arr("reportStatuses").map(String).filter(Boolean), "معتمد")],
         quarters: arr("quarters"),
       };
       S.projects = {
