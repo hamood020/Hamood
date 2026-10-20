@@ -15,6 +15,7 @@ Published entry point: `public/index.html`
 - `public/settings-page.js`: platform settings UI, local cache, database synchronization, and publishes calculation settings to the app.
 - `public/icv-team.js`: user/team, audit, follow-up, and notification-facing functionality.
 - `public/icv-i18n.js`: shared Arabic/English toggle, translation dictionary, and RTL/LTR presentation.
+- `public/vendor/xlsx-js-style-1.2.0.min.js`: pinned same-origin Excel export library; its Apache license is stored beside it.
 - `public/plan.html`: dedicated local-content plan entry page.
 - `public/report-form.html`: dedicated quarterly report entry/edit page.
 
@@ -41,10 +42,11 @@ The shell had two separate `popstate` listeners. Both could invoke route restora
 
 ## Release checks performed
 
-- JavaScript syntax checks passed for all shared application scripts.
+- JavaScript syntax checks passed for all shared application scripts, including the vendored Excel library.
 - Inline script syntax checks passed for `index.html`, `plan.html`, and `report-form.html`.
 - GitHub Actions deployment succeeded for the earlier release; latest commits still need their own successful deployment confirmation.
 - The static site could not be rendered in the available web inspection environment, so this is not a substitute for a live browser smoke test.
+- The Supabase browser SDK remains a pinned third-party CDN script; its exact SRI hash has not been verified, so the SRI portion of the hardening work remains incomplete.
 
 ## Explicit exclusions retained
 
