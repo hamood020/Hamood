@@ -453,7 +453,7 @@
       T("صورة عامة عن المحفظة: أين المشاريع، كيف تسير في الوقت والصرف، وهل التقارير تصل.", "The portfolio at a glance: where projects are, how they track time and spend, and whether reports arrive.") +
       '</div></div><div class="hm-actions">' +
       (canScope ? '<label class="hm-scope"><input type="checkbox" ' + (window.icvFollowupOnly ? "checked" : "") + ' onchange="icvSetFollowupScope(this.checked)"> ' + T("جهات المتابعة فقط", "My entities only") + "</label>" : "") +
-      (canAdd && typeof window.openProject === "function" ? '<button type="button" class="btn primary" data-hm-add>+ ' + T("إضافة مشروع", "Add project") + "</button>" : "") +
+      "" +
       "</div></div></div>";
 
     if (!list.length) {
