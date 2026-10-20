@@ -1108,8 +1108,20 @@
     const p = (window.projects || []).find((x) => x.id === pid);
     if (!p) return msg("vem", "تعذر العثور على المشروع. حدّث الصفحة وحاول مرة أخرى.");
     if (!val("vname").trim()) return msg("vem", "اسم المشروع مطلوب.");
+    const projectSettings = window.__icvSettings?.projects || {};
     const entityName = val("vent").trim(),
-      companyName = val("vcom").trim();
+      companyName = val("vcom").trim(),
+      projectValueText = val("vv").trim(),
+      startDate = val("vs"),
+      endDate = val("ve");
+    if (projectSettings.requiredEntity && !entityName) return msg("vem", "اسم الجهة مطلوب.");
+    if (projectSettings.requiredCompany && !companyName) return msg("vem", "الشركة المنفذة مطلوبة.");
+    if (projectSettings.requiredValue && (!projectValueText || !Number.isFinite(Number(projectValueText)) || Number(projectValueText) <= 0))
+      return msg("vem", "قيمة المشروع مطلوبة ويجب أن تكون أكبر من صفر.");
+    if (projectSettings.requiredDates && (!startDate || !endDate))
+      return msg("vem", "تاريخ البداية والنهاية مطلوبان.");
+    if (startDate && endDate && endDate < startDate)
+      return msg("vem", "تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية.");
     const [e, c] = await Promise.all([
       entityName
         ? dbx.from("government_entities").select("id,name").eq("name", entityName).maybeSingle()
@@ -1135,8 +1147,8 @@
         work_sector: val("vsec").trim() || null,
         total_project_value: Number(val("vv") || 0),
         progress_pct: Number(val("vp") || 0),
-        start_date: val("vs") || null,
-        end_date: val("ve") || null,
+        start_date: startDate || null,
+        end_date: endDate || null,
         notes: val("vn") || null,
       })
       .eq("id", pid);
