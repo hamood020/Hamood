@@ -2340,10 +2340,8 @@
             };
           }
 
-          window.addEventListener("popstate", function () {
-            if (window.__icvProfile) routeFromUrl();
-          });
-
+          // The final navigation router below owns popstate handling.
+          // Keep this router responsible for direct-link startup and project URL updates only.
           routingReady = true;
         }
 
