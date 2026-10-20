@@ -46,7 +46,7 @@ The shell had two separate `popstate` listeners. Both could invoke route restora
 - Inline script syntax checks passed for `index.html`, `plan.html`, and `report-form.html`.
 - GitHub Actions deployment succeeded for the earlier release; latest commits still need their own successful deployment confirmation.
 - The static site could not be rendered in the available web inspection environment, so this is not a substitute for a live browser smoke test.
-- The Supabase browser SDK remains a pinned third-party CDN script; its exact SRI hash has not been verified, so the SRI portion of the hardening work remains incomplete.
+- The Supabase browser SDK is pinned to `@supabase/supabase-js@2.118.0/dist/umd/supabase.js` with a verified SHA-384 SRI hash and `crossorigin="anonymous"` on all three HTML pages.
 
 ## Explicit exclusions retained
 
