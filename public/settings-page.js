@@ -77,8 +77,19 @@
     x = x && typeof x === "object" ? x : {};
     const out = {};
     Object.keys(D).forEach((k) => (out[k] = merge(D[k], x[k])));
-    out.reports.statuses = Array.isArray(out.reports.statuses) ? [...new Set([...out.reports.statuses.map(String).filter(Boolean), "معتمد"])] : [...D.reports.statuses];
-    out.reports.quarters = Array.isArray(out.reports.quarters) && out.reports.quarters.length ? out.reports.quarters.map(String) : [...D.reports.quarters];
+    out.reports.statuses = Array.isArray(out.reports.statuses) && out.reports.statuses.length
+      ? [...new Set([...out.reports.statuses.map(String).filter(Boolean), "معتمد"])]
+      : [...D.reports.statuses];
+    out.reports.quarters = Array.isArray(out.reports.quarters) && out.reports.quarters.length
+      ? out.reports.quarters.map(String)
+      : [...D.reports.quarters];
+    out.reports.years = String(out.reports.years || D.reports.years);
+    out.projects.statuses = Array.isArray(out.projects.statuses) && out.projects.statuses.length
+      ? out.projects.statuses.map(String).filter(Boolean)
+      : [...D.projects.statuses];
+    out.projects.extensionTypes = Array.isArray(out.projects.extensionTypes) && out.projects.extensionTypes.length
+      ? out.projects.extensionTypes.map(String).filter(Boolean)
+      : [...D.projects.extensionTypes];
     delete out.audit.enabled; // the audit log is always on
     delete out.users.roles; // replaced by roleLabels
     return out;
@@ -776,6 +787,23 @@
           .map((x) => x.firstChild?.textContent?.trim())
           .filter(Boolean);
     document.getElementById("settingsSave").onclick = async () => {
+      const percentFields = ["omanization","sme","goodsMin","servicesMin","omaniSalary","foreignSalary","madeInOman","localSupplier","directImport","smePurchase","localService","foreignService","smeService","smeSubcontract","subcontractLocal","subcontractForeign"];
+      for (const id of percentFields) {
+        const n = Number(v(id));
+        if (!Number.isFinite(n) || n < 0 || n > 100) return toastA("القيمة في " + id + " يجب أن تكون بين 0 و100.");
+      }
+      for (const id of ["dueDays","lateAfter","daysBefore"]) {
+        const n = Number(v(id));
+        if (!Number.isInteger(n) || n < 0 || n > 365) return toastA("يجب أن تكون مدة " + id + " عددًا صحيحًا بين 0 و365 يومًا.");
+      }
+      const years = v("reportYears").split(",").map((x) => x.trim()).filter(Boolean);
+      if (!years.length || years.some((x) => !/^\\d{4}$/.test(x)) || new Set(years).size !== years.length)
+        return toastA("أدخل سنوات تقارير صحيحة من أربعة أرقام، من دون تكرار.");
+      const quarters = arr("quarters");
+      if (quarters.length !== 4 || ["Q1","Q2","Q3","Q4"].some((q) => !quarters.includes(q)))
+        return toastA("يجب أن تكون الأرباع المعتمدة Q1 وQ2 وQ3 وQ4.");
+      if (!arr("projectStatuses").length) return toastA("أضف حالة واحدة على الأقل للمشاريع.");
+      if (!arr("reportStatuses").length) return toastA("أضف حالة واحدة على الأقل للتقارير.");
       S.general = {
         ...S.general,
         platformName: v("platformName"),
