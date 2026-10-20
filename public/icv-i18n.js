@@ -131,9 +131,7 @@
     "اكتب ملاحظة توضح ما تم قبل إغلاق الملاحظة.":"Write a note explaining what was done before closing it.",
     "انتهت الجلسة، سجّل الدخول ثم حاول مرة أخرى.":"Session expired; sign in and try again.",
     "تعذر تحميل إعدادات المنصة من قاعدة البيانات":"Could not load platform settings from the database",
-    "تم حفظ جميع إعدادات المنصة في قاعدة البيانات":"All platform settings saved to the database"
-
-
+    "تم حفظ جميع إعدادات المنصة في قاعدة البيانات":"All platform settings saved to the database",
     "لوحة التحكم":"Dashboard","تم":"Done","نعم":"Yes","جهة":"Entity","حدث":"Event","سلع":"Goods","خدم":"Services","يوم":"Day",
     "محقق":"Achieved","موظف":"Employee","فعال":"Active","شركة":"Company","مهمة":"Task","مشروع":"Project","الفئة":"Category",
     "مكتمل":"Completed","إخفاء":"Hide","سارية":"Valid","معطّل":"Disabled","مستوفي":"Compliant","مستوفٍ":"Compliant",
