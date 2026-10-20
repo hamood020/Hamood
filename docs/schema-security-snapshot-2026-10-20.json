@@ -318,16 +318,16 @@
       "definition": "CREATE INDEX idx_reports_project ON public.quarterly_reports USING btree (project_id)"
     },
     {
+      "name": "idx_reports_project_period",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_reports_project_period ON public.quarterly_reports USING btree (project_id, annual_period, quarter)"
+    },
+    {
       "name": "quarterly_reports_pkey",
       "table": "quarterly_reports",
       "schema": "public",
       "definition": "CREATE UNIQUE INDEX quarterly_reports_pkey ON public.quarterly_reports USING btree (id)"
-    },
-    {
-      "name": "quarterly_reports_project_id_quarter_annual_period_key",
-      "table": "quarterly_reports",
-      "schema": "public",
-      "definition": "CREATE UNIQUE INDEX quarterly_reports_project_id_quarter_annual_period_key ON public.quarterly_reports USING btree (project_id, quarter, annual_period)"
     },
     {
       "name": "idx_user_entity_assignments_government_entity_id",
@@ -932,347 +932,111 @@
   "triggers": [
     {
       "name": "audit_sensitive_changes",
-      "event": "DELETE",
       "table": "companies",
       "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
+      "definition": "CREATE TRIGGER audit_sensitive_changes AFTER INSERT OR DELETE OR UPDATE ON companies FOR EACH ROW EXECUTE FUNCTION private.write_audit()"
     },
     {
       "name": "audit_sensitive_changes",
-      "event": "INSERT",
-      "table": "companies",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_sensitive_changes",
-      "event": "UPDATE",
-      "table": "companies",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_sensitive_changes",
-      "event": "DELETE",
       "table": "employee_followups",
       "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
+      "definition": "CREATE TRIGGER audit_sensitive_changes AFTER INSERT OR DELETE OR UPDATE ON employee_followups FOR EACH ROW EXECUTE FUNCTION private.write_audit()"
     },
     {
       "name": "audit_sensitive_changes",
-      "event": "INSERT",
-      "table": "employee_followups",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_sensitive_changes",
-      "event": "UPDATE",
-      "table": "employee_followups",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_sensitive_changes",
-      "event": "DELETE",
       "table": "government_entities",
       "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_sensitive_changes",
-      "event": "INSERT",
-      "table": "government_entities",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_sensitive_changes",
-      "event": "UPDATE",
-      "table": "government_entities",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
+      "definition": "CREATE TRIGGER audit_sensitive_changes AFTER INSERT OR DELETE OR UPDATE ON government_entities FOR EACH ROW EXECUTE FUNCTION private.write_audit()"
     },
     {
       "name": "audit_plans",
-      "event": "DELETE",
       "table": "local_content_plans",
       "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_plans",
-      "event": "INSERT",
-      "table": "local_content_plans",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_plans",
-      "event": "UPDATE",
-      "table": "local_content_plans",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
+      "definition": "CREATE TRIGGER audit_plans AFTER INSERT OR DELETE OR UPDATE ON local_content_plans FOR EACH ROW EXECUTE FUNCTION private.write_audit()"
     },
     {
       "name": "audit_sensitive_changes",
-      "event": "DELETE",
       "table": "platform_settings",
       "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_sensitive_changes",
-      "event": "INSERT",
-      "table": "platform_settings",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_sensitive_changes",
-      "event": "UPDATE",
-      "table": "platform_settings",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
+      "definition": "CREATE TRIGGER audit_sensitive_changes AFTER INSERT OR DELETE OR UPDATE ON platform_settings FOR EACH ROW EXECUTE FUNCTION private.write_audit()"
     },
     {
       "name": "recompute_on_settings_change",
-      "event": "INSERT",
       "table": "platform_settings",
       "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.trg_settings_recompute()"
-    },
-    {
-      "name": "recompute_on_settings_change",
-      "event": "UPDATE",
-      "table": "platform_settings",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.trg_settings_recompute()"
+      "definition": "CREATE TRIGGER recompute_on_settings_change AFTER INSERT OR UPDATE ON platform_settings FOR EACH ROW EXECUTE FUNCTION private.trg_settings_recompute()"
     },
     {
       "name": "audit_sensitive_changes",
-      "event": "DELETE",
       "table": "project_plan_documents",
       "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_sensitive_changes",
-      "event": "INSERT",
-      "table": "project_plan_documents",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_sensitive_changes",
-      "event": "UPDATE",
-      "table": "project_plan_documents",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
+      "definition": "CREATE TRIGGER audit_sensitive_changes AFTER INSERT OR DELETE OR UPDATE ON project_plan_documents FOR EACH ROW EXECUTE FUNCTION private.write_audit()"
     },
     {
       "name": "trg_project_plan_documents_updated_at",
-      "event": "UPDATE",
       "table": "project_plan_documents",
       "schema": "public",
-      "timing": "BEFORE",
-      "statement": "EXECUTE FUNCTION touch_project_plan_documents_updated_at()"
+      "definition": "CREATE TRIGGER trg_project_plan_documents_updated_at BEFORE UPDATE ON project_plan_documents FOR EACH ROW EXECUTE FUNCTION touch_project_plan_documents_updated_at()"
     },
     {
       "name": "audit_projects",
-      "event": "DELETE",
       "table": "projects",
       "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_projects",
-      "event": "INSERT",
-      "table": "projects",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_projects",
-      "event": "UPDATE",
-      "table": "projects",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
+      "definition": "CREATE TRIGGER audit_projects AFTER INSERT OR DELETE OR UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION private.write_audit()"
     },
     {
       "name": "recompute_on_value_change",
-      "event": "INSERT",
       "table": "projects",
       "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.trg_project_value_recompute()"
-    },
-    {
-      "name": "recompute_on_value_change",
-      "event": "UPDATE",
-      "table": "projects",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.trg_project_value_recompute()"
+      "definition": "CREATE TRIGGER recompute_on_value_change AFTER INSERT OR UPDATE OF total_project_value ON projects FOR EACH ROW EXECUTE FUNCTION private.trg_project_value_recompute()"
     },
     {
       "name": "trg_project_end_date_change",
-      "event": "INSERT",
       "table": "projects",
       "schema": "public",
-      "timing": "BEFORE",
-      "statement": "EXECUTE FUNCTION handle_project_end_date_change()"
-    },
-    {
-      "name": "trg_project_end_date_change",
-      "event": "UPDATE",
-      "table": "projects",
-      "schema": "public",
-      "timing": "BEFORE",
-      "statement": "EXECUTE FUNCTION handle_project_end_date_change()"
+      "definition": "CREATE TRIGGER trg_project_end_date_change BEFORE INSERT OR UPDATE OF end_date ON projects FOR EACH ROW EXECUTE FUNCTION handle_project_end_date_change()"
     },
     {
       "name": "audit_reports",
-      "event": "DELETE",
       "table": "quarterly_reports",
       "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
+      "definition": "CREATE TRIGGER audit_reports AFTER INSERT OR DELETE OR UPDATE ON quarterly_reports FOR EACH ROW EXECUTE FUNCTION private.write_audit()"
     },
     {
-      "name": "audit_reports",
-      "event": "INSERT",
+      "name": "enforce_report_period_uniqueness",
       "table": "quarterly_reports",
       "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_reports",
-      "event": "UPDATE",
-      "table": "quarterly_reports",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
+      "definition": "CREATE TRIGGER enforce_report_period_uniqueness BEFORE INSERT OR UPDATE OF project_id, annual_period, quarter ON quarterly_reports FOR EACH ROW EXECUTE FUNCTION private.enforce_report_period_uniqueness()"
     },
     {
       "name": "lock_approved_reports",
-      "event": "DELETE",
       "table": "quarterly_reports",
       "schema": "public",
-      "timing": "BEFORE",
-      "statement": "EXECUTE FUNCTION private.trg_lock_approved_reports()"
-    },
-    {
-      "name": "lock_approved_reports",
-      "event": "UPDATE",
-      "table": "quarterly_reports",
-      "schema": "public",
-      "timing": "BEFORE",
-      "statement": "EXECUTE FUNCTION private.trg_lock_approved_reports()"
+      "definition": "CREATE TRIGGER lock_approved_reports BEFORE DELETE OR UPDATE ON quarterly_reports FOR EACH ROW EXECUTE FUNCTION private.trg_lock_approved_reports()"
     },
     {
       "name": "notify_report_status",
-      "event": "UPDATE",
       "table": "quarterly_reports",
       "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.trg_report_status_notify()"
+      "definition": "CREATE TRIGGER notify_report_status AFTER UPDATE OF status ON quarterly_reports FOR EACH ROW EXECUTE FUNCTION private.trg_report_status_notify()"
     },
     {
       "name": "recompute_project_metrics",
-      "event": "DELETE",
       "table": "quarterly_reports",
       "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.trg_reports_recompute()"
-    },
-    {
-      "name": "recompute_project_metrics",
-      "event": "INSERT",
-      "table": "quarterly_reports",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.trg_reports_recompute()"
-    },
-    {
-      "name": "recompute_project_metrics",
-      "event": "UPDATE",
-      "table": "quarterly_reports",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.trg_reports_recompute()"
+      "definition": "CREATE TRIGGER recompute_project_metrics AFTER INSERT OR DELETE OR UPDATE ON quarterly_reports FOR EACH ROW EXECUTE FUNCTION private.trg_reports_recompute()"
     },
     {
       "name": "audit_sensitive_changes",
-      "event": "DELETE",
       "table": "user_entity_assignments",
       "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
+      "definition": "CREATE TRIGGER audit_sensitive_changes AFTER INSERT OR DELETE OR UPDATE ON user_entity_assignments FOR EACH ROW EXECUTE FUNCTION private.write_audit()"
     },
     {
       "name": "audit_sensitive_changes",
-      "event": "INSERT",
-      "table": "user_entity_assignments",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_sensitive_changes",
-      "event": "UPDATE",
-      "table": "user_entity_assignments",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_sensitive_changes",
-      "event": "DELETE",
       "table": "user_profiles",
       "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_sensitive_changes",
-      "event": "INSERT",
-      "table": "user_profiles",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
-    },
-    {
-      "name": "audit_sensitive_changes",
-      "event": "UPDATE",
-      "table": "user_profiles",
-      "schema": "public",
-      "timing": "AFTER",
-      "statement": "EXECUTE FUNCTION private.write_audit()"
+      "definition": "CREATE TRIGGER audit_sensitive_changes AFTER INSERT OR DELETE OR UPDATE ON user_profiles FOR EACH ROW EXECUTE FUNCTION private.write_audit()"
     }
   ],
   "functions": [
@@ -1290,6 +1054,16 @@
       "name": "can_manage_assignments",
       "schema": "private",
       "returns": "boolean",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "",
+      "security_definer": true
+    },
+    {
+      "name": "enforce_report_period_uniqueness",
+      "schema": "private",
+      "returns": "trigger",
       "settings": [
         "search_path=\"\""
       ],
@@ -1568,7 +1342,7 @@
     }
   ],
   "project_id": "bmwtrnosqosbkezdswcx",
-  "captured_at": "2026-10-20T16:43:12.761963+00:00",
+  "captured_at": "2026-10-20T17:23:05.085827+00:00",
   "constraints": [
     {
       "name": "audit_log_actor_user_id_fkey",
@@ -1870,13 +1644,6 @@
       "table": "quarterly_reports",
       "schema": "public",
       "definition": "FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE"
-    },
-    {
-      "name": "quarterly_reports_project_id_quarter_annual_period_key",
-      "type": "UNIQUE",
-      "table": "quarterly_reports",
-      "schema": "public",
-      "definition": "UNIQUE (project_id, quarter, annual_period)"
     },
     {
       "name": "user_entity_assignments_government_entity_id_fkey",
