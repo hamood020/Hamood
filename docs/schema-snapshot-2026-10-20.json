@@ -1,0 +1,1588 @@
+{
+  "objects": [
+    {
+      "kind": "BASE TABLE",
+      "name": "audit_log",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "int8",
+          "name": "id",
+          "type": "bigint",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "actor_user_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "operation",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "table_name",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "record_id",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "old_data",
+          "type": "jsonb",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "new_data",
+          "type": "jsonb",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "changed_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "kind": "BASE TABLE",
+      "name": "companies",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "company_type",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "contact_points",
+          "type": "jsonb",
+          "default": "'[]'::jsonb",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "kind": "BASE TABLE",
+      "name": "employee_followups",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "project_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "employee_name",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "category",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "action_required",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "date",
+          "name": "due_date",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'open'::text",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "notes",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "assigned_to",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "priority",
+          "type": "text",
+          "default": "'متوسطة'::text",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "resolved_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "resolved_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "resolution_note",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "resolved_by_name",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "kind": "BASE TABLE",
+      "name": "government_entities",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "code",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "contact_points",
+          "type": "jsonb",
+          "default": "'[]'::jsonb",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "kind": "BASE TABLE",
+      "name": "local_content_plans",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "project_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "version",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "source_file",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "plan_data",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "date",
+          "name": "received_at",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "date",
+          "name": "reviewed_at",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'received'::text",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "kind": "BASE TABLE",
+      "name": "notifications",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "user_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "kind",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "body",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "project_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "dedupe_key",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "read_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "kind": "BASE TABLE",
+      "name": "platform_settings",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "text",
+          "name": "id",
+          "type": "text",
+          "default": "'global'::text",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "settings",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "updated_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "kind": "BASE TABLE",
+      "name": "project_baselines",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "project_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "source_file",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "baseline_data",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "captured_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "kind": "BASE TABLE",
+      "name": "project_end_date_history",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "project_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "date",
+          "name": "old_end_date",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "date",
+          "name": "new_end_date",
+          "type": "date",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "changed_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "changed_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "reason",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "kind": "BASE TABLE",
+      "name": "project_plan_documents",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "project_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "plan_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "display_name",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "original_file_name",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "storage_path",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "mime_type",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int8",
+          "name": "file_size",
+          "type": "bigint",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "kind": "BASE TABLE",
+      "name": "projects",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "serial_no",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "government_entity_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "project_name",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "tender_type",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "project_status",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "consultant",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "implementing_company_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "work_sector",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "total_project_value",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "date",
+          "name": "start_date",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "date",
+          "name": "end_date",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "bool",
+          "name": "local_content_plan",
+          "type": "boolean",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "progress_pct",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "target_reports",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "due_reports",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "received_reports",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "late_reports",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "current_quarter",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "annual_update",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "target_omani",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "current_omani",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "achieved_omani",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "non_omani",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "omanization_pct",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "target_non_omani",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "plan_omani_salary",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "actual_omani_salary",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "local_content_omani",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "plan_non_omani_salary",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "actual_non_omani_salary",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "local_content_non_omani",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "cat1_omani",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "cat1_non_omani",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "cat2_omani",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "cat2_non_omani",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "cat3_omani",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "cat3_non_omani",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "plan_made_in_oman",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "actual_made_in_oman",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "mandatory_made_in_oman",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "made_in_oman_status",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "local_content_made_in_oman",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "plan_local_supplier",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "actual_local_supplier",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "local_content_local_supplier",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "plan_direct_import",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "actual_direct_import",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "local_content_direct_import",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "plan_sme_supplier",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "actual_sme_supplier",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "local_content_sme_supplier",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "plan_local_service",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "actual_local_service",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "local_content_local_service",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "plan_foreign_service",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "actual_foreign_service",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "local_content_foreign_service",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "plan_sme_service",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "actual_sme_service",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "sme_10_status",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "local_content_sme_service",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "total_spend",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "total_local_content",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "local_content_spend_pct",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "local_content_project_pct",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "sme_pct",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "notes",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "date",
+          "name": "original_end_date",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "goods_pct",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "services_pct",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "omanization_status",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "services_status",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "compliance_status",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "actual_subcontract_local",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "actual_subcontract_foreign",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "actual_subcontract_sme",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "metrics_updated_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "kind": "BASE TABLE",
+      "name": "quarterly_reports",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "project_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "quarter",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "annual_period",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "source_file",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "report_data",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'received'::text",
+          "nullable": false
+        },
+        {
+          "udt": "date",
+          "name": "submitted_at",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "date",
+          "name": "reviewed_at",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "notes",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "kind": "BASE TABLE",
+      "name": "user_entity_assignments",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "user_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "government_entity_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "kind": "VIEW",
+      "name": "user_entity_assignments_view",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "user_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "government_entity_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "government_entity",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "code",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "kind": "VIEW",
+      "name": "user_management",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "user_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "username",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "display_name",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "role",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "bool",
+          "name": "is_active",
+          "type": "boolean",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "access_starts_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "access_expires_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "access_status",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int8",
+          "name": "assigned_entities",
+          "type": "bigint",
+          "default": null,
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "kind": "BASE TABLE",
+      "name": "user_notification_settings",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "user_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "bool",
+          "name": "report_due",
+          "type": "boolean",
+          "default": "true",
+          "nullable": false
+        },
+        {
+          "udt": "bool",
+          "name": "project_expiry",
+          "type": "boolean",
+          "default": "true",
+          "nullable": false
+        },
+        {
+          "udt": "bool",
+          "name": "approval",
+          "type": "boolean",
+          "default": "true",
+          "nullable": false
+        },
+        {
+          "udt": "bool",
+          "name": "delay",
+          "type": "boolean",
+          "default": "true",
+          "nullable": false
+        },
+        {
+          "udt": "bool",
+          "name": "plan_update",
+          "type": "boolean",
+          "default": "true",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "days_before",
+          "type": "integer",
+          "default": "10",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "kind": "BASE TABLE",
+      "name": "user_profiles",
+      "schema": "public",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "full_name",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "role",
+          "type": "text",
+          "default": "'viewer'::text",
+          "nullable": false
+        },
+        {
+          "udt": "bool",
+          "name": "is_active",
+          "type": "boolean",
+          "default": "false",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "username",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "access_starts_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "access_expires_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        }
+      ]
+    }
+  ],
+  "project_id": "bmwtrnosqosbkezdswcx",
+  "captured_at": "2026-10-20T16:43:01.456633+00:00"
+}
