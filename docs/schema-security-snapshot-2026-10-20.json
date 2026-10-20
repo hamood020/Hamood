@@ -1,0 +1,1959 @@
+{
+  "rls": [
+    {
+      "table": "audit_log",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "companies",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "employee_followups",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "government_entities",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "local_content_plans",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "notifications",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "platform_settings",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "project_baselines",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "project_end_date_history",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "project_plan_documents",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "projects",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "quarterly_reports",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "user_entity_assignments",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "user_notification_settings",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "user_profiles",
+      "forced": false,
+      "enabled": true
+    }
+  ],
+  "indexes": [
+    {
+      "name": "audit_log_changed_at_idx",
+      "table": "audit_log",
+      "schema": "public",
+      "definition": "CREATE INDEX audit_log_changed_at_idx ON public.audit_log USING btree (changed_at)"
+    },
+    {
+      "name": "audit_log_merge_idx",
+      "table": "audit_log",
+      "schema": "public",
+      "definition": "CREATE INDEX audit_log_merge_idx ON public.audit_log USING btree (actor_user_id, table_name, record_id, changed_at DESC)"
+    },
+    {
+      "name": "audit_log_pkey",
+      "table": "audit_log",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX audit_log_pkey ON public.audit_log USING btree (id)"
+    },
+    {
+      "name": "idx_audit_actor",
+      "table": "audit_log",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_audit_actor ON public.audit_log USING btree (actor_user_id)"
+    },
+    {
+      "name": "companies_name_key",
+      "table": "companies",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX companies_name_key ON public.companies USING btree (name)"
+    },
+    {
+      "name": "companies_normalized_name_uidx",
+      "table": "companies",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX companies_normalized_name_uidx ON public.companies USING btree (private.normalize_directory_name(name))"
+    },
+    {
+      "name": "companies_pkey",
+      "table": "companies",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX companies_pkey ON public.companies USING btree (id)"
+    },
+    {
+      "name": "employee_followups_pkey",
+      "table": "employee_followups",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX employee_followups_pkey ON public.employee_followups USING btree (id)"
+    },
+    {
+      "name": "idx_employee_followups_created_by",
+      "table": "employee_followups",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_employee_followups_created_by ON public.employee_followups USING btree (created_by)"
+    },
+    {
+      "name": "idx_employee_followups_resolved_by",
+      "table": "employee_followups",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_employee_followups_resolved_by ON public.employee_followups USING btree (resolved_by)"
+    },
+    {
+      "name": "idx_followups_assigned_to",
+      "table": "employee_followups",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_followups_assigned_to ON public.employee_followups USING btree (assigned_to)"
+    },
+    {
+      "name": "idx_followups_project",
+      "table": "employee_followups",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_followups_project ON public.employee_followups USING btree (project_id)"
+    },
+    {
+      "name": "government_entities_name_key",
+      "table": "government_entities",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX government_entities_name_key ON public.government_entities USING btree (name)"
+    },
+    {
+      "name": "government_entities_normalized_name_uidx",
+      "table": "government_entities",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX government_entities_normalized_name_uidx ON public.government_entities USING btree (private.normalize_directory_name(name))"
+    },
+    {
+      "name": "government_entities_pkey",
+      "table": "government_entities",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX government_entities_pkey ON public.government_entities USING btree (id)"
+    },
+    {
+      "name": "idx_plans_created_by",
+      "table": "local_content_plans",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_plans_created_by ON public.local_content_plans USING btree (created_by)"
+    },
+    {
+      "name": "idx_plans_project",
+      "table": "local_content_plans",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_plans_project ON public.local_content_plans USING btree (project_id)"
+    },
+    {
+      "name": "local_content_plans_pkey",
+      "table": "local_content_plans",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX local_content_plans_pkey ON public.local_content_plans USING btree (id)"
+    },
+    {
+      "name": "notifications_pkey",
+      "table": "notifications",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX notifications_pkey ON public.notifications USING btree (id)"
+    },
+    {
+      "name": "notifications_project_idx",
+      "table": "notifications",
+      "schema": "public",
+      "definition": "CREATE INDEX notifications_project_idx ON public.notifications USING btree (project_id)"
+    },
+    {
+      "name": "notifications_user_id_dedupe_key_key",
+      "table": "notifications",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX notifications_user_id_dedupe_key_key ON public.notifications USING btree (user_id, dedupe_key)"
+    },
+    {
+      "name": "notifications_user_idx",
+      "table": "notifications",
+      "schema": "public",
+      "definition": "CREATE INDEX notifications_user_idx ON public.notifications USING btree (user_id, read_at, created_at DESC)"
+    },
+    {
+      "name": "idx_platform_settings_updated_by",
+      "table": "platform_settings",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_platform_settings_updated_by ON public.platform_settings USING btree (updated_by)"
+    },
+    {
+      "name": "platform_settings_pkey",
+      "table": "platform_settings",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX platform_settings_pkey ON public.platform_settings USING btree (id)"
+    },
+    {
+      "name": "idx_baseline_created_by",
+      "table": "project_baselines",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_baseline_created_by ON public.project_baselines USING btree (created_by)"
+    },
+    {
+      "name": "project_baselines_pkey",
+      "table": "project_baselines",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX project_baselines_pkey ON public.project_baselines USING btree (id)"
+    },
+    {
+      "name": "project_baselines_project_id_key",
+      "table": "project_baselines",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX project_baselines_project_id_key ON public.project_baselines USING btree (project_id)"
+    },
+    {
+      "name": "idx_project_end_date_history_changed_by",
+      "table": "project_end_date_history",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_project_end_date_history_changed_by ON public.project_end_date_history USING btree (changed_by)"
+    },
+    {
+      "name": "project_end_date_history_pkey",
+      "table": "project_end_date_history",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX project_end_date_history_pkey ON public.project_end_date_history USING btree (id)"
+    },
+    {
+      "name": "project_end_date_history_project_idx",
+      "table": "project_end_date_history",
+      "schema": "public",
+      "definition": "CREATE INDEX project_end_date_history_project_idx ON public.project_end_date_history USING btree (project_id, changed_at DESC)"
+    },
+    {
+      "name": "idx_project_plan_documents_created_by",
+      "table": "project_plan_documents",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_project_plan_documents_created_by ON public.project_plan_documents USING btree (created_by)"
+    },
+    {
+      "name": "idx_project_plan_documents_plan_id",
+      "table": "project_plan_documents",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_project_plan_documents_plan_id ON public.project_plan_documents USING btree (plan_id)"
+    },
+    {
+      "name": "idx_project_plan_documents_project_id",
+      "table": "project_plan_documents",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_project_plan_documents_project_id ON public.project_plan_documents USING btree (project_id)"
+    },
+    {
+      "name": "project_plan_documents_pkey",
+      "table": "project_plan_documents",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX project_plan_documents_pkey ON public.project_plan_documents USING btree (id)"
+    },
+    {
+      "name": "project_plan_documents_storage_path_key",
+      "table": "project_plan_documents",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX project_plan_documents_storage_path_key ON public.project_plan_documents USING btree (storage_path)"
+    },
+    {
+      "name": "idx_projects_company",
+      "table": "projects",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_projects_company ON public.projects USING btree (implementing_company_id)"
+    },
+    {
+      "name": "idx_projects_entity",
+      "table": "projects",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_projects_entity ON public.projects USING btree (government_entity_id)"
+    },
+    {
+      "name": "projects_pkey",
+      "table": "projects",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX projects_pkey ON public.projects USING btree (id)"
+    },
+    {
+      "name": "idx_reports_created_by",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_reports_created_by ON public.quarterly_reports USING btree (created_by)"
+    },
+    {
+      "name": "idx_reports_project",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_reports_project ON public.quarterly_reports USING btree (project_id)"
+    },
+    {
+      "name": "quarterly_reports_pkey",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX quarterly_reports_pkey ON public.quarterly_reports USING btree (id)"
+    },
+    {
+      "name": "quarterly_reports_project_id_quarter_annual_period_key",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX quarterly_reports_project_id_quarter_annual_period_key ON public.quarterly_reports USING btree (project_id, quarter, annual_period)"
+    },
+    {
+      "name": "idx_user_entity_assignments_government_entity_id",
+      "table": "user_entity_assignments",
+      "schema": "public",
+      "definition": "CREATE INDEX idx_user_entity_assignments_government_entity_id ON public.user_entity_assignments USING btree (government_entity_id)"
+    },
+    {
+      "name": "user_entity_assignments_pkey",
+      "table": "user_entity_assignments",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX user_entity_assignments_pkey ON public.user_entity_assignments USING btree (id)"
+    },
+    {
+      "name": "user_entity_assignments_user_id_government_entity_id_key",
+      "table": "user_entity_assignments",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX user_entity_assignments_user_id_government_entity_id_key ON public.user_entity_assignments USING btree (user_id, government_entity_id)"
+    },
+    {
+      "name": "user_notification_settings_pkey",
+      "table": "user_notification_settings",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX user_notification_settings_pkey ON public.user_notification_settings USING btree (user_id)"
+    },
+    {
+      "name": "user_profiles_pkey",
+      "table": "user_profiles",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX user_profiles_pkey ON public.user_profiles USING btree (id)"
+    },
+    {
+      "name": "user_profiles_username_uq",
+      "table": "user_profiles",
+      "schema": "public",
+      "definition": "CREATE UNIQUE INDEX user_profiles_username_uq ON public.user_profiles USING btree (username) WHERE (username IS NOT NULL)"
+    }
+  ],
+  "policies": [
+    {
+      "name": "audit admin read",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "audit_log",
+      "using": "(private.is_admin() AND private.user_access_valid(( SELECT ( SELECT auth.uid() AS uid) AS uid)))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "audit section head read specialists",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "audit_log",
+      "using": "(private.has_valid_role(ARRAY['section_head'::text]) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = audit_log.actor_user_id) AND (u.role = 'editor'::text)))))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "companies admin write delete",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "companies",
+      "using": "private.is_admin()",
+      "schema": "public",
+      "command": "DELETE"
+    },
+    {
+      "name": "companies admin write insert",
+      "check": "private.has_valid_role(ARRAY['admin'::text, 'section_head'::text, 'editor'::text])",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "companies",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT"
+    },
+    {
+      "name": "companies admin write update",
+      "check": "private.is_admin()",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "companies",
+      "using": "private.is_admin()",
+      "schema": "public",
+      "command": "UPDATE"
+    },
+    {
+      "name": "companies valid users read",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "companies",
+      "using": "private.user_access_valid(( SELECT auth.uid() AS uid))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "followups admin editor insert",
+      "check": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (created_by = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "employee_followups",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT"
+    },
+    {
+      "name": "followups admin editor read",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "employee_followups",
+      "using": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "followups admin editor update",
+      "check": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "employee_followups",
+      "using": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "schema": "public",
+      "command": "UPDATE"
+    },
+    {
+      "name": "entities admin editor insert valid users",
+      "check": "(private.user_access_valid(( SELECT ( SELECT auth.uid() AS uid) AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles up\n  WHERE ((up.id = ( SELECT ( SELECT auth.uid() AS uid) AS uid)) AND (up.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text])) AND (up.is_active = true)))))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "government_entities",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT"
+    },
+    {
+      "name": "entities admin write delete",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "government_entities",
+      "using": "private.is_admin()",
+      "schema": "public",
+      "command": "DELETE"
+    },
+    {
+      "name": "entities admin write update",
+      "check": "private.is_admin()",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "government_entities",
+      "using": "private.is_admin()",
+      "schema": "public",
+      "command": "UPDATE"
+    },
+    {
+      "name": "entities valid users read",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "government_entities",
+      "using": "private.user_access_valid(( SELECT auth.uid() AS uid))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "plans editor write delete",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "local_content_plans",
+      "using": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "schema": "public",
+      "command": "DELETE"
+    },
+    {
+      "name": "plans editor write insert",
+      "check": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "local_content_plans",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT"
+    },
+    {
+      "name": "plans editor write update",
+      "check": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "local_content_plans",
+      "using": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "schema": "public",
+      "command": "UPDATE"
+    },
+    {
+      "name": "plans valid users read",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "local_content_plans",
+      "using": "private.user_access_valid(( SELECT auth.uid() AS uid))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "notifications own mark read",
+      "check": "(user_id = ( SELECT auth.uid() AS uid))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "notifications",
+      "using": "((user_id = ( SELECT auth.uid() AS uid)) AND private.user_access_valid(( SELECT auth.uid() AS uid)))",
+      "schema": "public",
+      "command": "UPDATE"
+    },
+    {
+      "name": "notifications own read",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "notifications",
+      "using": "((user_id = ( SELECT auth.uid() AS uid)) AND private.user_access_valid(( SELECT auth.uid() AS uid)))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "Admins can insert platform settings",
+      "check": "(private.is_admin() AND private.user_access_valid(( SELECT ( SELECT auth.uid() AS uid) AS uid)))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "platform_settings",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT"
+    },
+    {
+      "name": "Admins can update platform settings",
+      "check": "(private.is_admin() AND private.user_access_valid(( SELECT ( SELECT auth.uid() AS uid) AS uid)))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "platform_settings",
+      "using": "(private.is_admin() AND private.user_access_valid(( SELECT ( SELECT auth.uid() AS uid) AS uid)))",
+      "schema": "public",
+      "command": "UPDATE"
+    },
+    {
+      "name": "Authenticated users can read platform settings",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "platform_settings",
+      "using": "private.user_access_valid(( SELECT auth.uid() AS uid))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "baseline editor write delete",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "project_baselines",
+      "using": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "schema": "public",
+      "command": "DELETE"
+    },
+    {
+      "name": "baseline editor write insert",
+      "check": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "project_baselines",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT"
+    },
+    {
+      "name": "baseline editor write update",
+      "check": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "project_baselines",
+      "using": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "schema": "public",
+      "command": "UPDATE"
+    },
+    {
+      "name": "baseline valid users read",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "project_baselines",
+      "using": "private.user_access_valid(( SELECT auth.uid() AS uid))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "project end history editors insert",
+      "check": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "project_end_date_history",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT"
+    },
+    {
+      "name": "project end history valid users read",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "project_end_date_history",
+      "using": "private.user_access_valid(( SELECT auth.uid() AS uid))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "plan documents delete editors",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "project_plan_documents",
+      "using": "(private.user_access_valid() AND (EXISTS ( SELECT 1\n   FROM user_profiles up\n  WHERE ((up.id = ( SELECT auth.uid() AS uid)) AND (up.is_active = true) AND (up.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "schema": "public",
+      "command": "DELETE"
+    },
+    {
+      "name": "plan documents read valid users",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "project_plan_documents",
+      "using": "(private.user_access_valid() AND (EXISTS ( SELECT 1\n   FROM projects p\n  WHERE (p.id = project_plan_documents.project_id))))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "plan documents update editors",
+      "check": "(private.user_access_valid() AND (EXISTS ( SELECT 1\n   FROM user_profiles up\n  WHERE ((up.id = ( SELECT auth.uid() AS uid)) AND (up.is_active = true) AND (up.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "project_plan_documents",
+      "using": "(private.user_access_valid() AND (EXISTS ( SELECT 1\n   FROM user_profiles up\n  WHERE ((up.id = ( SELECT auth.uid() AS uid)) AND (up.is_active = true) AND (up.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "schema": "public",
+      "command": "UPDATE"
+    },
+    {
+      "name": "plan documents write editors",
+      "check": "(private.user_access_valid() AND (EXISTS ( SELECT 1\n   FROM user_profiles up\n  WHERE ((up.id = ( SELECT auth.uid() AS uid)) AND (up.is_active = true) AND (up.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))) AND (EXISTS ( SELECT 1\n   FROM projects p\n  WHERE (p.id = project_plan_documents.project_id))))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "project_plan_documents",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT"
+    },
+    {
+      "name": "projects admin delete",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "projects",
+      "using": "private.is_admin()",
+      "schema": "public",
+      "command": "DELETE"
+    },
+    {
+      "name": "projects editor insert",
+      "check": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "projects",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT"
+    },
+    {
+      "name": "projects editor update",
+      "check": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "projects",
+      "using": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "schema": "public",
+      "command": "UPDATE"
+    },
+    {
+      "name": "projects valid users read",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "projects",
+      "using": "private.user_access_valid(( SELECT auth.uid() AS uid))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "reports editor write delete",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "quarterly_reports",
+      "using": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "schema": "public",
+      "command": "DELETE"
+    },
+    {
+      "name": "reports editor write insert",
+      "check": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "quarterly_reports",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT"
+    },
+    {
+      "name": "reports editor write update",
+      "check": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "quarterly_reports",
+      "using": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_profiles u\n  WHERE ((u.id = ( SELECT auth.uid() AS uid)) AND (u.role = ANY (ARRAY['admin'::text, 'editor'::text, 'section_head'::text]))))))",
+      "schema": "public",
+      "command": "UPDATE"
+    },
+    {
+      "name": "reports valid users read",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "quarterly_reports",
+      "using": "private.user_access_valid(( SELECT auth.uid() AS uid))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "assignments delete self or manager",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "user_entity_assignments",
+      "using": "(((user_id = ( SELECT auth.uid() AS uid)) AND private.user_access_valid(( SELECT auth.uid() AS uid))) OR ((user_id <> ( SELECT auth.uid() AS uid)) AND private.can_manage_assignments()))",
+      "schema": "public",
+      "command": "DELETE"
+    },
+    {
+      "name": "assignments insert self or manager",
+      "check": "(((user_id = ( SELECT auth.uid() AS uid)) AND private.user_access_valid(( SELECT auth.uid() AS uid))) OR ((user_id <> ( SELECT auth.uid() AS uid)) AND private.can_manage_assignments()))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "user_entity_assignments",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT"
+    },
+    {
+      "name": "assignments manager update",
+      "check": "private.can_manage_assignments()",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "user_entity_assignments",
+      "using": "private.can_manage_assignments()",
+      "schema": "public",
+      "command": "UPDATE"
+    },
+    {
+      "name": "assignments self or manager read",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "user_entity_assignments",
+      "using": "(private.user_access_valid(( SELECT auth.uid() AS uid)) AND ((user_id = ( SELECT auth.uid() AS uid)) OR private.can_manage_assignments()))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "notification settings self read",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "user_notification_settings",
+      "using": "((user_id = ( SELECT auth.uid() AS uid)) AND private.user_access_valid(( SELECT auth.uid() AS uid)))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "notification settings self write delete",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "user_notification_settings",
+      "using": "((user_id = ( SELECT auth.uid() AS uid)) AND private.user_access_valid(( SELECT auth.uid() AS uid)))",
+      "schema": "public",
+      "command": "DELETE"
+    },
+    {
+      "name": "notification settings self write insert",
+      "check": "((user_id = ( SELECT auth.uid() AS uid)) AND private.user_access_valid(( SELECT auth.uid() AS uid)))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "user_notification_settings",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT"
+    },
+    {
+      "name": "notification settings self write update",
+      "check": "((user_id = ( SELECT auth.uid() AS uid)) AND private.user_access_valid(( SELECT auth.uid() AS uid)))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "user_notification_settings",
+      "using": "((user_id = ( SELECT auth.uid() AS uid)) AND private.user_access_valid(( SELECT auth.uid() AS uid)))",
+      "schema": "public",
+      "command": "UPDATE"
+    },
+    {
+      "name": "profile section head read",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "user_profiles",
+      "using": "private.has_valid_role(ARRAY['section_head'::text])",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "profile self read",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "user_profiles",
+      "using": "((id = ( SELECT ( SELECT auth.uid() AS uid) AS uid)) OR ( SELECT private.is_admin() AS is_admin))",
+      "schema": "public",
+      "command": "SELECT"
+    },
+    {
+      "name": "profile self update",
+      "check": "((id = ( SELECT ( SELECT auth.uid() AS uid) AS uid)) OR ( SELECT private.is_admin() AS is_admin))",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "user_profiles",
+      "using": "((id = ( SELECT ( SELECT auth.uid() AS uid) AS uid)) OR ( SELECT private.is_admin() AS is_admin))",
+      "schema": "public",
+      "command": "UPDATE"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "audit_sensitive_changes",
+      "event": "DELETE",
+      "table": "companies",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "INSERT",
+      "table": "companies",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "UPDATE",
+      "table": "companies",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "DELETE",
+      "table": "employee_followups",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "INSERT",
+      "table": "employee_followups",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "UPDATE",
+      "table": "employee_followups",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "DELETE",
+      "table": "government_entities",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "INSERT",
+      "table": "government_entities",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "UPDATE",
+      "table": "government_entities",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_plans",
+      "event": "DELETE",
+      "table": "local_content_plans",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_plans",
+      "event": "INSERT",
+      "table": "local_content_plans",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_plans",
+      "event": "UPDATE",
+      "table": "local_content_plans",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "DELETE",
+      "table": "platform_settings",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "INSERT",
+      "table": "platform_settings",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "UPDATE",
+      "table": "platform_settings",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "recompute_on_settings_change",
+      "event": "INSERT",
+      "table": "platform_settings",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.trg_settings_recompute()"
+    },
+    {
+      "name": "recompute_on_settings_change",
+      "event": "UPDATE",
+      "table": "platform_settings",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.trg_settings_recompute()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "DELETE",
+      "table": "project_plan_documents",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "INSERT",
+      "table": "project_plan_documents",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "UPDATE",
+      "table": "project_plan_documents",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "trg_project_plan_documents_updated_at",
+      "event": "UPDATE",
+      "table": "project_plan_documents",
+      "schema": "public",
+      "timing": "BEFORE",
+      "statement": "EXECUTE FUNCTION touch_project_plan_documents_updated_at()"
+    },
+    {
+      "name": "audit_projects",
+      "event": "DELETE",
+      "table": "projects",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_projects",
+      "event": "INSERT",
+      "table": "projects",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_projects",
+      "event": "UPDATE",
+      "table": "projects",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "recompute_on_value_change",
+      "event": "INSERT",
+      "table": "projects",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.trg_project_value_recompute()"
+    },
+    {
+      "name": "recompute_on_value_change",
+      "event": "UPDATE",
+      "table": "projects",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.trg_project_value_recompute()"
+    },
+    {
+      "name": "trg_project_end_date_change",
+      "event": "INSERT",
+      "table": "projects",
+      "schema": "public",
+      "timing": "BEFORE",
+      "statement": "EXECUTE FUNCTION handle_project_end_date_change()"
+    },
+    {
+      "name": "trg_project_end_date_change",
+      "event": "UPDATE",
+      "table": "projects",
+      "schema": "public",
+      "timing": "BEFORE",
+      "statement": "EXECUTE FUNCTION handle_project_end_date_change()"
+    },
+    {
+      "name": "audit_reports",
+      "event": "DELETE",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_reports",
+      "event": "INSERT",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_reports",
+      "event": "UPDATE",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "lock_approved_reports",
+      "event": "DELETE",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "timing": "BEFORE",
+      "statement": "EXECUTE FUNCTION private.trg_lock_approved_reports()"
+    },
+    {
+      "name": "lock_approved_reports",
+      "event": "UPDATE",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "timing": "BEFORE",
+      "statement": "EXECUTE FUNCTION private.trg_lock_approved_reports()"
+    },
+    {
+      "name": "notify_report_status",
+      "event": "UPDATE",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.trg_report_status_notify()"
+    },
+    {
+      "name": "recompute_project_metrics",
+      "event": "DELETE",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.trg_reports_recompute()"
+    },
+    {
+      "name": "recompute_project_metrics",
+      "event": "INSERT",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.trg_reports_recompute()"
+    },
+    {
+      "name": "recompute_project_metrics",
+      "event": "UPDATE",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.trg_reports_recompute()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "DELETE",
+      "table": "user_entity_assignments",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "INSERT",
+      "table": "user_entity_assignments",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "UPDATE",
+      "table": "user_entity_assignments",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "DELETE",
+      "table": "user_profiles",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "INSERT",
+      "table": "user_profiles",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    },
+    {
+      "name": "audit_sensitive_changes",
+      "event": "UPDATE",
+      "table": "user_profiles",
+      "schema": "public",
+      "timing": "AFTER",
+      "statement": "EXECUTE FUNCTION private.write_audit()"
+    }
+  ],
+  "functions": [
+    {
+      "name": "audit_ignored_keys",
+      "schema": "private",
+      "returns": "text[]",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "p_table text",
+      "security_definer": false
+    },
+    {
+      "name": "can_manage_assignments",
+      "schema": "private",
+      "returns": "boolean",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "",
+      "security_definer": true
+    },
+    {
+      "name": "generate_notifications",
+      "schema": "private",
+      "returns": "integer",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "",
+      "security_definer": true
+    },
+    {
+      "name": "has_entity_access",
+      "schema": "private",
+      "returns": "boolean",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "p_entity_id uuid",
+      "security_definer": true
+    },
+    {
+      "name": "has_valid_role",
+      "schema": "private",
+      "returns": "boolean",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "p_roles text[]",
+      "security_definer": true
+    },
+    {
+      "name": "is_admin",
+      "schema": "private",
+      "returns": "boolean",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "",
+      "security_definer": true
+    },
+    {
+      "name": "normalize_directory_name",
+      "schema": "private",
+      "returns": "text",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "p_value text",
+      "security_definer": false
+    },
+    {
+      "name": "num",
+      "schema": "private",
+      "returns": "numeric",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "p jsonb, k text",
+      "security_definer": false
+    },
+    {
+      "name": "pct_setting",
+      "schema": "private",
+      "returns": "numeric",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "p jsonb, k text, d numeric",
+      "security_definer": false
+    },
+    {
+      "name": "purge_audit_log",
+      "schema": "private",
+      "returns": "integer",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "",
+      "security_definer": true
+    },
+    {
+      "name": "recompute_project_metrics",
+      "schema": "private",
+      "returns": "void",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "p_project_id uuid",
+      "security_definer": true
+    },
+    {
+      "name": "trg_lock_approved_reports",
+      "schema": "private",
+      "returns": "trigger",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "",
+      "security_definer": true
+    },
+    {
+      "name": "trg_project_value_recompute",
+      "schema": "private",
+      "returns": "trigger",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "",
+      "security_definer": true
+    },
+    {
+      "name": "trg_report_status_notify",
+      "schema": "private",
+      "returns": "trigger",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "",
+      "security_definer": true
+    },
+    {
+      "name": "trg_reports_recompute",
+      "schema": "private",
+      "returns": "trigger",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "",
+      "security_definer": true
+    },
+    {
+      "name": "trg_settings_recompute",
+      "schema": "private",
+      "returns": "trigger",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "",
+      "security_definer": true
+    },
+    {
+      "name": "user_access_valid",
+      "schema": "private",
+      "returns": "boolean",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "p_user_id uuid",
+      "security_definer": true
+    },
+    {
+      "name": "write_audit",
+      "schema": "private",
+      "returns": "trigger",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "",
+      "security_definer": true
+    },
+    {
+      "name": "admin_update_user_profile_guarded",
+      "schema": "public",
+      "returns": "void",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "p_user_id uuid, p_full_name text, p_role text, p_is_active boolean, p_access_starts_at timestamp with time zone, p_access_expires_at timestamp with time zone, p_actor_user_id uuid",
+      "security_definer": true
+    },
+    {
+      "name": "claim_first_admin",
+      "schema": "public",
+      "returns": "boolean",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "",
+      "security_definer": true
+    },
+    {
+      "name": "get_contact_points",
+      "schema": "public",
+      "returns": "TABLE(id uuid, contact_points jsonb)",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "p_table text, p_ids uuid[]",
+      "security_definer": true
+    },
+    {
+      "name": "handle_new_user",
+      "schema": "public",
+      "returns": "trigger",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "",
+      "security_definer": true
+    },
+    {
+      "name": "handle_project_end_date_change",
+      "schema": "public",
+      "returns": "trigger",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "",
+      "security_definer": true
+    },
+    {
+      "name": "rls_auto_enable",
+      "schema": "public",
+      "returns": "event_trigger",
+      "settings": [
+        "search_path=pg_catalog"
+      ],
+      "arguments": "",
+      "security_definer": true
+    },
+    {
+      "name": "set_company_contact_points",
+      "schema": "public",
+      "returns": "void",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "p_company_id uuid, p_contact_points jsonb",
+      "security_definer": true
+    },
+    {
+      "name": "set_government_entity_contact_details",
+      "schema": "public",
+      "returns": "void",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "p_entity_id uuid, p_name text, p_contact_points jsonb",
+      "security_definer": true
+    },
+    {
+      "name": "set_my_entity_assignments",
+      "schema": "public",
+      "returns": "void",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "p_entity_ids uuid[]",
+      "security_definer": false
+    },
+    {
+      "name": "set_user_entity_assignments",
+      "schema": "public",
+      "returns": "void",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "p_user_id uuid, p_entity_ids uuid[]",
+      "security_definer": false
+    },
+    {
+      "name": "touch_project_plan_documents_updated_at",
+      "schema": "public",
+      "returns": "trigger",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "arguments": "",
+      "security_definer": false
+    }
+  ],
+  "project_id": "bmwtrnosqosbkezdswcx",
+  "captured_at": "2026-10-20T16:43:12.761963+00:00",
+  "constraints": [
+    {
+      "name": "audit_log_actor_user_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "audit_log",
+      "schema": "public",
+      "definition": "FOREIGN KEY (actor_user_id) REFERENCES auth.users(id)"
+    },
+    {
+      "name": "audit_log_pkey",
+      "type": "PRIMARY KEY",
+      "table": "audit_log",
+      "schema": "public",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "companies_contact_points_is_array",
+      "type": "CHECK",
+      "table": "companies",
+      "schema": "public",
+      "definition": "CHECK (jsonb_typeof(contact_points) = 'array'::text)"
+    },
+    {
+      "name": "companies_name_key",
+      "type": "UNIQUE",
+      "table": "companies",
+      "schema": "public",
+      "definition": "UNIQUE (name)"
+    },
+    {
+      "name": "companies_pkey",
+      "type": "PRIMARY KEY",
+      "table": "companies",
+      "schema": "public",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "employee_followups_assigned_to_fkey",
+      "type": "FOREIGN KEY",
+      "table": "employee_followups",
+      "schema": "public",
+      "definition": "FOREIGN KEY (assigned_to) REFERENCES auth.users(id)"
+    },
+    {
+      "name": "employee_followups_created_by_fkey",
+      "type": "FOREIGN KEY",
+      "table": "employee_followups",
+      "schema": "public",
+      "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id)"
+    },
+    {
+      "name": "employee_followups_pkey",
+      "type": "PRIMARY KEY",
+      "table": "employee_followups",
+      "schema": "public",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "employee_followups_priority_check",
+      "type": "CHECK",
+      "table": "employee_followups",
+      "schema": "public",
+      "definition": "CHECK (priority = ANY (ARRAY['منخفضة'::text, 'متوسطة'::text, 'عالية'::text, 'عاجلة'::text]))"
+    },
+    {
+      "name": "employee_followups_project_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "employee_followups",
+      "schema": "public",
+      "definition": "FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "employee_followups_resolved_by_fkey",
+      "type": "FOREIGN KEY",
+      "table": "employee_followups",
+      "schema": "public",
+      "definition": "FOREIGN KEY (resolved_by) REFERENCES auth.users(id)"
+    },
+    {
+      "name": "employee_followups_status_check",
+      "type": "CHECK",
+      "table": "employee_followups",
+      "schema": "public",
+      "definition": "CHECK (status = ANY (ARRAY['open'::text, 'closed'::text]))"
+    },
+    {
+      "name": "government_entities_name_key",
+      "type": "UNIQUE",
+      "table": "government_entities",
+      "schema": "public",
+      "definition": "UNIQUE (name)"
+    },
+    {
+      "name": "government_entities_pkey",
+      "type": "PRIMARY KEY",
+      "table": "government_entities",
+      "schema": "public",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "local_content_plans_created_by_fkey",
+      "type": "FOREIGN KEY",
+      "table": "local_content_plans",
+      "schema": "public",
+      "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id)"
+    },
+    {
+      "name": "local_content_plans_pkey",
+      "type": "PRIMARY KEY",
+      "table": "local_content_plans",
+      "schema": "public",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "local_content_plans_project_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "local_content_plans",
+      "schema": "public",
+      "definition": "FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "notifications_kind_check",
+      "type": "CHECK",
+      "table": "notifications",
+      "schema": "public",
+      "definition": "CHECK (kind = ANY (ARRAY['report_due'::text, 'delay'::text, 'project_expiry'::text, 'approval'::text, 'plan_update'::text]))"
+    },
+    {
+      "name": "notifications_pkey",
+      "type": "PRIMARY KEY",
+      "table": "notifications",
+      "schema": "public",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "notifications_project_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "notifications",
+      "schema": "public",
+      "definition": "FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "notifications_user_id_dedupe_key_key",
+      "type": "UNIQUE",
+      "table": "notifications",
+      "schema": "public",
+      "definition": "UNIQUE (user_id, dedupe_key)"
+    },
+    {
+      "name": "notifications_user_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "notifications",
+      "schema": "public",
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "platform_settings_id_check",
+      "type": "CHECK",
+      "table": "platform_settings",
+      "schema": "public",
+      "definition": "CHECK (id = 'global'::text)"
+    },
+    {
+      "name": "platform_settings_pkey",
+      "type": "PRIMARY KEY",
+      "table": "platform_settings",
+      "schema": "public",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "platform_settings_updated_by_fkey",
+      "type": "FOREIGN KEY",
+      "table": "platform_settings",
+      "schema": "public",
+      "definition": "FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "project_baselines_created_by_fkey",
+      "type": "FOREIGN KEY",
+      "table": "project_baselines",
+      "schema": "public",
+      "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id)"
+    },
+    {
+      "name": "project_baselines_pkey",
+      "type": "PRIMARY KEY",
+      "table": "project_baselines",
+      "schema": "public",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "project_baselines_project_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "project_baselines",
+      "schema": "public",
+      "definition": "FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "project_baselines_project_id_key",
+      "type": "UNIQUE",
+      "table": "project_baselines",
+      "schema": "public",
+      "definition": "UNIQUE (project_id)"
+    },
+    {
+      "name": "project_end_date_history_changed_by_fkey",
+      "type": "FOREIGN KEY",
+      "table": "project_end_date_history",
+      "schema": "public",
+      "definition": "FOREIGN KEY (changed_by) REFERENCES auth.users(id)"
+    },
+    {
+      "name": "project_end_date_history_pkey",
+      "type": "PRIMARY KEY",
+      "table": "project_end_date_history",
+      "schema": "public",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "project_end_date_history_project_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "project_end_date_history",
+      "schema": "public",
+      "definition": "FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "project_plan_documents_created_by_fkey",
+      "type": "FOREIGN KEY",
+      "table": "project_plan_documents",
+      "schema": "public",
+      "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id)"
+    },
+    {
+      "name": "project_plan_documents_pkey",
+      "type": "PRIMARY KEY",
+      "table": "project_plan_documents",
+      "schema": "public",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "project_plan_documents_plan_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "project_plan_documents",
+      "schema": "public",
+      "definition": "FOREIGN KEY (plan_id) REFERENCES local_content_plans(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "project_plan_documents_project_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "project_plan_documents",
+      "schema": "public",
+      "definition": "FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "project_plan_documents_storage_path_key",
+      "type": "UNIQUE",
+      "table": "project_plan_documents",
+      "schema": "public",
+      "definition": "UNIQUE (storage_path)"
+    },
+    {
+      "name": "projects_government_entity_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "projects",
+      "schema": "public",
+      "definition": "FOREIGN KEY (government_entity_id) REFERENCES government_entities(id)"
+    },
+    {
+      "name": "projects_implementing_company_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "projects",
+      "schema": "public",
+      "definition": "FOREIGN KEY (implementing_company_id) REFERENCES companies(id)"
+    },
+    {
+      "name": "projects_pkey",
+      "type": "PRIMARY KEY",
+      "table": "projects",
+      "schema": "public",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "quarterly_reports_created_by_fkey",
+      "type": "FOREIGN KEY",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id)"
+    },
+    {
+      "name": "quarterly_reports_pkey",
+      "type": "PRIMARY KEY",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "quarterly_reports_project_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "definition": "FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "quarterly_reports_project_id_quarter_annual_period_key",
+      "type": "UNIQUE",
+      "table": "quarterly_reports",
+      "schema": "public",
+      "definition": "UNIQUE (project_id, quarter, annual_period)"
+    },
+    {
+      "name": "user_entity_assignments_government_entity_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "user_entity_assignments",
+      "schema": "public",
+      "definition": "FOREIGN KEY (government_entity_id) REFERENCES government_entities(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "user_entity_assignments_pkey",
+      "type": "PRIMARY KEY",
+      "table": "user_entity_assignments",
+      "schema": "public",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "user_entity_assignments_user_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "user_entity_assignments",
+      "schema": "public",
+      "definition": "FOREIGN KEY (user_id) REFERENCES user_profiles(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "user_entity_assignments_user_id_government_entity_id_key",
+      "type": "UNIQUE",
+      "table": "user_entity_assignments",
+      "schema": "public",
+      "definition": "UNIQUE (user_id, government_entity_id)"
+    },
+    {
+      "name": "user_notification_settings_days_before_check",
+      "type": "CHECK",
+      "table": "user_notification_settings",
+      "schema": "public",
+      "definition": "CHECK (days_before >= 0 AND days_before <= 365)"
+    },
+    {
+      "name": "user_notification_settings_pkey",
+      "type": "PRIMARY KEY",
+      "table": "user_notification_settings",
+      "schema": "public",
+      "definition": "PRIMARY KEY (user_id)"
+    },
+    {
+      "name": "user_notification_settings_user_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "user_notification_settings",
+      "schema": "public",
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "user_profiles_id_fkey",
+      "type": "FOREIGN KEY",
+      "table": "user_profiles",
+      "schema": "public",
+      "definition": "FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "user_profiles_pkey",
+      "type": "PRIMARY KEY",
+      "table": "user_profiles",
+      "schema": "public",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "user_profiles_role_check",
+      "type": "CHECK",
+      "table": "user_profiles",
+      "schema": "public",
+      "definition": "CHECK (role = ANY (ARRAY['admin'::text, 'section_head'::text, 'editor'::text, 'viewer'::text, 'temporary_viewer'::text]))"
+    },
+    {
+      "name": "user_profiles_temporary_viewer_expiry_check",
+      "type": "CHECK",
+      "table": "user_profiles",
+      "schema": "public",
+      "definition": "CHECK (role <> 'temporary_viewer'::text OR access_expires_at IS NOT NULL)"
+    }
+  ]
+}
