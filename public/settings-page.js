@@ -38,7 +38,7 @@
       years: "2026,2027,2028,2029,2030,2031,2032,2033,2034,2035",
       quarters: ["Q1", "Q2", "Q3", "Q4"],
       type: "تراكمي",
-      statuses: ["مسودة", "مقدم", "تحت المراجعة", "معتمد", "مرفوض"],
+      statuses: ["مسودة", "مستلم", "قيد المراجعة", "معتمد", "مرفوض"],
       lockApproved: false,
       multiReport: false,
       dueDays: 30,
@@ -77,6 +77,8 @@
     x = x && typeof x === "object" ? x : {};
     const out = {};
     Object.keys(D).forEach((k) => (out[k] = merge(D[k], x[k])));
+    out.reports.statuses = Array.isArray(out.reports.statuses) ? [...new Set([...out.reports.statuses.map(String).filter(Boolean), "معتمد"])] : [...D.reports.statuses];
+    out.reports.quarters = Array.isArray(out.reports.quarters) && out.reports.quarters.length ? out.reports.quarters.map(String) : [...D.reports.quarters];
     delete out.audit.enabled; // the audit log is always on
     delete out.users.roles; // replaced by roleLabels
     return out;
