@@ -498,16 +498,6 @@
           "Number and value of projects in each status; the bar shows the status share of total value. Stalled is separate because it can happen at any stage. Click a status to list its projects.",
         ),
       ) +
-      section(
-        4,
-        T("الوقت مقابل الصرف", "Time vs spend"),
-        T("هل الصرف يواكب الزمن المنقضي من المشروع؟", "Does spending keep pace with elapsed time?"),
-        scatterHtml(list, today),
-        T(
-          "كل نقطة مشروع قائم أو متعثر. المحور الأفقي: نسبة المدة المنقضية من تاريخ البداية حتى تاريخ الانتهاء الحالي. المحور الرأسي: الصرف من التقارير المعتمدة ÷ قيمة المشروع. المنطقة البرتقالية: مضى من الوقت أكثر من الصرف بـ 30 نقطة فأكثر، فالمشروع مرشح للتأخر. حجم النقطة حسب قيمة المشروع، والضغط عليها يفتح المشروع.",
-          "Each dot is a running or stalled project. Horizontal: share of time elapsed between start and current end date. Vertical: spend from approved reports ÷ project value. Orange zone: time is 30+ points ahead of spend, so the project may be lagging. Dot size follows project value; click to open.",
-        ),
-      ) +
       "</div>";
 
     const g = ganttHtml(list, today);
