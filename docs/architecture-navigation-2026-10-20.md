@@ -40,6 +40,13 @@ The shell had two separate `popstate` listeners. Both could invoke route restora
 - Calculation coefficients and compliance thresholds are read by the database calculation function; changing local-content settings triggers recalculation for projects.
 - Notification deadlines use `reports.dueDays`; the `reports.lateAfter` grace period is now applied before a report changes from due to overdue.
 
+## Database baseline artifacts
+
+- `docs/schema-baseline-2026-10-20.sql` captures public table DDL, constraints, indexes, RLS enablement, and policies as a reference snapshot.
+- `docs/schema-snapshot-2026-10-20.json` captures public table columns and types.
+- `docs/schema-security-snapshot-2026-10-20.json` captures constraints, indexes, policies, function metadata, and triggers.
+- These are reference artifacts, not a turnkey replay migration; validate dependencies, grants, storage policies, and function bodies before restoring a database.
+
 ## Release checks performed
 
 - JavaScript syntax checks passed for all shared application scripts, including the vendored Excel library.
