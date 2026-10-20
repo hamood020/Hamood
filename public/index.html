@@ -1741,15 +1741,17 @@
           return toast("تاريخ البداية والنهاية مطلوبان.");
         if (f_start.value && f_end.value && f_end.value < f_start.value)
           return toast("تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية.");
-        const entityResult = await db.from("government_entities").select("id").eq("name", en).maybeSingle();
+        const entityResult = en
+          ? await db.from("government_entities").select("id").eq("name", en).maybeSingle()
+          : { data: null, error: null };
         if (entityResult.error) return toast("تعذّر التحقق من الجهة الحكومية: " + entityResult.error.message);
-        if (!entityResult.data?.id)
+        if (en && !entityResult.data?.id)
           return toast("الجهة غير موجودة في القائمة. أضفها أولاً من صفحة الجهات الحكومية ثم أعد المحاولة.");
         const r = await db
           .from("projects")
           .insert({
             serial_no: Number(f_serial.value) || null,
-            government_entity_id: entityResult.data.id,
+            government_entity_id: entityResult.data?.id || null,
             implementing_company_id: f_company.value || null,
             project_name: f_name.value.trim(),
             project_status: f_status.value,
