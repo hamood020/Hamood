@@ -1049,6 +1049,23 @@
               .split(",").map((x) => x.trim()).filter((x) => /^\d{4}$/.test(x));
             const list = document.getElementById("rYearOptions");
             if (list && years.length) list.innerHTML = years.map((year) => '<option value="' + year + '"></option>').join("");
+            const quarters = Array.isArray(settings?.reports?.quarters) && settings.reports.quarters.length
+              ? settings.reports.quarters.map((x) => String(x).trim()).filter(Boolean)
+              : ["Q1", "Q2", "Q3", "Q4"];
+            const quarterSelect = document.getElementById("rQuarter");
+            if (quarterSelect && quarters.length) {
+              const currentQuarter = quarterSelect.value || "Q1";
+              quarterSelect.innerHTML = quarters.map((q) => {
+                const safe = q.replace(/[&<>"']/g, "");
+                return '<option value="' + safe + '">' + safe + '</option>';
+              }).join("");
+              quarterSelect.value = quarters.includes(currentQuarter) ? currentQuarter : quarters[0];
+            }
+            const typeSelect = document.getElementById("rType");
+            const defaultType = String(settings?.reports?.type || "").trim();
+            if (typeSelect && defaultType && [...typeSelect.options].some((o) => o.value === defaultType || o.textContent.trim() === defaultType)) {
+              typeSelect.value = defaultType;
+            }
           } catch (_) {}
         })();
       </script>
