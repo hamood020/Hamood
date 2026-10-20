@@ -35,7 +35,7 @@
     "جارٍ التحميل...":"Loading...","لا توجد بيانات":"No data available","لا توجد نتائج":"No results",
     "تم الحفظ بنجاح.":"Saved successfully.","حدث خطأ غير متوقع.":"An unexpected error occurred.",
     "تعذر الاتصال بقاعدة البيانات":"Could not connect to the database","الرجاء الانتظار":"Please wait",
-    "من أصل":"of","عرض":"Showing","من":"From","إلى":"To","الملاحظات":"Notes","الأدوار":"Roles",
+    "من أصل":"of","من":"From","إلى":"To","الملاحظات":"Notes","الأدوار":"Roles",
     "الصلاحيات":"Permissions","جهات الاتصال":"Contact points","نقاط التواصل":"Contact points",
     "إضافة مهمة":"Add task","المهام":"Tasks","الأولوية":"Priority","مفتوحة":"Open","مغلقة":"Closed",
     "العملة":"Currency","تاريخ الإنشاء":"Created at","آخر تحديث":"Last updated",
