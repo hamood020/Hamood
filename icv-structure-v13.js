@@ -331,48 +331,6 @@
     b.innerHTML =
       '<div class="panel"><h2>الإعدادات</h2><div class="muted">إدارة المستخدمين والصلاحيات والمرجعيات وسجل العمليات.</div></div><div class="grid2" style="margin-top:18px"><div class="panel"><h2>إدارة المستخدمين</h2><div class="muted">المستخدمون، الأدوار، فترات الصلاحية والجهات المسندة.</div><div class="actions" style="margin-top:12px"><button class="btn primary" onclick="showPage(\'users\',this);setTimeout(()=>window.openUserForm?.(),150)">+ إضافة مستخدم</button><button class="btn" onclick="showPage(\'users\',this)">قائمة المستخدمين</button></div></div><div class="panel"><h2>الجهات الحكومية</h2><button class="btn" onclick="showPage(\'entities\',this)">فتح الجهات</button></div><div class="panel"><h2>الشركات</h2><button class="btn" onclick="showPage(\'companies\',this)">فتح الشركات</button></div><div class="panel"><h2>سجل العمليات</h2><button class="btn" onclick="showPage(\'audit\',this)">فتح سجل التدقيق</button></div></div>';
   };
-  async function enhance(id) {
-    const b = document.getElementById("page-projects");
-    if (!b) return;
-    [...b.querySelectorAll(":scope > .panel")].forEach((x, i) => (x.id = "project-sec-" + i));
-    b.querySelector(".project-tabs")?.remove();
-    const t = document.createElement("div");
-    t.className = "panel project-tabs";
-    t.innerHTML =
-      '<div class="toolbar"><h2>مركز المشروع</h2><div class="actions"><button class="btn" onclick="icvProjectTab(0)">البيانات الأساسية</button><button class="btn" onclick="icvProjectTab(2)">الخطة</button><button class="btn" onclick="icvProjectTab(3)">التقارير</button><button class="btn" onclick="icvProjectTab(4)">النتائج التراكمية</button></div></div>';
-    b.prepend(t);
-    const p = ps().find((x) => x.id === id),
-      re = rs(id),
-      latest = [...re].reverse().find((r) => String(r.status || "").includes("معتمد")) || re.slice(-1)[0],
-      d = latest?.report_data || {},
-      sec = b.querySelector("#project-sec-4");
-    if (sec) {
-      let cum = 0;
-      re.forEach((r) => {
-        const z = r.report_data || {},
-          v = Number(z.total_local_content || 0);
-        cum = String(z.report_type || "").includes("تراكمي") ? v : cum + v;
-      });
-      sec.innerHTML +=
-        '<div class="section"><div class="section-head"><h2>النتائج التراكمية</h2><span class="muted">القيم المالية تتراكم حسب نوع التقرير، والعمالة من آخر تقرير معتمد/متاح.</span></div><div class="cards"><div class="card"><div class="label">آخر قوة عاملة</div><div class="value">' +
-        Number(d.workforce_total || 0) +
-        '</div></div><div class="card"><div class="label">نسبة التعمين</div><div class="value">' +
-        pct(d.omanization_percent) +
-        '</div></div><div class="card"><div class="label">المحتوى المحلي التراكمي</div><div class="value">' +
-        money(cum) +
-        '</div></div><div class="card"><div class="label">SME</div><div class="value">' +
-        pct(p?.sme_pct) +
-        '</div></div></div><div class="table-wrap"><table><thead><tr><th>المؤشر</th><th>الفعلي</th><th>المستهدف</th><th>النتيجة</th></tr></thead><tbody><tr><td>التعمين</td><td>' +
-        pct(d.omanization_percent) +
-        "</td><td>30%</td><td>" +
-        (!d.workforce_total ? "غير منطبق" : Number(d.omanization_percent) >= 30 ? "مستوفي" : "غير مستوفي") +
-        "</td></tr><tr><td>SME</td><td>" +
-        pct(p?.sme_pct) +
-        "</td><td>10%</td><td>" +
-        (p?.sme_pct == null ? "غير منطبق" : Number(p.sme_pct) >= 10 ? "مستوفي" : "غير مستوفي") +
-        "</td></tr></tbody></table></div></div>";
-    }
-  }
   window.icvProjectTab = (i) =>
     document.getElementById("project-sec-" + i)?.scrollIntoView({ behavior: "smooth" });
   const bv = window.viewProject;

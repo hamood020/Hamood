@@ -1820,7 +1820,7 @@
           .join("");
         root.innerHTML =
           '<div class="panel"><div class="toolbar"><div><h2>الجهات الحكومية</h2><div class="muted">عرض الجهات الحكومية وعدد مشاريعها وقيمتها والإنفاق، مع إمكانية فتح بطاقة كل جهة.</div></div>' +
-          (["admin", "editor"].includes(window.__icvProfile?.role) &&
+          (window.ICV.canEdit(window.__icvProfile) &&
           typeof window.icvAddEntityV2 === "function"
             ? '<button class="btn primary" onclick="window.icvAddEntityV2()">+ إضافة جهة</button>'
             : "") +

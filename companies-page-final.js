@@ -30,22 +30,37 @@
     document.head.appendChild(s);
   }
 
-  function metric(p) {
-    var oman = toPercent(p.omanization_pct);
-    var sme = toPercent(p.sme_pct);
-    var local = toPercent(p.local_content_project_pct);
-    var ok = oman >= 30 && sme >= 10 && local >= 70;
-    if (
-      String(p.made_in_oman_status || "") === "غير مستوفي" ||
-      String(p.sme_10_status || "") === "غير مستوفي"
-    )
-      ok = false;
-    return { oman: oman, sme: sme, local: local, ok: ok };
+  // Percentages and statuses are computed by the database from approved reports and the
+  // platform settings, so this page, the project page and Excel always agree.
+  function pctCell(v) {
+    return v == null ? "—" : pct(v);
   }
-
-  function toPercent(v) {
-    var n = Number(v || 0);
-    return n > 0 && n <= 1 ? n * 100 : n;
+  function pctOrNull(v) {
+    return v == null || v === "" ? null : Number(v);
+  }
+  function metric(p) {
+    return {
+      oman: pctOrNull(p.omanization_pct),
+      sme: pctOrNull(p.sme_pct),
+      goods: pctOrNull(p.goods_pct),
+      services: pctOrNull(p.services_pct),
+      local: pctOrNull(p.local_content_project_pct),
+      status: p.compliance_status || "غير منطبق",
+      ok: p.compliance_status === "مستوفي",
+    };
+  }
+  function threshold(k) {
+    var t = (window.__icvCalculationSettings && window.__icvCalculationSettings.thresholds) || {};
+    var d = { omanization: 30, sme: 10, goods: 40, services: 10 }[k];
+    var v = Number(t[k]);
+    return Number.isFinite(v) ? (v > 0 && v <= 1 ? v * 100 : v) : d;
+  }
+  // Excel label for a stored status.
+  function xlStatus(s) {
+    return s === "مستوفي" ? "مستوفٍ" : s === "غير مستوفي" ? "غير مستوفٍ" : "غير منطبق";
+  }
+  function isApproved(r) {
+    return String((r && r.status) || "").trim() === "معتمد";
   }
   function reportKey(r) {
     return (
@@ -61,11 +76,8 @@
     });
   }
   function latestCompanyReport(rows) {
-    var a = sortCompanyReports(rows),
-      ok = a.filter(function (r) {
-        return String(r.status || "").includes("معتمد");
-      });
-    return ok.length ? ok[ok.length - 1] : a.length ? a[a.length - 1] : null;
+    var ok = sortCompanyReports(rows).filter(isApproved);
+    return ok.length ? ok[ok.length - 1] : null;
   }
   function cumulativeCompanyFinancials(rows) {
     var o = {
@@ -80,7 +92,7 @@
       sub_foreign: 0,
       sub_sme: 0,
     };
-    sortCompanyReports(rows).forEach(function (r) {
+    sortCompanyReports((rows || []).filter(isApproved)).forEach(function (r) {
       var d = r.report_data || {},
         cum = String(d.report_type || "ربعي منفصل").includes("تراكمي"),
         p = d.purchases || {},
@@ -204,33 +216,18 @@
         var rr = by[p.id] || [],
           lr = latestCompanyReport(rr),
           d = (lr && lr.report_data) || {},
-          f = cumulativeCompanyFinancials(rr),
-          wf = Number(d.workforce_total || 0),
-          om = Number(d.omani_total || 0),
-          fr = Number(d.foreign_total || 0);
-        var oman = toPercent(p.omanization_pct != null ? p.omanization_pct : wf ? om / wf : 0),
-          smeVal = f.sub_local + f.sub_foreign + f.sub_sme + f.sme_service,
-          sme = toPercent(
-            p.sme_pct != null
-              ? p.sme_pct
-              : Number(p.total_project_value || 0)
-                ? smeVal / Number(p.total_project_value || 0)
-                : 0,
-          ),
-          lc = toPercent(p.local_content_project_pct);
+          m = metric(p);
         return {
           p: p,
-          rr: rr,
+          rr: rr.filter(isApproved),
           latest: lr,
           d: d,
-          f: f,
-          wf: wf,
-          om: om,
-          fr: fr,
-          oman: oman,
-          sme: sme,
-          lc: lc,
-          ok: oman >= 30 && sme >= 10 && lc >= 70,
+          f: cumulativeCompanyFinancials(rr),
+          wf: Number(d.workforce_total || 0),
+          om: Number(d.omani_total || 0),
+          fr: Number(d.foreign_total || 0),
+          m: m,
+          ok: m.ok,
         };
       });
       var totalValue = ps.reduce(function (a, p) {
@@ -238,42 +235,29 @@
         }, 0),
         okCount = stats.filter(function (x) {
           return x.ok;
+        }).length,
+        applicableCount = stats.filter(function (x) {
+          return x.m.status !== "غير منطبق";
         }).length;
-      var totalSpend = stats.reduce(function (a, x) {
-        var f = x.f,
-          d = x.d;
-        return (
-          a +
-          Number(d.omani_salary || 0) +
-          Number(d.foreign_salary || 0) +
-          f.made_in_oman +
-          f.local_supplier +
-          f.direct_import +
-          f.sme_purchase +
-          f.local_service +
-          f.foreign_service +
-          f.sme_service +
-          f.sub_local +
-          f.sub_foreign +
-          f.sub_sme
-        );
+      var totalSpend = ps.reduce(function (a, p) {
+        return a + Number(p.total_spend || 0);
       }, 0);
-      var totalLC = stats.reduce(function (a, x) {
-        var f = x.f,
-          d = x.d;
-        return (
-          a +
-          Number(d.omani_salary || 0) * 0.8 +
-          Number(d.foreign_salary || 0) * 0.2 +
-          f.made_in_oman * 0.7 +
-          f.local_supplier * 0.18 +
-          f.direct_import * 0.06 +
-          f.sme_purchase * 0.18 +
-          f.local_service * 0.7 +
-          f.foreign_service * 0.1 +
-          (f.sub_local + f.sub_foreign + f.sub_sme) * 0.7
-        );
+      var totalLC = ps.reduce(function (a, p) {
+        return a + Number(p.total_local_content || 0);
       }, 0);
+      var frac = function (v) {
+        return v == null ? "—" : v / 100;
+      };
+      var criteriaText =
+        "جميع المعايير المنطبقة: التعمين ≥ " +
+        threshold("omanization") +
+        "%، SME ≥ " +
+        threshold("sme") +
+        "%، السلع ≥ " +
+        threshold("goods") +
+        "%، الخدمات ≥ " +
+        threshold("services") +
+        "%";
 
       var rows = [
         ["المؤشر", "القيمة", "التوضيح"],
@@ -281,11 +265,15 @@
         ["تاريخ التقرير", date, "تاريخ إنشاء الملف"],
         ["عدد المشاريع", ps.length, "عدد المشاريع المرتبطة بالشركة"],
         ["إجمالي قيمة المشاريع", totalValue, "ر.ع"],
-        ["المشاريع المستوفية", okCount, "تعمين ≥ 30% + SME ≥ 10% + محتوى محلي ≥ 70%"],
-        ["المشاريع غير المستوفية", ps.length - okCount, "تحتاج إلى متابعة"],
-        ["نسبة الاستيفاء", ps.length ? okCount / ps.length : 0, "المستوفية ÷ إجمالي المشاريع"],
-        ["إجمالي الصرف المسجل", totalSpend, "ر.ع — من التقارير المحفوظة"],
-        ["المحتوى المحلي المحسوب", totalLC, "ر.ع — وفق معاملات الحساب الحالية"],
+        ["المشاريع المستوفية", okCount, criteriaText],
+        ["المشاريع غير المستوفية", applicableCount - okCount, "تحتاج إلى متابعة"],
+        [
+          "نسبة الاستيفاء",
+          applicableCount ? okCount / applicableCount : 0,
+          "المستوفية ÷ المشاريع التي لديها تقارير معتمدة",
+        ],
+        ["إجمالي الصرف المسجل", totalSpend, "ر.ع — من التقارير المعتمدة فقط"],
+        ["المحتوى المحلي المحسوب", totalLC, "ر.ع — وفق معاملات الحساب في الإعدادات"],
       ];
       var ws = makeExcelSheet(
         rows,
@@ -312,7 +300,9 @@
           "آخر تقرير",
           "التعمين",
           "SME",
-          "المحتوى المحلي",
+          "السلع (صنع في عُمان)",
+          "الخدمات",
+          "المحتوى المحلي / القيمة",
           "الحالة النهائية",
         ],
       ];
@@ -329,25 +319,29 @@
           p.start_date || "—",
           p.end_date || "—",
           lr ? String(lr.annual_period || "") + " " + String(lr.quarter || "") : "—",
-          x.oman / 100,
-          x.sme / 100,
-          x.lc / 100,
-          x.ok ? "مستوفٍ" : "غير مستوفٍ",
+          frac(x.m.oman),
+          frac(x.m.sme),
+          frac(x.m.goods),
+          frac(x.m.services),
+          frac(x.m.local),
+          xlStatus(x.m.status),
         ]);
       });
       ws = makeExcelSheet(
         rows,
         "تقرير الشركة — تفاصيل المشاريع",
         "كل مشروع مرتبط بالشركة مع مؤشرات الامتثال",
-        [6, 36, 28, 22, 18, 18, 15, 15, 16, 12, 12, 15, 18],
+        [6, 36, 28, 22, 18, 18, 15, 15, 16, 12, 12, 14, 12, 15, 18],
       );
-      for (var i = 4; i <= rows.length; i++) {
+      var styleStatus = function (cell) {
+        if (cell && cell.v !== "غير منطبق") cell.s = cell.v === "مستوفٍ" ? S.ok : S.bad;
+      };
+      for (var i = 5; i <= rows.length + 3; i++) {
         ws["F" + i].z = "#,##0.00";
-        ws["J" + i].z = "0.0%";
-        ws["K" + i].z = "0.0%";
-        ws["L" + i].z = "0.0%";
-        var st = ws["M" + i];
-        if (st) st.s = st.v === "مستوفٍ" ? S.ok : S.bad;
+        ["J", "K", "L", "M", "N"].forEach(function (col) {
+          if (ws[col + i]) ws[col + i].z = "0.0%";
+        });
+        styleStatus(ws["O" + i]);
       }
       XLSX.utils.book_append_sheet(wb, ws, "تفاصيل المشاريع");
 
@@ -374,24 +368,23 @@
           x.wf,
           x.om,
           x.fr,
-          x.oman / 100,
+          frac(x.m.oman),
           Number(d.omani_salary || 0),
           Number(d.foreign_salary || 0),
-          x.oman >= 30 ? "مستوفٍ" : "غير مستوفٍ",
+          xlStatus(x.p.omanization_status),
         ]);
       });
       ws = makeExcelSheet(
         rows,
         "تقرير الشركة — القوى العاملة والرواتب",
-        "القوى العاملة والرواتب من آخر تقرير معتمد، أو آخر تقرير متاح",
+        "القوى العاملة والرواتب من آخر تقرير معتمد",
         [6, 36, 16, 16, 14, 16, 12, 22, 24, 18],
       );
-      for (i = 4; i <= rows.length; i++) {
+      for (i = 5; i <= rows.length + 3; i++) {
         ws["G" + i].z = "0.0%";
         ws["H" + i].z = "#,##0.00";
         ws["I" + i].z = "#,##0.00";
-        var st2 = ws["J" + i];
-        if (st2) st2.s = st2.v === "مستوفٍ" ? S.ok : S.bad;
+        styleStatus(ws["J" + i]);
       }
       XLSX.utils.book_append_sheet(wb, ws, "القوى العاملة والرواتب");
 
@@ -450,79 +443,50 @@
       ws = makeExcelSheet(
         rows,
         "تقرير الشركة — التفاصيل المالية",
-        "القيم محسوبة حسب نوع التقرير: الربعي يضاف تراكمياً، والتراكمي يستبدل القيمة السابقة",
+        "من التقارير المعتمدة فقط: الربعي يضاف تراكمياً، والتراكمي يستبدل القيمة السابقة",
         [6, 34, 30, 17, 17, 17, 17, 17, 17, 17, 18, 18, 18, 22],
       );
-      for (i = 4; i <= rows.length; i++)
+      for (i = 5; i <= rows.length + 3; i++)
         for (var col of ["D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]) ws[col + i].z = "#,##0.00";
       XLSX.utils.book_append_sheet(wb, ws, "التفاصيل المالية");
 
+      // One row per criterion: how many projects meet it among those where it applies.
+      var criterionRow = function (label, key, pctKey, th) {
+        var applicable = stats.filter(function (x) {
+            return x.p[key] === "مستوفي" || x.p[key] === "غير مستوفي";
+          }),
+          met = applicable.filter(function (x) {
+            return x.p[key] === "مستوفي";
+          }).length,
+          avg = applicable.length
+            ? applicable.reduce(function (a, x) {
+                return a + Number(x.p[pctKey] || 0);
+              }, 0) /
+              applicable.length /
+              100
+            : "—";
+        return [
+          label,
+          threshold(th) / 100,
+          avg,
+          applicable.length ? met + " من " + applicable.length : "—",
+          applicable.length ? (met === applicable.length ? "مستوفٍ" : "غير مستوفٍ") : "غير منطبق",
+          "كل مشروع مقابل حد " + threshold(th) + "% (المشاريع المنطبق عليها المعيار فقط)",
+        ];
+      };
       rows = [
-        ["المؤشر", "المستهدف", "المتوسط الفعلي / المحسوب", "الوحدة", "الحالة", "طريقة القراءة"],
-        [
-          "التعمين",
-          0.3,
-          stats.length
-            ? stats.reduce(function (a, x) {
-                return a + x.oman;
-              }, 0) /
-              stats.length /
-              100
-            : 0,
-          "%",
-          stats.length &&
-          stats.every(function (x) {
-            return x.oman >= 30;
-          })
-            ? "مستوفٍ"
-            : "غير مستوفٍ",
-          "كل مشروع مقابل حد 30%",
-        ],
-        [
-          "SME",
-          0.1,
-          stats.length
-            ? stats.reduce(function (a, x) {
-                return a + x.sme;
-              }, 0) /
-              stats.length /
-              100
-            : 0,
-          "%",
-          stats.length &&
-          stats.every(function (x) {
-            return x.sme >= 10;
-          })
-            ? "مستوفٍ"
-            : "غير مستوفٍ",
-          "كل مشروع مقابل حد 10%",
-        ],
-        [
-          "المحتوى المحلي",
-          0.7,
-          stats.length
-            ? stats.reduce(function (a, x) {
-                return a + x.lc;
-              }, 0) /
-              stats.length /
-              100
-            : 0,
-          "%",
-          stats.length &&
-          stats.every(function (x) {
-            return x.lc >= 70;
-          })
-            ? "مستوفٍ"
-            : "غير مستوفٍ",
-          "كل مشروع مقابل حد 70%",
-        ],
+        ["المؤشر", "المستهدف", "متوسط المشاريع", "المشاريع المستوفية", "الحالة", "طريقة القراءة"],
+        criterionRow("التعمين", "omanization_status", "omanization_pct", "omanization"),
+        criterionRow("المؤسسات الصغيرة والمتوسطة", "sme_10_status", "sme_pct", "sme"),
+        criterionRow("السلع (صنع في عُمان)", "made_in_oman_status", "goods_pct", "goods"),
+        criterionRow("الخدمات", "services_status", "services_pct", "services"),
         [
           "نسبة استيفاء المشاريع",
           1,
-          ps.length ? okCount / ps.length : 0,
-          "%",
-          ps.length && okCount === ps.length ? "مستوفٍ" : "غير مستوفٍ",
-          "المشاريع المستوفية ÷ إجمالي المشاريع",
+          applicableCount ? okCount / applicableCount : "—",
+          applicableCount ? okCount + " من " + applicableCount : "—",
+          applicableCount ? (okCount === applicableCount ? "مستوفٍ" : "غير مستوفٍ") : "غير منطبق",
+          "المشروع مستوفٍ عندما يحقق جميع المعايير المنطبقة عليه",
         ],
       ];
       ws = makeExcelSheet(
@@ -531,11 +495,10 @@
         "ملخص تنفيذي للمدير مع حدود الامتثال",
         [28, 16, 24, 12, 18, 52],
       );
-      for (i = 4; i <= rows.length; i++) {
+      for (i = 5; i <= rows.length + 3; i++) {
         ws["B" + i].z = "0.0%";
         ws["C" + i].z = "0.0%";
-        var st3 = ws["E" + i];
-        if (st3) st3.s = st3.v === "مستوفٍ" ? S.ok : S.bad;
+        styleStatus(ws["E" + i]);
       }
       XLSX.utils.book_append_sheet(wb, ws, "المؤشرات");
 
@@ -611,8 +574,8 @@
     );
   }
   function openCompanyContactsEditor(company, projects, allReports) {
-    if (!["admin", "editor"].includes(window.__icvProfile && window.__icvProfile.role)) {
-      alert("تعديل نقاط التواصل متاح لمدير النظام والمحرر فقط.");
+    if (!window.ICV.canEdit(window.__icvProfile)) {
+      window.ICV.showMessage("تعديل نقاط التواصل متاح لموظفي القسم ومدير النظام فقط.", "error");
       return;
     }
     var db = window.__icvAccessClient || window.__icvDb;
@@ -695,7 +658,7 @@
         if (typeof window.icvSaveSuccess === "function") window.icvSaveSuccess("تم حفظ نقاط التواصل للشركة.");
         openModal(company, projects, allReports);
       } catch (error) {
-        status.textContent = "تعذر حفظ نقاط التواصل: " + String(error?.message || error);
+        status.textContent = "تعذر حفظ نقاط التواصل: " + window.ICV.friendlyError(error);
         saveBtn.disabled = false;
         saveBtn.textContent = "حفظ نقاط التواصل";
       }
@@ -703,8 +666,8 @@
   }
 
   window.icvOpenCompanyContactsEditor = async function (id) {
-    if (!["admin", "editor"].includes(window.__icvProfile && window.__icvProfile.role)) {
-      alert("تعديل نقاط التواصل متاح لمدير النظام والمحرر فقط.");
+    if (!window.ICV.canEdit(window.__icvProfile)) {
+      window.ICV.showMessage("تعديل نقاط التواصل متاح لموظفي القسم ومدير النظام فقط.", "error");
       return;
     }
     var db = window.__icvAccessClient || window.__icvDb;
@@ -724,7 +687,7 @@
       if (results[1].error) throw results[1].error;
       openCompanyContactsEditor(cr.data, results[0].data || [], results[1].data || []);
     } catch (error) {
-      alert("تعذر فتح نقاط التواصل: " + String((error && error.message) || error));
+      window.icvShowError(error);
     }
   };
 
@@ -733,13 +696,16 @@
       return String(p.implementing_company_id || "") === String(company.id);
     });
     var ok = ps.filter(function (p) {
-      return metric(p).ok;
-    }).length;
+        return metric(p).ok;
+      }).length,
+      bad = ps.filter(function (p) {
+        return metric(p).status === "غير مستوفي";
+      }).length;
     var total = ps.reduce(function (a, p) {
       return a + Number(p.total_project_value || 0);
     }, 0);
     var contactPoints = Array.isArray(company.contact_points) ? company.contact_points : [];
-    var contactEditButton = ["admin", "editor"].includes(window.__icvProfile && window.__icvProfile.role)
+    var contactEditButton = window.ICV.canEdit(window.__icvProfile)
       ? '<button type="button" class="btn" id="icvCoManageContacts">إدارة نقاط التواصل</button>'
       : "";
     var ov = document.createElement("div");
@@ -758,15 +724,17 @@
           "</td><td>" +
           money(p.total_project_value) +
           "</td><td>" +
-          pct(m.oman) +
+          pctCell(m.oman) +
           "</td><td>" +
-          pct(m.sme) +
+          pctCell(m.sme) +
           "</td><td>" +
-          pct(m.local) +
+          pctCell(m.goods) +
+          "</td><td>" +
+          pctCell(m.services) +
           '</td><td><span class="icv-co-status ' +
-          (m.ok ? "icv-co-ok" : "icv-co-bad") +
+          (m.ok ? "icv-co-ok" : m.status === "غير مستوفي" ? "icv-co-bad" : "") +
           '">' +
-          (m.ok ? "مستوفٍ" : "غير مستوفٍ") +
+          esc(m.status === "غير منطبق" ? "لا توجد تقارير معتمدة" : m.status) +
           "</span></td></tr>"
         );
       })
@@ -783,9 +751,9 @@
       ' ر.ع</b></div><div><small>مستوفٍ</small><b class="icv-co-ok">' +
       ok +
       '</b></div><div><small>غير مستوفٍ</small><b class="icv-co-bad">' +
-      (ps.length - ok) +
+      bad +
       "</b></div><div><small>نسبة الاستيفاء</small><b>" +
-      pct(ps.length ? (ok / ps.length) * 100 : 0) +
+      (ok + bad ? pct((ok / (ok + bad)) * 100) : "—") +
       "</b></div></div>" +
       '<div class="panel" style="margin:14px 0"><div class="toolbar"><div><h3 style="margin:0">نقاط التواصل</h3><div class="muted">بيانات المختصين المسجلة لهذه الشركة أو المقاول.</div></div>' +
       contactEditButton +
@@ -794,8 +762,8 @@
       "</div></div>" +
       '<div class="panel"><div class="toolbar"><div><h3 style="margin:0">مشاريع الشركة</h3><div class="muted">' +
       ps.length +
-      ' مشروع</div></div></div><div class="table-wrap"><table><thead><tr><th>م</th><th>المشروع</th><th>الجهة الحكومية</th><th>القيمة</th><th>التعمين</th><th>SME</th><th>المحتوى المحلي</th><th>الحالة</th></tr></thead><tbody>' +
-      (rows || '<tr><td colspan="8" class="muted">لا توجد مشاريع مرتبطة بهذه الشركة.</td></tr>') +
+      ' مشروع</div></div></div><div class="table-wrap"><table><thead><tr><th>م</th><th>المشروع</th><th>الجهة الحكومية</th><th>القيمة</th><th>التعمين</th><th>SME</th><th>السلع</th><th>الخدمات</th><th>الحالة</th></tr></thead><tbody>' +
+      (rows || '<tr><td colspan="9" class="muted">لا توجد مشاريع مرتبطة بهذه الشركة.</td></tr>') +
       "</tbody></table></div></div></div>";
     document.body.appendChild(ov);
     document.getElementById("icvCoClose").onclick = function () {
@@ -818,7 +786,7 @@
           esc(company.name) +
           "</h2><p>تاريخ الإصدار: " +
           new Date().toLocaleDateString("ar-OM") +
-          "</p><table><thead><tr><th>م</th><th>المشروع</th><th>الجهة</th><th>القيمة</th><th>التعمين</th><th>SME</th><th>المحتوى المحلي</th><th>الحالة</th></tr></thead><tbody>" +
+          "</p><table><thead><tr><th>م</th><th>المشروع</th><th>الجهة</th><th>القيمة</th><th>التعمين</th><th>SME</th><th>السلع</th><th>الخدمات</th><th>الحالة</th></tr></thead><tbody>" +
           rows +
           "</tbody></table><script>window.onload=function(){setTimeout(function(){window.print()},300)}</script></body></html>",
       );
@@ -854,7 +822,9 @@
       var totalOk = projects.filter(function (p) {
         return metric(p).ok;
       }).length;
-      var totalBad = projects.length - totalOk;
+      var totalBad = projects.filter(function (p) {
+        return metric(p).status === "غير مستوفي";
+      }).length;
       root.innerHTML =
         '<div class="icv-co-kpis"><div class="card"><div class="label">إجمالي الشركات</div><div class="value">' +
         companies.length +
@@ -880,8 +850,11 @@
               }),
               ok = ps.filter(function (p) {
                 return metric(p).ok;
+              }).length,
+              bad = ps.filter(function (p) {
+                return metric(p).status === "غير مستوفي";
               }).length;
-            return { c: c, ps: ps, ok: ok };
+            return { c: c, ps: ps, ok: ok, bad: bad };
           })
           .filter(function (x) {
             if (
@@ -892,7 +865,7 @@
             )
               return false;
             if (f === "ok" && !x.ok) return false;
-            if (f === "bad" && x.ok === x.ps.length) return false;
+            if (f === "bad" && !x.bad) return false;
             return true;
           });
         document.getElementById("icvCoTable").innerHTML =
@@ -917,9 +890,9 @@
                 '</td><td><span class="icv-co-status icv-co-ok">' +
                 x.ok +
                 '</span></td><td><span class="icv-co-status icv-co-bad">' +
-                (x.ps.length - x.ok) +
+                x.bad +
                 "</span></td><td>" +
-                pct(x.ps.length ? (x.ok / x.ps.length) * 100 : 0) +
+                (x.ok + x.bad ? pct((x.ok / (x.ok + x.bad)) * 100) : "—") +
                 '</td><td><button class="btn primary" data-id="' +
                 esc(x.c.id) +
                 '">عرض</button></td></tr>'
