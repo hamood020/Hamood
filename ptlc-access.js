@@ -3,16 +3,59 @@
     KEY = "sb_publishable_Ge88ZuNnqW89l0SMfw_mvQ_nY2BzpPr";
   const client = window.supabase.createClient(URL, KEY);
   window.__icvAccessClient = client;
-  const roleLabel = { admin: "مدير النظام", editor: "محرر", viewer: "مشاهد", temporary_viewer: "مشاهد مؤقت" };
+  const roleName = (r) => window.ICV.roleLabel(r || "viewer");
+  const isStaff = (p) => window.ICV.canEdit(p);
   const escA = (v) =>
     String(v ?? "").replace(
       /[&<>"']/g,
       (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[m],
     );
-  const toastA = (m) => {
-    if (window.toast) window.toast(m);
-    else alert(m);
+  const toastA = (m) => window.ICV.showMessage(m, "success");
+  const errorA = (e) => window.ICV.showMessage(window.ICV.friendlyError(e), "error");
+  const errorBox = (e) => '<div class="bad">' + escA(window.ICV.friendlyError(e)) + "</div>";
+
+  // Quarter helpers. A quarterly report is due 30 days after its quarter ends.
+  const REPORT_GRACE_DAYS = 30;
+  const quarterNo = (q) => Number(String(q || "").replace(/\D/g, "")) || 0;
+  const reportKey = (projectId, year, q) => projectId + "|" + Number(year) + "|" + Number(q);
+  // Returns the reports each project still owes for the last finished quarter, plus how late or close they are.
+  function reportAlerts(projects, reports, now = new Date()) {
+    const have = new Set(reports.map((r) => reportKey(r.project_id, r.annual_period, quarterNo(r.quarter))));
+    const curQ = Math.floor(now.getMonth() / 3) + 1;
+    const prevQ = curQ === 1 ? 4 : curQ - 1,
+      prevYear = curQ === 1 ? now.getFullYear() - 1 : now.getFullYear();
+    const qStart = new Date(prevYear, (prevQ - 1) * 3, 1),
+      qEnd = new Date(prevYear, prevQ * 3, 0);
+    const deadline = new Date(qEnd);
+    deadline.setDate(deadline.getDate() + REPORT_GRACE_DAYS);
+    const days = Math.ceil((deadline - now) / 86400000);
+    const missing = [],
+      due = [];
+    projects.forEach((p) => {
+      const start = p.start_date ? new Date(p.start_date) : null,
+        end = p.end_date ? new Date(p.end_date) : null;
+      if (!start || start > qEnd || (end && end < qStart)) return;
+      if (have.has(reportKey(p.id, prevYear, prevQ))) return;
+      if (days < 0) missing.push({ p, days: -days });
+      else due.push({ p, days });
+    });
+    return { missing, due, label: "Q" + prevQ + " " + prevYear };
+  }
+  // Compliance criteria stored on each project by the database (see recompute_project_metrics).
+  const CRITERIA = [
+    { key: "omanization_status", pct: "omanization_pct", label: "التعمين", icon: "عُ", th: "omanization" },
+    { key: "sme_10_status", pct: "sme_pct", label: "المؤسسات الصغيرة والمتوسطة", icon: "SME", th: "sme" },
+    { key: "made_in_oman_status", pct: "goods_pct", label: "السلع (صنع في عُمان)", icon: "سلع", th: "goods" },
+    { key: "services_status", pct: "services_pct", label: "الخدمات", icon: "خدم", th: "services" },
+  ];
+  const thresholdOf = (k) => {
+    const v = Number(window.__icvCalculationSettings?.thresholds?.[k]);
+    const d = { omanization: 30, sme: 10, goods: 40, services: 10 }[k];
+    if (!Number.isFinite(v)) return d;
+    return v > 0 && v <= 1 ? v * 100 : v;
   };
+  const PROJECT_FIELDS =
+    "id,project_name,serial_no,government_entity_id,project_status,start_date,end_date,local_content_plan,total_project_value,notes,omanization_pct,sme_pct,goods_pct,services_pct,omanization_status,sme_10_status,made_in_oman_status,services_status,compliance_status";
   let profile = null,
     originalShowPage = window.showPage;
 
@@ -28,18 +71,13 @@
     return data;
   }
   function valid(p) {
-    const now = Date.now();
-    return (
-      p?.is_active !== false &&
-      (!p.access_starts_at || new Date(p.access_starts_at).getTime() <= now) &&
-      (!p.access_expires_at || new Date(p.access_expires_at).getTime() >= now)
-    );
+    return !window.ICV.accessProblem(p);
   }
   function applyRoleUI() {
     if (!profile) return;
     document.body.dataset.role = profile.role || "viewer";
     const admin = profile.role === "admin",
-      editor = admin || profile.role === "editor";
+      editor = isStaff(profile);
     const nav = document.getElementById("userAdminNav");
     if (nav) nav.classList.toggle("hidden", !admin);
     document.querySelectorAll("button").forEach((b) => {
@@ -50,7 +88,7 @@
     const name = document.getElementById("userName"),
       role = document.getElementById("userRole");
     if (name) name.textContent = profile.full_name || profile.username || "المستخدم";
-    if (role) role.textContent = roleLabel[profile.role] || profile.role || "مشاهد";
+    if (role) role.textContent = roleName(profile.role);
   }
   async function loginWithUsername() {
     const field = document.getElementById("email"),
@@ -66,7 +104,7 @@
     const email = raw.includes("@") ? raw : raw + "@icv-new.local";
     const r = await client.auth.signInWithPassword({ email, password });
     if (r.error) {
-      if (msg) msg.textContent = "فشل تسجيل الدخول: " + r.error.message;
+      if (msg) msg.textContent = window.ICV.friendlyError(r.error);
       return;
     }
     const { data: p, error: pe } = await client
@@ -79,9 +117,10 @@
       if (msg) msg.textContent = "تعذر تحميل صلاحيات الحساب.";
       return;
     }
-    if (!valid(p)) {
+    const problem = window.ICV.accessProblem(p);
+    if (problem) {
       await client.auth.signOut();
-      if (msg) msg.textContent = "الحساب غير نشط أو أن فترة الصلاحية غير سارية.";
+      if (msg) msg.textContent = problem;
       return;
     }
     profile = p;
@@ -114,28 +153,10 @@
     if (!root) return;
     root.classList.toggle("profile-limited-viewer", limited);
     if (!limited) return;
-    const hideSelectors = [
-      ".profile-user-card",
-      "#accessProfileSummary",
-      "#accessProfileAlerts",
-      "#accessProfileActivity",
-    ];
-    hideSelectors.forEach((sel) =>
-      root.querySelectorAll(sel).forEach((el) => {
-        const target = sel === "#accessProfileActivity" ? el.closest(".profile-card") || el : el;
-        target.style.setProperty("display", "none", "important");
-      }),
+    // Viewers see their account card and password change only: tasks and follow-up lists are staff work.
+    ["#accessProfileSummary", "#accessProfileAlerts", ".profile-entities", ".profile-grid"].forEach((sel) =>
+      root.querySelectorAll(sel).forEach((el) => el.style.setProperty("display", "none", "important")),
     );
-    const tasks = root.querySelector("#accessProfileTasks")?.closest(".profile-card");
-    if (tasks) {
-      tasks.style.setProperty("display", "block", "important");
-      tasks.style.gridColumn = "1 / -1";
-    }
-    const grid = root.querySelector(".profile-grid");
-    if (grid) {
-      grid.style.display = "grid";
-      grid.style.gridTemplateColumns = "1fr";
-    }
     const security = root.querySelector(".profile-security");
     if (security) security.style.setProperty("display", "flex", "important");
   }
@@ -159,7 +180,11 @@
     usersPage.className = usersPage.className || "hidden";
     if (!usersPage.querySelector(".um-wrap")) {
       usersPage.innerHTML =
-        '<div class="um-wrap"><div class="um-hero"><div><div class="um-crumb">إدارة النظام / المستخدمون</div><h2>إدارة المستخدمين</h2><p>إدارة حسابات الموظفين والأدوار وفترات الصلاحية والجهات المسندة إليهم.</p></div><button class="btn primary um-add" onclick="openUserForm()">＋ إضافة مستخدم</button></div><div class="um-filters panel"><div class="um-filter-grid"><div class="field"><label>اسم المستخدم</label><input id="usersSearch" placeholder="مثال: user01" oninput="filterAdminUsers()"></div><div class="field"><label>الاسم</label><input id="usersNameFilter" placeholder="ابحث بالاسم" oninput="filterAdminUsers()"></div><div class="field"><label>الدور</label><select id="usersRoleFilter" onchange="filterAdminUsers()"><option value="">الكل</option><option value="admin">مدير النظام</option><option value="editor">محرر</option><option value="viewer">مشاهد</option><option value="temporary_viewer">مشاهد مؤقت</option></select></div><div class="field"><label>الحالة</label><select id="usersStatusFilter" onchange="filterAdminUsers()"><option value="">الكل</option><option value="active">فعال</option><option value="inactive">غير فعال</option></select></div><div class="field"><label>الجهة المسندة</label><select id="usersEntityFilter" onchange="filterAdminUsers()"><option value="">كل الجهات</option></select></div></div></div><div class="panel um-table-panel"><div class="um-table-head"><div><h3>قائمة المستخدمين</h3><div id="usersAdminCount" class="muted"></div></div><button class="btn" onclick="loadUsersAdmin()">تحديث</button></div><div id="usersAdminBox" class="empty">جاري التحميل...</div></div></div>';
+        '<div class="um-wrap"><div class="um-hero"><div><div class="um-crumb">إدارة النظام / المستخدمون</div><h2>إدارة المستخدمين</h2><p>إدارة حسابات الموظفين والأدوار وفترات الصلاحية والجهات المسندة إليهم.</p></div><button class="btn primary um-add" onclick="openUserForm()">＋ إضافة مستخدم</button></div><div class="um-filters panel"><div class="um-filter-grid"><div class="field"><label>اسم المستخدم</label><input id="usersSearch" placeholder="مثال: user01" oninput="filterAdminUsers()"></div><div class="field"><label>الاسم</label><input id="usersNameFilter" placeholder="ابحث بالاسم" oninput="filterAdminUsers()"></div><div class="field"><label>الدور</label><select id="usersRoleFilter" onchange="filterAdminUsers()"><option value="">الكل</option>' +
+        window.ICV.ROLE_ORDER.map((r) => '<option value="' + r + '">' + escA(roleName(r)) + "</option>").join(
+          "",
+        ) +
+        '</select></div><div class="field"><label>الحالة</label><select id="usersStatusFilter" onchange="filterAdminUsers()"><option value="">الكل</option><option value="active">فعال</option><option value="inactive">غير فعال</option></select></div><div class="field"><label>الجهة المسندة</label><select id="usersEntityFilter" onchange="filterAdminUsers()"><option value="">كل الجهات</option></select></div></div></div><div class="panel um-table-panel"><div class="um-table-head"><div><h3>قائمة المستخدمين</h3><div id="usersAdminCount" class="muted"></div></div><button class="btn" onclick="loadUsersAdmin()">تحديث</button></div><div id="usersAdminBox" class="empty">جاري التحميل...</div></div></div>';
       if (!usersPage.parentElement) main.appendChild(usersPage);
     }
     const nav = document.querySelector(".nav");
@@ -190,6 +215,7 @@
     applyLimitedViewerProfile();
   }
 
+  const taskDone = (t) => ["closed", "مكتمل", "done"].includes(String(t.status || "").toLowerCase());
   function renderMyTasks(rows) {
     const el = document.getElementById("accessProfileTasks");
     if (!el) return;
@@ -205,13 +231,7 @@
         const title = t.task_name || t.action_required || t.title || "مهمة متابعة";
         const project = t.project_name || t.project?.project_name || "بدون مشروع";
         const due = t.due_date ? new Date(t.due_date).toLocaleDateString("ar-OM") : "بدون تاريخ";
-        const done =
-          String(t.status || "")
-            .toLowerCase()
-            .includes("مكتمل") ||
-          String(t.status || "")
-            .toLowerCase()
-            .includes("done");
+        const done = taskDone(t);
         return (
           '<div class="profile-task ' +
           (done ? "done" : "") +
@@ -236,17 +256,18 @@
         (btn.onclick = async () => {
           const row = rows.find((x) => String(x.id) === String(btn.dataset.taskId));
           if (!row) return;
-          const next = String(row.status || "") === "مكتمل" ? "مفتوح" : "مكتمل";
+          const closing = !taskDone(row);
+          const change = closing
+            ? { status: "closed", resolved_at: new Date().toISOString(), resolved_by: profile.id }
+            : { status: "open", resolved_at: null, resolved_by: null };
           const { error } = await client
             .from("employee_followups")
-            .update({ status: next })
+            .update(change)
             .eq("id", row.id)
             .eq("assigned_to", profile.id);
-          if (error) {
-            toastA(error.message);
-            return;
-          }
-          btn.parentElement.classList.toggle("done", next === "مكتمل");
+          if (error) return errorA(error);
+          Object.assign(row, change);
+          btn.parentElement.classList.toggle("done", closing);
           window.icvSaveSuccess?.("تم تحديث حالة المهمة");
         }),
     );
@@ -275,15 +296,17 @@
       : '<div class="profile-empty">لا توجد أنشطة مسجلة حاليًا.</div>';
   }
   window.openMyTaskForm = function () {
+    if (!isStaff(profile)) return toastA("المهام متاحة لموظفي القسم فقط.");
     document.getElementById("myTaskModal")?.remove();
     const d = document.createElement("div");
     d.id = "myTaskModal";
     d.className = "modal";
     d.innerHTML =
-      '<div class="modal-card"><div class="modal-head"><div><h2>إضافة مهمة</h2><div class="muted">إضافة متابعة شخصية إلى ملفك.</div></div><button class="close" onclick="this.closest(\'.modal\').remove()">×</button></div><div class="form-grid"><div class="field full"><label>المهمة</label><input id="myTaskName" placeholder="اكتب المهمة"></div><div class="field"><label>المشروع</label><input id="myTaskProject" placeholder="اختياري"></div><div class="field"><label>تاريخ الاستحقاق</label><input id="myTaskDue" type="date"></div><div class="field"><label>الأولوية</label><select id="myTaskPriority"><option value="عالية">عالية</option><option value="متوسطة" selected>متوسطة</option><option value="منخفضة">منخفضة</option></select></div><div class="field full"><label>ملاحظات</label><textarea id="myTaskNotes" rows="3" placeholder="اختياري"></textarea></div></div><div id="myTaskMsg"></div><div class="modal-foot"><button class="btn primary" onclick="saveMyTask()">إضافة المهمة</button><button class="btn" onclick="this.closest(\'.modal\').remove()">إلغاء</button></div></div>';
+      '<div class="modal-card"><div class="modal-head"><div><h2>إضافة مهمة</h2><div class="muted">إضافة متابعة شخصية إلى ملفك.</div></div><button class="close" onclick="this.closest(\'.modal\').remove()">×</button></div><div class="form-grid"><div class="field full"><label>المهمة</label><input id="myTaskName" placeholder="اكتب المهمة"></div><div class="field"><label>المشروع</label><input id="myTaskProject" placeholder="اختياري"></div><div class="field"><label>تاريخ الاستحقاق</label><input id="myTaskDue" type="date"></div><div class="field"><label>الأولوية</label><select id="myTaskPriority"><option value="عاجلة">عاجلة</option><option value="عالية">عالية</option><option value="متوسطة" selected>متوسطة</option><option value="منخفضة">منخفضة</option></select></div><div class="field full"><label>ملاحظات</label><textarea id="myTaskNotes" rows="3" placeholder="اختياري"></textarea></div></div><div id="myTaskMsg"></div><div class="modal-foot"><button class="btn primary" onclick="saveMyTask()">إضافة المهمة</button><button class="btn" onclick="this.closest(\'.modal\').remove()">إلغاء</button></div></div>';
     document.body.appendChild(d);
   };
   window.saveMyTask = async function () {
+    if (!isStaff(profile)) return;
     const name = document.getElementById("myTaskName")?.value.trim(),
       msg = document.getElementById("myTaskMsg");
     if (!name) {
@@ -292,10 +315,13 @@
     }
     const body = {
       assigned_to: profile.id,
+      created_by: profile.id,
       employee_name: profile.full_name || profile.username || "المستخدم",
+      category: "مهمة شخصية",
       action_required: name,
+      priority: document.getElementById("myTaskPriority")?.value || "متوسطة",
       due_date: document.getElementById("myTaskDue")?.value || null,
-      status: "مفتوح",
+      status: "open",
       notes: (
         (document.getElementById("myTaskProject")?.value || "") +
         " " +
@@ -304,7 +330,7 @@
     };
     const { error } = await client.from("employee_followups").insert(body);
     if (error) {
-      if (msg) msg.innerHTML = '<div class="bad">' + escA(error.message) + "</div>";
+      if (msg) msg.innerHTML = errorBox(error);
       return;
     }
     document.getElementById("myTaskModal")?.remove();
@@ -334,7 +360,7 @@
     }
     const { error } = await client.auth.updateUser({ password: a });
     if (error) {
-      msg.innerHTML = '<div class="bad">' + escA(error.message) + "</div>";
+      msg.innerHTML = errorBox(error);
       return;
     }
     document.getElementById("changePasswordModal")?.remove();
@@ -355,9 +381,7 @@
     if (ids.size) {
       const projectQuery = client
         .from("projects")
-        .select(
-          "id,project_name,serial_no,government_entity_id,project_status,start_date,end_date,local_content_plan,omanization_pct,sme_pct,total_project_value,notes",
-        )
+        .select(PROJECT_FIELDS)
         .in("government_entity_id", [...ids])
         .order("project_name");
       pr = await projectQuery;
@@ -379,11 +403,13 @@
             .in("project_id", projectIds)
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] }),
-      client
-        .from("employee_followups")
-        .select("*")
-        .eq("assigned_to", uid)
-        .order("due_date", { ascending: true }),
+      isStaff(profile)
+        ? client
+            .from("employee_followups")
+            .select("*")
+            .eq("assigned_to", uid)
+            .order("due_date", { ascending: true })
+        : Promise.resolve({ data: [] }),
     ]);
     const reports = rr.data || [],
       plans = pl.data || [],
@@ -393,34 +419,28 @@
       myReports = reports.filter((x) => pids.has(x.project_id)),
       planIds = new Set(plans.map((x) => x.project_id));
     const reviewReports = myReports.filter((r) => /مراجعة|review|pending/i.test(String(r.status || "")));
-    const latest = new Set(myReports.map((x) => x.project_id + "|" + x.annual_period + "|" + x.quarter));
-    const now = new Date(),
-      year = now.getFullYear(),
-      q = Math.floor(now.getMonth() / 3) + 1,
-      missing = [],
-      due = [];
-    projects.forEach((p) => {
-      if (!p.start_date || new Date(p.start_date) > now) return;
-      const key = p.id + "|" + year + "|Q" + q;
-      if (latest.has(key)) return;
-      const d = new Date(year, q * 3, 0);
-      d.setDate(d.getDate() + 30);
-      const days = Math.ceil((d - now) / 86400000);
-      if (days >= 0 && days <= 10) due.push({ p, days });
-      else if (days < 0) missing.push({ p, days: Math.abs(days) });
-    });
+    const now = new Date();
+    const { missing, due, label: alertPeriod } = reportAlerts(projects, myReports, now);
     const attention = [];
-    const pct = (v) => {
-      let n = Number(v || 0);
-      if (n <= 1) n *= 100;
-      return n.toFixed(1) + "%";
-    };
     projects.forEach((p) => {
-      if (Number(p.omanization_pct || 0) < 0.3) attention.push({ p, t: "التعمين أقل من 30%", k: "red" });
-      if (Number(p.sme_pct || 0) < 0.1) attention.push({ p, t: "SME أقل من 10%", k: "red" });
-      if (p.project_status === "متعثر") attention.push({ p, t: "المشروع متعثر", k: "orange" });
+      CRITERIA.forEach((c) => {
+        if (p[c.key] === "غير مستوفي")
+          attention.push({
+            p,
+            icon: c.icon,
+            k: "red",
+            t:
+              c.label +
+              " " +
+              (p[c.pct] == null ? "" : Number(p[c.pct]).toFixed(1) + "% ") +
+              "أقل من الحد (" +
+              thresholdOf(c.th) +
+              "%)",
+          });
+      });
+      if (p.project_status === "متعثر") attention.push({ p, icon: "!", t: "المشروع متعثر", k: "orange" });
       if (!p.local_content_plan && !planIds.has(p.id))
-        attention.push({ p, t: "لا توجد خطة محتوى محلي", k: "orange" });
+        attention.push({ p, icon: "📄", t: "لا توجد خطة محتوى محلي", k: "orange" });
     });
     const exp = projects
         .filter((p) => p.end_date)
@@ -458,9 +478,7 @@
               ' <span class="profile-entity-dot" aria-hidden="true">●</span></button>',
           )
           .join("")
-      : admin
-        ? '<span class="profile-entity">جميع الجهات الحكومية</span>'
-        : '<span class="profile-empty">لم يتم تخصيص جهات لهذا الحساب.</span>';
+      : '<span class="profile-empty">لم تُحدَّد جهات لهذا الحساب بعد. اضغط «تعديل الجهات» لاختيار الجهات التي تتابعها.</span>';
     let h = '<div class="profile-grid">';
     h +=
       '<section class="profile-card full"><div class="profile-card-head"><h3>🔴 التقارير التي تحتاج إجراء</h3><span class="profile-muted">' +
@@ -471,10 +489,8 @@
         (h +=
           '<div class="profile-row report-row" data-type="missing"><div class="profile-icon">!</div><div class="profile-row-main"><strong>' +
           escA(x.p.project_name) +
-          "</strong><span>Q" +
-          q +
-          " " +
-          year +
+          "</strong><span>" +
+          alertPeriod +
           " — التقرير غير مستلم · متأخر " +
           x.days +
           ' يوم</span></div><button class="profile-open" data-open-project="' +
@@ -486,10 +502,8 @@
         (h +=
           '<div class="profile-row report-row" data-type="due"><div class="profile-icon orange">!</div><div class="profile-row-main"><strong>' +
           escA(x.p.project_name) +
-          "</strong><span>Q" +
-          q +
-          " " +
-          year +
+          "</strong><span>" +
+          alertPeriod +
           " — مستحق خلال " +
           x.days +
           ' أيام</span></div><button class="profile-open" data-open-project="' +
@@ -550,11 +564,11 @@
           '<div class="profile-row"><div class="profile-icon ' +
           (x.k === "red" ? "" : "orange") +
           '">' +
-          (x.t.includes("تعمين") ? "30%" : x.t.includes("SME") ? "SME" : x.t.includes("خطة") ? "📄" : "!") +
+          escA(x.icon) +
           '</div><div class="profile-row-main"><strong>' +
           escA(x.p.project_name) +
           "</strong><span>" +
-          x.t +
+          escA(x.t) +
           '</span></div><button class="profile-open" data-open-project="' +
           x.p.id +
           '">فتح المشروع ←</button></div>'),
@@ -566,18 +580,16 @@
         ? '<button class="profile-show-all" data-toggle-list="attentionProjects">إظهار الكل</button>'
         : "") +
       "</section>";
-    const pctValue = (v) => {
-      let n = Number(v || 0);
-      if (n <= 1) n *= 100;
-      return n;
+    const plansOk = projects.filter((p) => !!p.local_content_plan || planIds.has(p.id)).length;
+    // Counts only projects where the criterion applies (status is not «غير منطبق»).
+    const criterionBar = (c) => {
+      const known = projects.filter((p) => p[c.key] === "مستوفي" || p[c.key] === "غير مستوفي");
+      return complianceBar(
+        "مشاريع تحقق " + c.label + " (" + thresholdOf(c.th) + "%)",
+        known.filter((p) => p[c.key] === "مستوفي").length,
+        known.length,
+      );
     };
-    const knownOman = projects.filter(
-        (p) => p.omanization_pct !== null && p.omanization_pct !== undefined && p.omanization_pct !== "",
-      ),
-      knownSme = projects.filter((p) => p.sme_pct !== null && p.sme_pct !== undefined && p.sme_pct !== "");
-    const omanOk = knownOman.filter((p) => pctValue(p.omanization_pct) >= 30).length,
-      smeOk = knownSme.filter((p) => pctValue(p.sme_pct) >= 10).length,
-      plansOk = projects.filter((p) => !!p.local_content_plan || planIds.has(p.id)).length;
     const complianceBar = (label, ok, total) => {
       const ratio = total ? Math.round((ok / total) * 100) : 0;
       return (
@@ -592,14 +604,16 @@
         "</small></div>"
       );
     };
+    const fullyCompliant = projects.filter((p) => p.compliance_status === "مستوفي").length,
+      withStatus = projects.filter((p) => p.compliance_status && p.compliance_status !== "غير منطبق").length;
     h +=
-      '<section class="profile-card full"><div class="profile-card-head"><h3>📊 لمحة عن الالتزام</h3><span class="profile-muted">ضمن الجهات المسندة للحساب</span></div><div class="profile-compliance-grid">' +
-      complianceBar("مشاريع تحقق مستهدف التعمين (30%)", omanOk, knownOman.length) +
-      complianceBar("مشاريع تحقق مستهدف المؤسسات الصغيرة والمتوسطة (10%)", smeOk, knownSme.length) +
+      '<section class="profile-card full"><div class="profile-card-head"><h3>📊 لمحة عن الالتزام</h3><span class="profile-muted">ضمن الجهات المسندة للحساب · من التقارير المعتمدة</span></div><div class="profile-compliance-grid">' +
+      complianceBar("مشاريع مستوفية لجميع المعايير", fullyCompliant, withStatus) +
+      CRITERIA.map(criterionBar).join("") +
       complianceBar("مشاريع لديها خطة محتوى محلي", plansOk, projects.length) +
       "</div></section>";
     h +=
-      '<section class="profile-card full"><div class="profile-card-head"><h3>📋 التقارير التي تحتاج إجراء</h3><span class="profile-muted">آخر الحالات</span></div><div class="profile-table-wrap"><table class="profile-table"><thead><tr><th>المشروع</th><th>الفترة</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody>';
+      '<section class="profile-card full"><div class="profile-card-head"><h3>📋 سجل التقارير</h3><span class="profile-muted">آخر التقارير المستلمة</span></div><div class="profile-table-wrap"><table class="profile-table"><thead><tr><th>المشروع</th><th>الفترة</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody>';
     myReports.forEach((r) => {
       const p = projects.find((x) => x.id === r.project_id);
       if (p)
@@ -609,7 +623,7 @@
           "</td><td>" +
           escA((r.quarter || "") + " " + (r.annual_period || "")) +
           '</td><td><span class="profile-status ' +
-          (String(r.status || "").includes("غير") ? "red" : "orange") +
+          (r.status === "معتمد" ? "green" : String(r.status || "").includes("غير") ? "red" : "orange") +
           '">' +
           escA(r.status || "—") +
           '</span></td><td><button class="profile-open" data-open-project="' +
@@ -617,27 +631,24 @@
           '">فتح المشروع ←</button></td></tr>';
     });
     if (!myReports.length) h += '<tr><td colspan="4" class="profile-empty">لا توجد تقارير مسجلة.</td></tr>';
-    h +=
-      "</tbody></table></div>" +
-      (myReports.length > 3
-        ? '<button class="profile-show-all" data-toggle-list="myReportsTable">إظهار الكل</button>'
-        : "") +
-      "</section>";
+    h += "</tbody></table></div></section>";
     h += "</div>";
     document.getElementById("accessProfileAlerts").innerHTML = h;
     document.getElementById("profileHeadName").textContent =
       profile.full_name || profile.username || "المستخدم";
     document.getElementById("profileHeadUsername").textContent = profile.username || "—";
-    document.getElementById("profileHeadUsername").textContent = profile.username || "—";
     document.getElementById("profileHeadRole").textContent =
-      roleLabel[profile.role] || profile.role || "مشاهد";
+      roleName(profile.role) +
+      (profile.access_expires_at
+        ? " · الصلاحية حتى " + window.ICV.formatDate(profile.access_expires_at)
+        : "");
     document.getElementById("profileHeadInitials").textContent = (
       profile.full_name ||
       profile.username ||
       "م"
     )
       .trim()
-      .split(/\\s+/)
+      .split(/\s+/)
       .slice(0, 2)
       .map((x) => x[0])
       .join("");
@@ -854,7 +865,7 @@
     const r = await client.rpc("set_my_entity_assignments", { p_entity_ids: ids });
     const m = document.getElementById("myEntityAccessMsg");
     if (r.error) {
-      m.innerHTML = '<div class="bad" style="padding:10px">' + escA(r.error.message) + "</div>";
+      m.innerHTML = errorBox(r.error);
       return;
     }
     document.getElementById("myEntityAccessModal")?.remove();
@@ -871,7 +882,7 @@
       client.from("government_entities").select("id,name").order("name"),
     ]);
     if (r.error) {
-      box.innerHTML = '<div class="bad">' + escA(r.error.message) + "</div>";
+      box.innerHTML = errorBox(r.error);
       return;
     }
     const users = r.data || [];
@@ -908,7 +919,7 @@
         .map((u) => {
           const initials = (u.display_name || u.username || "?")
             .trim()
-            .split(/\\s+/)
+            .split(/\s+/)
             .slice(0, 2)
             .map((x) => x[0])
             .join("");
@@ -930,13 +941,13 @@
             '</b></td><td><span class="um-badge role-' +
             escA(u.role || "viewer") +
             '">' +
-            escA(roleLabel[u.role] || u.role || "مشاهد") +
+            escA(roleName(u.role)) +
             '</span></td><td><span class="um-badge ' +
             (u.is_active ? "active" : "inactive") +
             '">' +
             (u.is_active ? "فعال" : "غير فعال") +
             "</span></td><td>" +
-            escA(roleLabel[u.role] || u.role || "مشاهد") +
+            escA(accessStatusText(u)) +
             '</td><td><span class="um-entity-count">' +
             Number(u.assigned_entities || 0) +
             "</span></td><td>" +
@@ -960,6 +971,14 @@
       "</tbody></table></div>";
     filterAdminUsers();
   };
+  function accessStatusText(u) {
+    const problem = window.ICV.accessProblem(u);
+    if (!problem)
+      return u.access_expires_at ? "سارية حتى " + window.ICV.formatDate(u.access_expires_at) : "سارية";
+    if (!u.is_active) return "معطّل";
+    if (u.access_expires_at && new Date(u.access_expires_at) < new Date()) return "منتهية";
+    return "لم تبدأ";
+  }
   window.filterAdminUsers = () => {
     const q = (document.getElementById("usersSearch")?.value || "").trim().toLowerCase(),
       n = (document.getElementById("usersNameFilter")?.value || "").trim().toLowerCase(),
@@ -982,7 +1001,7 @@
   };
   window.openUserFormById = async (uid) => {
     const r = await client.from("user_management").select("*").eq("user_id", uid).maybeSingle();
-    if (r.error || !r.data) return toastA(r.error?.message || "تعذر تحميل المستخدم");
+    if (r.error || !r.data) return errorA(r.error || "تعذر تحميل المستخدم");
     openUserForm(r.data);
   };
   window.openUserForm = function (user) {
@@ -1006,7 +1025,11 @@
       (edit
         ? ""
         : '<div class="field"><label>كلمة المرور</label><input id="au_password" type="password" minlength="8"></div>') +
-      '<div class="field"><label>الدور</label><select id="au_role"><option value="viewer">مشاهد</option><option value="editor">محرر</option><option value="admin">مدير النظام</option><option value="temporary_viewer">مشاهد مؤقت</option></select></div><div class="field"><label>بداية الصلاحية</label><input id="au_start" type="datetime-local"></div><div class="field"><label>نهاية الصلاحية</label><input id="au_end" type="datetime-local"></div>' +
+      '<div class="field"><label>الدور</label><select id="au_role" onchange="window.icvSyncExpiryRequired()">' +
+      window.ICV.ROLE_ORDER.map((r) => '<option value="' + r + '">' + escA(roleName(r)) + "</option>").join(
+        "",
+      ) +
+      '</select></div><div class="field"><label>بداية الصلاحية</label><input id="au_start" type="datetime-local"></div><div class="field"><label id="au_end_label">نهاية الصلاحية</label><input id="au_end" type="datetime-local"></div>' +
       (edit
         ? '<div class="field full"><label><input id="au_active" type="checkbox"> الحساب نشط</label></div>'
         : "") +
@@ -1017,21 +1040,30 @@
       "</button></div>";
     document.body.appendChild(d);
     if (user) {
-      au_role.value = user.role || "viewer";
-      au_start.value = user.access_starts_at
-        ? new Date(user.access_starts_at).toISOString().slice(0, 16)
-        : "";
-      au_end.value = user.access_expires_at
-        ? new Date(user.access_expires_at).toISOString().slice(0, 16)
-        : "";
-      au_active.checked = user.is_active !== false;
+      document.getElementById("au_role").value = user.role || "viewer";
+      document.getElementById("au_start").value = window.ICV.toLocalInput(user.access_starts_at);
+      document.getElementById("au_end").value = window.ICV.toLocalInput(user.access_expires_at);
+      document.getElementById("au_active").checked = user.is_active !== false;
     }
+    window.icvSyncExpiryRequired();
+  };
+  // A temporary viewer must have an end date; the account stops at that date and reopens if it is extended.
+  window.icvSyncExpiryRequired = () => {
+    const temp = document.getElementById("au_role")?.value === "temporary_viewer",
+      label = document.getElementById("au_end_label"),
+      end = document.getElementById("au_end");
+    if (label) label.textContent = temp ? "نهاية الصلاحية (إلزامية للمشاهد المؤقت)" : "نهاية الصلاحية";
+    if (end) end.required = temp;
   };
   window.saveAccessUser = async (uid) => {
     const role = document.getElementById("au_role").value,
       start = document.getElementById("au_start").value || null,
       end = document.getElementById("au_end").value || null,
       msg = document.getElementById("accessUserMsg");
+    if (role === "temporary_viewer" && !end) {
+      msg.innerHTML = '<div class="bad">حدد تاريخ نهاية الصلاحية للمشاهد المؤقت.</div>';
+      return;
+    }
     if (start && end && new Date(end) <= new Date(start)) {
       msg.innerHTML = '<div class="bad">نهاية الصلاحية يجب أن تكون بعد البداية.</div>';
       return;
@@ -1043,8 +1075,8 @@
           display_name: document.getElementById("au_name").value.trim(),
           role,
           is_active: document.getElementById("au_active").checked,
-          access_starts_at: start ? new Date(start).toISOString() : null,
-          access_expires_at: end ? new Date(end).toISOString() : null,
+          access_starts_at: window.ICV.fromLocalInput(start),
+          access_expires_at: window.ICV.fromLocalInput(end),
         }
       : {
           action: "create",
@@ -1052,13 +1084,13 @@
           password: document.getElementById("au_password").value,
           display_name: document.getElementById("au_name").value.trim(),
           role,
-          access_starts_at: start ? new Date(start).toISOString() : null,
-          access_expires_at: end ? new Date(end).toISOString() : null,
+          access_starts_at: window.ICV.fromLocalInput(start),
+          access_expires_at: window.ICV.fromLocalInput(end),
         };
     msg.textContent = "جاري الحفظ...";
     const r = await client.functions.invoke("manage-platform-user", { body });
     if (r.error || r.data?.error) {
-      msg.innerHTML = '<div class="bad">' + escA(r.error?.message || r.data?.error) + "</div>";
+      msg.innerHTML = errorBox(r.data?.error || r.error);
       return;
     }
     msg.innerHTML = '<div class="ok">تم الحفظ بنجاح</div>';
@@ -1070,7 +1102,7 @@
       client.from("government_entities").select("id,name,code").order("name"),
       client.from("user_entity_assignments_view").select("government_entity_id").eq("user_id", uid),
     ]);
-    if (e.error || a.error) return toastA((e.error || a.error).message);
+    if (e.error || a.error) return errorA(e.error || a.error);
     const selected = new Set((a.data || []).map((x) => x.government_entity_id));
     const d = document.createElement("div");
     d.id = "accessEntityModal";
@@ -1108,7 +1140,7 @@
       m = document.getElementById("accessEntityMsg");
     const r = await client.rpc("set_user_entity_assignments", { p_user_id: uid, p_entity_ids: ids });
     if (r.error) {
-      m.innerHTML = '<div class="bad">' + escA(r.error.message) + "</div>";
+      m.innerHTML = errorBox(r.error);
       return;
     }
     document.getElementById("accessEntityModal")?.remove();
@@ -1117,45 +1149,90 @@
   };
 
   window.openUserProfile = async function (uid) {
-    const [u, a, p] = await Promise.all([
+    const [u, a] = await Promise.all([
       client.from("user_management").select("*").eq("user_id", uid).maybeSingle(),
       client.from("user_entity_assignments_view").select("*").eq("user_id", uid).order("government_entity"),
-      client
-        .from("projects")
-        .select(
-          "id,project_name,government_entity_id,project_status,end_date,omanization_pct,sme_pct,local_content_plan,due_reports,received_reports,late_reports",
-        ),
     ]);
-    if (u.error || !u.data) return toastA(u.error?.message || "تعذر تحميل ملف الموظف");
+    if (u.error || !u.data) return errorA(u.error || "تعذر تحميل ملف الموظف");
     const user = u.data,
       assigned = a.data || [],
-      ids = new Set(assigned.map((x) => x.government_entity_id)),
-      projects = (p.data || []).filter((x) => ids.has(x.government_entity_id));
+      ids = [...new Set(assigned.map((x) => x.government_entity_id).filter(Boolean))];
+    const p = ids.length
+      ? await client.from("projects").select(PROJECT_FIELDS).in("government_entity_id", ids)
+      : { data: [] };
+    const projects = p.data || [];
+    const rr = projects.length
+      ? await client
+          .from("quarterly_reports")
+          .select("project_id,quarter,annual_period,status")
+          .in(
+            "project_id",
+            projects.map((x) => x.id),
+          )
+      : { data: [] };
     const now = new Date(),
       three = new Date(now);
     three.setMonth(three.getMonth() + 3);
-    const due = projects.reduce(
-        (n, x) => n + Math.max(0, Number(x.due_reports || 0) - Number(x.received_reports || 0)),
-        0,
-      ),
-      late = projects.reduce((n, x) => n + Number(x.late_reports || 0), 0),
-      ending = projects.filter(
+    const { missing, due, label: alertPeriod } = reportAlerts(projects, rr.data || [], now);
+    const endingList = projects.filter(
         (x) => x.end_date && new Date(x.end_date) >= now && new Date(x.end_date) <= three,
-      ).length,
-      lowOm = projects.filter((x) => x.omanization_pct != null && Number(x.omanization_pct) < 30).length,
-      lowSme = projects.filter((x) => x.sme_pct != null && Number(x.sme_pct) < 10).length,
-      stalled = projects.filter((x) => x.project_status === "متعثر").length,
-      noPlan = projects.filter((x) => !x.local_content_plan).length;
+      ),
+      failing = projects.filter((x) => x.compliance_status === "غير مستوفي"),
+      stalled = projects.filter((x) => x.project_status === "متعثر"),
+      noPlan = projects.filter((x) => !x.local_content_plan);
     const initials = (user.display_name || user.username || "?")
       .trim()
-      .split(/\\s+/)
+      .split(/\s+/)
       .slice(0, 2)
       .map((x) => x[0])
       .join("");
     window.icvOpenUserProject = (id) => {
-      if (window.icvV2?.projectPage) window.icvV2.projectPage(id);
-      else showPage("projects");
+      document.getElementById("accessUserProfileModal")?.remove();
+      window.openMyProject(id);
     };
+    const alert = (x, danger, title, detail) =>
+      '<div class="um-alert' +
+      (danger ? " danger" : "") +
+      '" onclick="window.icvOpenUserProject(\'' +
+      escA(x.id) +
+      "')\"><b>" +
+      escA(title) +
+      " — " +
+      escA(x.project_name) +
+      "</b><small>" +
+      escA(detail) +
+      "</small></div>";
+    const failedCriteria = (x) =>
+      CRITERIA.filter((c) => x[c.key] === "غير مستوفي")
+        .map((c) => c.label)
+        .join("، ");
+    const alerts =
+      missing
+        .slice(0, 5)
+        .map((x) => alert(x.p, true, "تقرير متأخر", alertPeriod + " · متأخر " + x.days + " يوم"))
+        .join("") +
+      due
+        .slice(0, 5)
+        .map((x) => alert(x.p, false, "تقرير مستحق", alertPeriod + " · متبقي " + x.days + " يوم"))
+        .join("") +
+      failing
+        .slice(0, 5)
+        .map((x) => alert(x, true, "غير مستوفي", "المعايير غير المستوفاة: " + failedCriteria(x)))
+        .join("") +
+      endingList
+        .slice(0, 5)
+        .map((x) =>
+          alert(x, false, "ينتهي خلال 3 أشهر", "تاريخ الانتهاء: " + window.ICV.formatDate(x.end_date)),
+        )
+        .join("") +
+      stalled
+        .slice(0, 5)
+        .map((x) => alert(x, true, "مشروع متعثر", "يحتاج متابعة مباشرة"))
+        .join("") +
+      noPlan
+        .slice(0, 5)
+        .map((x) => alert(x, false, "لا توجد خطة محتوى محلي", "اضغط لفتح صفحة المشروع"))
+        .join("");
     document.getElementById("accessUserProfileModal")?.remove();
     const d = document.createElement("div");
     d.id = "accessUserProfileModal";
@@ -1168,107 +1245,30 @@
       "</h2><div>" +
       escA(user.username || "—") +
       " · " +
-      escA(roleLabel[user.role] || user.role) +
+      escA(roleName(user.role)) +
+      " · " +
+      escA(accessStatusText(user)) +
       '</div></div></div></div><div class="um-profile-body"><div class="um-profile-grid"><div class="card"><h3>الجهات المسندة</h3><div class="um-entity-list">' +
       (assigned.length
         ? assigned.map((x) => "<span>" + escA(x.government_entity || "—") + "</span>").join("")
         : "<em>لا توجد جهات مسندة</em>") +
       '</div></div><div class="card"><h3>ملخص المتابعة</h3><div class="um-metrics"><div><b>' +
       projects.length +
-      "</b><small>مشاريع تحتاج متابعة</small></div><div><b>" +
-      due +
-      "</b><small>تقارير غير مسلمة</small></div><div><b>" +
-      late +
-      "</b><small>تقارير متأخرة</small></div><div><b>" +
-      ending +
+      "</b><small>مشاريع الجهات المسندة</small></div><div><b>" +
+      missing.length +
+      "</b><small>تقارير متأخرة (" +
+      escA(alertPeriod) +
+      ")</small></div><div><b>" +
+      due.length +
+      "</b><small>تقارير مستحقة قريبًا</small></div><div><b>" +
+      failing.length +
+      "</b><small>مشاريع غير مستوفية</small></div><div><b>" +
+      endingList.length +
       "</b><small>تنتهي خلال 3 أشهر</small></div><div><b>" +
-      lowOm +
-      "</b><small>تعمين أقل من 30%</small></div><div><b>" +
-      lowSme +
-      '</b><small>SME أقل من 10%</small></div></div></div></div><div class="card"><h3>التنبيهات التي تحتاج متابعة</h3><div class="um-alerts">' +
-      projects
-        .filter((x) => Number(x.late_reports || 0) > 0)
-        .slice(0, 5)
-        .map(
-          (x) =>
-            '<div class="um-alert danger" onclick="window.icvOpenUserProject(\'' +
-            x.id +
-            "')\"><b>تقرير متأخر — " +
-            escA(x.project_name) +
-            "</b><small>عدد التقارير المتأخرة: " +
-            Number(x.late_reports || 0) +
-            "</small></div>",
-        )
-        .join("") +
-      projects
-        .filter((x) => x.end_date && new Date(x.end_date) >= now && new Date(x.end_date) <= three)
-        .slice(0, 5)
-        .map(
-          (x) =>
-            '<div class="um-alert" onclick="window.icvOpenUserProject(\'' +
-            x.id +
-            "')\"><b>مشروع ينتهي خلال 3 أشهر — " +
-            escA(x.project_name) +
-            "</b><small>تاريخ الانتهاء: " +
-            escA(new Date(x.end_date).toLocaleDateString("ar-OM")) +
-            "</small></div>",
-        )
-        .join("") +
-      projects
-        .filter((x) => x.omanization_pct != null && Number(x.omanization_pct) < 30)
-        .slice(0, 5)
-        .map(
-          (x) =>
-            '<div class="um-alert danger" onclick="window.icvOpenUserProject(\'' +
-            x.id +
-            "')\"><b>تعمين أقل من 30% — " +
-            escA(x.project_name) +
-            "</b><small>النسبة الحالية: " +
-            Number(x.omanization_pct || 0).toFixed(1) +
-            "%</small></div>",
-        )
-        .join("") +
-      projects
-        .filter((x) => x.sme_pct != null && Number(x.sme_pct) < 10)
-        .slice(0, 5)
-        .map(
-          (x) =>
-            '<div class="um-alert" onclick="window.icvOpenUserProject(\'' +
-            x.id +
-            "')\"><b>SME أقل من 10% — " +
-            escA(x.project_name) +
-            "</b><small>النسبة الحالية: " +
-            Number(x.sme_pct || 0).toFixed(1) +
-            "%</small></div>",
-        )
-        .join("") +
-      projects
-        .filter((x) => x.project_status === "متعثر")
-        .slice(0, 5)
-        .map(
-          (x) =>
-            '<div class="um-alert danger" onclick="window.icvOpenUserProject(\'' +
-            x.id +
-            "')\"><b>مشروع متعثر — " +
-            escA(x.project_name) +
-            "</b><small>يحتاج متابعة مباشرة</small></div>",
-        )
-        .join("") +
-      projects
-        .filter((x) => !x.local_content_plan)
-        .slice(0, 5)
-        .map(
-          (x) =>
-            '<div class="um-alert" onclick="window.icvOpenUserProject(\'' +
-            x.id +
-            "')\"><b>لا توجد خطة محتوى محلي — " +
-            escA(x.project_name) +
-            "</b><small>اضغط لفتح صفحة المشروع</small></div>",
-        )
-        .join("") +
-      '<div class="um-alert-empty" style="display:' +
-      (late + ending + lowOm + lowSme + stalled + noPlan === 0 ? "block" : "none") +
-      '">لا توجد تنبيهات حالية.</div></div></div></div></div><div class="modal-foot"><button class="btn" onclick="this.closest(\'.modal\').remove()">إغلاق</button></div></div>';
+      stalled.length +
+      '</b><small>مشاريع متعثرة</small></div></div></div></div><div class="card"><h3>التنبيهات التي تحتاج متابعة</h3><div class="um-alerts">' +
+      (alerts || '<div class="um-alert-empty">لا توجد تنبيهات حالية.</div>') +
+      '</div></div></div><div class="modal-foot"><button class="btn" onclick="this.closest(\'.modal\').remove()">إغلاق</button></div></div>';
     document.body.appendChild(d);
   };
   function injectUserManagementStyle() {
@@ -1343,6 +1343,7 @@
     ensurePageShell();
     profile = await getProfile();
     if (profile && !valid(profile)) {
+      // index.html shows the reason on the login screen.
       await client.auth.signOut();
       return;
     }

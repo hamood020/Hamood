@@ -85,7 +85,7 @@
       if (y || q) {
         const ids = new Set(
           (window.reports || [])
-            .filter((r) => (!y || r.annual_period === y) && (!q || r.quarter === q))
+            .filter((r) => (!y || String(r.annual_period) === y) && (!q || String(r.quarter) === q))
             .map((r) => r.project_id),
         );
         x = x.filter((p) => ids.has(p.id));
@@ -97,12 +97,8 @@
         sme = x.filter((p) => p.sme_pct != null),
         oa = om.length ? om.reduce((n, p) => n + Number(p.omanization_pct || 0), 0) / om.length : 0,
         sa = sme.length ? sme.reduce((n, p) => n + Number(p.sme_pct || 0), 0) / sme.length : 0,
-        cfg = window.__icvCalculationSettings || { thresholds: { omanization: 30, sme: 10 } },
-        ok = x.filter(
-          (p) =>
-            Number(p.omanization_pct) >= Number((cfg.thresholds && cfg.thresholds.omanization) || 30) &&
-            Number(p.sme_pct) >= Number((cfg.thresholds && cfg.thresholds.sme) || 10),
-        ).length;
+        ok = x.filter((p) => p.compliance_status === "مستوفي").length,
+        bad = x.filter((p) => p.compliance_status === "غير مستوفي").length;
       document.getElementById("dm").innerHTML =
         '<div class="cards"><div class="card"><div class="label">إجمالي المشاريع</div><div class="value">' +
         x.length +
@@ -119,10 +115,12 @@
         '</div></div><div class="card"><div class="label">مستوفي</div><div class="value">' +
         ok +
         '</div></div><div class="card"><div class="label">غير مستوفي</div><div class="value">' +
-        Math.max(0, x.length - ok) +
-        "</div></div></div>";
+        bad +
+        '</div><div class="sub">' +
+        (x.length - ok - bad) +
+        " بلا تقارير معتمدة</div></div></div>";
       document.getElementById("dt").innerHTML =
-        '<div class="panel"><h2>المشاريع ضمن نطاق المؤشرات</h2><div class="table-wrap"><table><thead><tr><th>المشروع</th><th>الجهة</th><th>القيمة</th><th>التعمين</th><th>SME</th><th>المحتوى المحلي</th><th>الحالة</th></tr></thead><tbody>' +
+        '<div class="panel"><h2>المشاريع ضمن نطاق المؤشرات</h2><div class="table-wrap"><table><thead><tr><th>المشروع</th><th>الجهة</th><th>القيمة</th><th>التعمين</th><th>SME</th><th>المحتوى المحلي</th><th>حالة المشروع</th><th>الالتزام</th></tr></thead><tbody>' +
         x
           .map(
             (p) =>
@@ -135,13 +133,15 @@
               "</td><td>" +
               money(p.total_project_value) +
               "</td><td>" +
-              pct(p.omanization_pct) +
+              (p.omanization_pct == null ? "—" : pct(p.omanization_pct)) +
               "</td><td>" +
-              pct(p.sme_pct) +
+              (p.sme_pct == null ? "—" : pct(p.sme_pct)) +
               "</td><td>" +
               money(p.total_local_content) +
               "</td><td>" +
               esc(p.project_status || "—") +
+              "</td><td>" +
+              esc(p.compliance_status || "غير منطبق") +
               "</td></tr>",
           )
           .join("") +
@@ -165,7 +165,11 @@
           (window.icvFollowupOnly ? "checked" : "") +
           ' onchange="icvSetFollowupScope(this.checked)"> جهات المتابعة فقط</label>'
         : "") +
-      '<button class="btn" onclick="exportProjects()">تصدير Excel</button><button class="btn primary" onclick="openProject()">+ إضافة مشروع</button></div></div><div class="project-filter-grid project-filter-grid-main"><div class="field"><label>بحث</label><input id="pq" class="search" placeholder="اسم المشروع أو رقم المناقصة" oninput="icvProjectApply()"></div><div class="field"><label>الجهة الحكومية</label><select id="pe" onchange="icvProjectApply()"><option value="">الكل</option>' +
+      '<button class="btn" onclick="exportProjects()">تصدير Excel</button>' +
+      (window.ICV?.canEdit(window.__icvProfile)
+        ? '<button class="btn primary" onclick="openProject()">+ إضافة مشروع</button>'
+        : "") +
+      '</div></div><div class="project-filter-grid project-filter-grid-main"><div class="field"><label>بحث</label><input id="pq" class="search" placeholder="اسم المشروع أو رقم المناقصة" oninput="icvProjectApply()"></div><div class="field"><label>الجهة الحكومية</label><select id="pe" onchange="icvProjectApply()"><option value="">الكل</option>' +
       es.map((x) => '<option value="' + x[0] + '">' + esc(x[1]) + "</option>").join("") +
       '</select></div><div class="field"><label>رقم المناقصة</label><input id="ptender" placeholder="رقم المناقصة" oninput="icvProjectApply()"></div><div class="field"><label>حالة المشروع</label><select id="pst" onchange="icvProjectApply()"><option value="">الكل</option>' +
       ["مسند", "قيد التنفيذ", "منتهي", "متعثر"].map((x) => "<option>" + esc(x) + "</option>").join("") +
@@ -409,7 +413,7 @@
   const bs = window.showPage;
   window.showPage = (n, b) => {
     if (n === "dashboard") {
-      go(n, "لوحة المؤشرات", b);
+      go(n, "الصفحة الرئيسية", b);
       return icvStructure.renderDashboard();
     }
     if (n === "projects") {
@@ -456,14 +460,6 @@
     x.dataset.page = "local-content";
     x.onclick = () => showPage("local-content", x);
     x.innerHTML = '<span class="ico">◫</span><span>المحتوى المحلي</span>';
-    nav.appendChild(x);
-  }
-  if (nav && !document.getElementById("settingsNav")) {
-    const x = document.createElement("button");
-    x.id = "settingsNav";
-    x.dataset.page = "settings";
-    x.onclick = () => showPage("settings", x);
-    x.innerHTML = '<span class="ico">⚙</span><span>الإعدادات</span>';
     nav.appendChild(x);
   }
 })();

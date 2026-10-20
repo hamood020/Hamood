@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>متابعة المحتوى المحلي</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+    <script src="icv-common.js?v=20261020-01"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap");
@@ -993,7 +994,8 @@
         <div class="muted">منصة متابعة المشاريع والمحتوى المحلي</div>
         <div id="loginBox">
           <div class="field">
-            <label>البريد الإلكتروني</label><input id="email" type="email" autocomplete="username" />
+            <label for="email">اسم المستخدم أو البريد الإلكتروني</label
+            ><input id="email" type="text" autocomplete="username" dir="ltr" />
           </div>
           <div class="field">
             <label>كلمة المرور</label><input id="password" type="password" autocomplete="current-password" />
@@ -1142,24 +1144,16 @@
       const money = (n) => Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 2 });
       const pct = (n) => (Number(n || 0) * 100).toFixed(1) + "%";
       function toast(m) {
-        if (
-          /^تم (حفظ|تحديث|إضافة|إنشاء|حذف|اعتماد|رفع)/.test(String(m)) &&
-          typeof window.icvSaveSuccess === "function"
-        ) {
-          window.icvSaveSuccess(m);
-          return;
-        }
-        const e = document.getElementById("toast");
-        e.textContent = m;
-        e.classList.remove("hidden");
-        setTimeout(() => e.classList.add("hidden"), 2500);
+        const text = String(m ?? "");
+        const success = /^تم(ت)? /.test(text);
+        ICV.showMessage(success ? text : ICV.friendlyError(text), success ? "success" : "error");
       }
 
       async function login() {
         const e = email.value.trim(),
           p = password.value;
         const r = await db.auth.signInWithPassword({ email: e, password: p });
-        if (r.error) return (authMsg.textContent = r.error.message);
+        if (r.error) return (authMsg.textContent = ICV.friendlyError(r.error));
         await boot(r.data.session);
       }
       async function logout() {
@@ -1181,12 +1175,22 @@
           authMsg.textContent = "تعذر تحميل صلاحيات الحساب.";
           return;
         }
+        const problem = ICV.accessProblem(r.data);
+        if (problem) {
+          await db.auth.signOut();
+          session = null;
+          document.body.classList.remove("auth-pending");
+          document.getElementById("login").classList.remove("hidden");
+          document.getElementById("app").classList.add("hidden");
+          authMsg.textContent = problem;
+          return;
+        }
         profile = r.data;
         document.getElementById("login").classList.add("hidden");
         document.getElementById("app").classList.remove("hidden");
         document.body.classList.remove("auth-pending");
         userName.textContent = profile.full_name || session.user.email;
-        userRole.textContent = profile.role || "viewer";
+        userRole.textContent = ICV.roleLabel(profile.role);
         window.__icvProfile = profile;
         await loadAll();
         if (typeof window.icvRefreshAccess === "function") {
@@ -1195,7 +1199,7 @@
             profile = fresh;
             window.__icvProfile = fresh;
             userName.textContent = fresh.full_name || session.user.email;
-            userRole.textContent = fresh.role || "viewer";
+            userRole.textContent = ICV.roleLabel(fresh.role);
           }
         }
         const q = new URLSearchParams(location.search);
@@ -2050,45 +2054,17 @@
         modal.innerHTML = "";
       }
       (async function () {
-        let s = (await db.auth.getSession()).data.session;
-        if (!s) {
-          try {
-            const raw = sessionStorage.getItem("icv-auth-session");
-            if (raw) {
-              const cached = JSON.parse(raw);
-              const restored = await db.auth.setSession({
-                access_token: cached.access_token,
-                refresh_token: cached.refresh_token,
-              });
-              s = restored.data?.session || null;
-            }
-          } catch (e) {
-            sessionStorage.removeItem("icv-auth-session");
-          }
-        }
+        const s = (await db.auth.getSession()).data.session;
         if (s) {
-          sessionStorage.setItem(
-            "icv-auth-session",
-            JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token }),
-          );
           await boot(s);
         } else {
           document.body.classList.remove("auth-pending");
           document.getElementById("login").classList.remove("hidden");
         }
       })();
-      db.auth.onAuthStateChange((event, s) => {
-        if (s) {
-          try {
-            sessionStorage.setItem(
-              "icv-auth-session",
-              JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token }),
-            );
-          } catch (e) {}
-          if (!session) boot(s);
-        } else if (event === "SIGNED_OUT") {
-          sessionStorage.removeItem("icv-auth-session");
-        }
+      // Login calls boot() itself; when the session ends in another tab, return to the login screen.
+      db.auth.onAuthStateChange((event) => {
+        if (event === "SIGNED_OUT" && session) location.reload();
       });
     </script>
     <script>
@@ -2437,6 +2413,12 @@
             );
           } catch (e) {}
         }
+        // Keeps the address bar in step with the page so refresh and Back return to it.
+        function syncUrl(name) {
+          var q = new URLSearchParams(location.search);
+          if (q.get("page") === name && !q.get("project")) return;
+          routeUrl(name);
+        }
         window.showPage = function (name, btn) {
           name = name || "dashboard";
           if (name === "project") {
@@ -2446,6 +2428,7 @@
             }
             name = "projects";
           }
+          if (name !== "users" || window.__icvProfile?.role === "admin") syncUrl(name);
           if (name === "profile") {
             hideAll();
             document.getElementById("page-profile")?.classList.remove("hidden");

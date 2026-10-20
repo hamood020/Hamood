@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>خطة المحتوى المحلي — ICV New</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+    <script src="icv-common.js?v=20261020-01"></script>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap");
       :root {
@@ -1565,8 +1566,15 @@
         profile = p.data;
         if (document.getElementById("userName"))
           userName.textContent = profile?.full_name || s.data.session.user.email;
-        if (document.getElementById("userRole")) userRole.textContent = profile?.role || "viewer";
-        if (!["admin", "editor"].includes(profile.role))
+        const roleLabels = {
+          admin: "مدير النظام",
+          section_head: "رئيس قسم",
+          editor: "أخصائي دعم ومتابعة",
+          viewer: "مشاهد",
+          temporary_viewer: "مشاهد مؤقت",
+        };
+        if (document.getElementById("userRole")) userRole.textContent = roleLabels[profile?.role] || "مشاهد";
+        if (!["admin", "section_head", "editor"].includes(profile.role))
           throw Error("صلاحية المستخدم لا تسمح بإضافة أو تعديل الخطط.");
       }
       function makeSelect(options, value = "") {
@@ -1723,7 +1731,7 @@
                   esc(e.message) +
                   "</div>";
             });
-        }, 650);
+        }, 4000);
       }
       async function switchSalaryPeriod() {
         clearTimeout(workSaveTimer);
@@ -1860,26 +1868,22 @@
         const planId = await ensurePlan();
         const safe = file.name.replace(/[^a-zA-Z0-9._-]+/g, "_"),
           path = pid + "/" + crypto.randomUUID() + "-" + safe;
-        const up = await db.storage
-          .from("project-plan-documents")
-          .upload(path, file, {
-            cacheControl: "3600",
-            upsert: false,
-            contentType: file.type || "application/octet-stream",
-          });
+        const up = await db.storage.from("project-plan-documents").upload(path, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type || "application/octet-stream",
+        });
         if (up.error) throw up.error;
-        const ins = await db
-          .from("project_plan_documents")
-          .insert({
-            project_id: pid,
-            plan_id: planId,
-            display_name: displayName,
-            original_file_name: file.name,
-            storage_path: path,
-            mime_type: file.type || null,
-            file_size: file.size,
-            created_by: profile.id,
-          });
+        const ins = await db.from("project_plan_documents").insert({
+          project_id: pid,
+          plan_id: planId,
+          display_name: displayName,
+          original_file_name: file.name,
+          storage_path: path,
+          mime_type: file.type || null,
+          file_size: file.size,
+          created_by: profile.id,
+        });
         if (ins.error) {
           await db.storage.from("project-plan-documents").remove([path]);
           throw ins.error;
@@ -1967,7 +1971,11 @@
       };
       $("saveBtn").onclick = () => savePlan("حفظ الخطة");
       $("draftBtn").onclick = () => savePlan("حفظ كمسودة");
+      let planSaving = false;
       async function savePlan(mode) {
+        if (planSaving) return;
+        planSaving = true;
+        ["saveBtn", "draftBtn"].forEach((id) => ($(id).disabled = true));
         try {
           saveWorkCategories();
           saveSalaryForKey(activeSalaryKey);
@@ -1989,9 +1997,9 @@
             version: $("version").value || "V1",
             received_at: $("planDate").value || null,
             status: mode === "حفظ كمسودة" ? "مسودة" : $("status").value || "مسودة",
-            created_by: profile.id,
             plan_data: pd,
           };
+          if (!current?.id) pay.created_by = profile.id;
           let r = current?.id
             ? await db.from("local_content_plans").update(pay).eq("id", current.id).select("*").single()
             : await db.from("local_content_plans").insert(pay).select("*").single();
@@ -2009,6 +2017,9 @@
           $("msg").innerHTML = "";
         } catch (e) {
           $("msg").innerHTML = '<div class="error">' + esc(e.message) + "</div>";
+        } finally {
+          planSaving = false;
+          ["saveBtn", "draftBtn"].forEach((id) => ($(id).disabled = false));
         }
       }
       async function load() {
@@ -2273,24 +2284,6 @@
         await db.auth.signOut();
         window.location.href = "index.html";
       };
-    </script>
-    <script>
-      (function () {
-        function cacheSession(s) {
-          if (!s) return;
-          try {
-            sessionStorage.setItem(
-              "icv-auth-session",
-              JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token }),
-            );
-          } catch (e) {}
-        }
-        db.auth.getSession().then((r) => cacheSession(r.data.session));
-        db.auth.onAuthStateChange((event, s) => {
-          if (s) cacheSession(s);
-          else if (event === "SIGNED_OUT") sessionStorage.removeItem("icv-auth-session");
-        });
-      })();
     </script>
   </body>
 </html>

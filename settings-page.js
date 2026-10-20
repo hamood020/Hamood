@@ -2,6 +2,8 @@
 (function () {
   "use strict";
   const KEY = "icv-settings-v1";
+  // Errors go through the shared message box; success messages use icvSaveSuccess.
+  const toastA = (m) => window.ICV.showMessage(String(m), "error");
   const D = {
     general: {
       platformName: "ICV New",
@@ -29,13 +31,15 @@
       foreignService: 10,
       smeService: 70,
       smeSubcontract: 70,
+      subcontractLocal: 70,
+      subcontractForeign: 10,
     },
     reports: {
       years: "2026,2027,2028,2029,2030",
       quarters: ["Q1", "Q2", "Q3", "Q4"],
       type: "تراكمي",
       statuses: ["مسودة", "مقدم", "تحت المراجعة", "معتمد", "مرفوض"],
-      lockApproved: true,
+      lockApproved: false,
       multiReport: false,
       dueDays: 30,
       lateAfter: 7,
@@ -49,7 +53,7 @@
       requiredCompany: false,
     },
     users: {
-      roles: ["مدير النظام", "مدير المحتوى المحلي", "موظف", "مراجع", "مشاهدة فقط"],
+      roleLabels: {},
       entityAccess: true,
     },
     notifications: {
@@ -60,7 +64,7 @@
       planUpdate: true,
       daysBefore: 10,
     },
-    audit: { enabled: true, retention: 365 },
+    audit: { retention: 365 },
     refs: {
       supplyTypes: ["صنع في عمان", "مورد محلي", "استيراد مباشر", "SME"],
       supplierTypes: ["محلي", "أجنبي", "SME"],
@@ -69,21 +73,19 @@
   function merge(a, b) {
     return Object.assign({}, a, b || {});
   }
+  function normalize(x) {
+    x = x && typeof x === "object" ? x : {};
+    const out = {};
+    Object.keys(D).forEach((k) => (out[k] = merge(D[k], x[k])));
+    delete out.audit.enabled; // the audit log is always on
+    delete out.users.roles; // replaced by roleLabels
+    return out;
+  }
   function load() {
     try {
-      const x = JSON.parse(localStorage.getItem(KEY) || "{}");
-      return {
-        general: merge(D.general, x.general),
-        local: merge(D.local, x.local),
-        reports: merge(D.reports, x.reports),
-        projects: merge(D.projects, x.projects),
-        users: merge(D.users, x.users),
-        notifications: merge(D.notifications, x.notifications),
-        audit: merge(D.audit, x.audit),
-        refs: merge(D.refs, x.refs),
-      };
+      return normalize(JSON.parse(localStorage.getItem(KEY) || "{}"));
     } catch (e) {
-      return JSON.parse(JSON.stringify(D));
+      return normalize({});
     }
   }
   let S = load();
@@ -108,8 +110,12 @@
         foreignService: Number(L.foreignService ?? 10) / 100,
         smeService: Number(L.smeService ?? 70) / 100,
         smeSubcontract: Number(L.smeSubcontract ?? 70) / 100,
+        subcontractLocal: Number(L.subcontractLocal ?? L.smeSubcontract ?? 70) / 100,
+        subcontractForeign: Number(L.subcontractForeign ?? 10) / 100,
       },
     };
+    window.ICV?.setRoleLabels(S.users?.roleLabels);
+    window.__icvSettings = S;
     if (G.platformName) {
       document.title = G.platformName;
       document.querySelectorAll(".brand b").forEach((x) => (x.textContent = G.platformName));
@@ -132,17 +138,7 @@
         .maybeSingle();
       if (error) throw error;
       if (data?.settings) {
-        const z = data.settings;
-        S = {
-          general: merge(D.general, z.general),
-          local: merge(D.local, z.local),
-          reports: merge(D.reports, z.reports),
-          projects: merge(D.projects, z.projects),
-          users: merge(D.users, z.users),
-          notifications: merge(D.notifications, z.notifications),
-          audit: merge(D.audit, z.audit),
-          refs: merge(D.refs, z.refs),
-        };
+        S = normalize(data.settings);
         localStorage.setItem(KEY, JSON.stringify(S));
         publishCalcSettings();
       }
@@ -322,8 +318,10 @@
       field("الخدمات المحلية %", "localService", S.local.localService, "number") +
       field("الخدمات الأجنبية %", "foreignService", S.local.foreignService, "number") +
       field("SME — الخدمات %", "smeService", S.local.smeService, "number") +
-      field("عقود الباطن %", "smeSubcontract", S.local.smeSubcontract, "number") +
-      '</div><div class="is-info" style="margin-top:14px">المعاملات هنا هي المصدر المركزي الذي تستخدمه التقارير وحسابات المشروع. حد SME مستقل عن معامل المحتوى المحلي.</div></div></section>' +
+      field("عقود الباطن — مزود محلي %", "subcontractLocal", S.local.subcontractLocal, "number") +
+      field("عقود الباطن — مزود أجنبي %", "subcontractForeign", S.local.subcontractForeign, "number") +
+      field("عقود الباطن — SME %", "smeSubcontract", S.local.smeSubcontract, "number") +
+      '</div><div class="is-info" style="margin-top:14px">تحسب قاعدة البيانات مؤشرات كل مشروع من التقارير المعتمدة فقط بهذه المعاملات والحدود، ويُعاد الحساب لجميع المشاريع فور حفظ أي تغيير هنا. يكون المشروع «مستوفيًا» عندما يحقق جميع المعايير المنطبقة عليه (التعمين، SME، السلع، الخدمات).</div></div></section>' +
       '<section class="is-sec" data-sec="reports"><div class="is-card"><div class="is-head"><div><h3>إعدادات التقارير</h3><p>السنوات، الأرباع، نوع التقرير، حالات الاعتماد ومواعيد التسليم.</p></div></div><div class="is-grid">' +
       field("سنوات التقارير", "reportYears", S.reports.years) +
       select("نوع التقرير الافتراضي", "reportType", S.reports.type, [
@@ -337,7 +335,7 @@
         "قفل التقرير بعد الاعتماد",
         "lockApproved",
         S.reports.lockApproved,
-        "منع تعديل التقرير المعتمد إلا بصلاحية خاصة.",
+        "عند التفعيل لا يعدّل التقرير المعتمد إلا مدير النظام.",
       ) +
       toggle("السماح بأكثر من تقرير للربع", "multiReport", S.reports.multiReport) +
       "</div>" +
@@ -355,13 +353,20 @@
       toggle("الشركة المنفذة إلزامية", "requiredCompany", S.projects.requiredCompany) +
       "</div></div></section>" +
       '<section class="is-sec" data-sec="users"><div class="is-card"><div class="is-head"><div><h3>المستخدمون والصلاحيات</h3><p>الأدوار الأساسية وربط المستخدم بالجهات الحكومية.</p></div></div>' +
-      chips("الأدوار", "roles", S.users.roles) +
-      '<div style="margin-top:14px">' +
+      '<div class="is-grid">' +
+      window.ICV.ROLE_ORDER.map((r) =>
+        field(
+          "اسم الدور: " + window.ICV.DEFAULT_ROLE_LABELS[r],
+          "roleLabel_" + r,
+          (S.users.roleLabels || {})[r] || window.ICV.DEFAULT_ROLE_LABELS[r],
+        ),
+      ).join("") +
+      '</div><div class="is-info" style="margin-top:10px">تغيير الاسم يغيّر طريقة عرض الدور فقط، ولا يغيّر صلاحياته.</div><div style="margin-top:14px">' +
       toggle(
-        "تقييد المستخدم بالجهات المسندة له",
+        "عرض الجهات المسندة افتراضيًا",
         "entityAccess",
         S.users.entityAccess,
-        "المستخدم يرى ويتابع فقط الجهات المرتبطة بحسابه حسب الصلاحيات.",
+        "تفتح القوائم مفلترة على جهات المستخدم، ويستطيع إلغاء الفلتر لرؤية بقية الجهات.",
       ) +
       '</div><div class="is-info" style="margin-top:12px">إدارة المستخدمين الفعلية تبقى في صفحة «إدارة المستخدمين».</div></div></section>' +
       '<section class="is-sec" data-sec="notifications"><div class="is-card"><div class="is-head"><div><h3>الإشعارات والتنبيهات</h3><p>تنبيهات الاستحقاقات والمشاريع والتقارير.</p></div></div><div class="iswitches">' +
@@ -374,14 +379,15 @@
       field("التنبيه قبل الموعد بـ (أيام)", "daysBefore", S.notifications.daysBefore, "number") +
       "</div></div></section>" +
       '<section class="is-sec" data-sec="audit"><div class="is-card"><div class="is-head"><div><h3>النسخ الاحتياطي وسجل التدقيق</h3><p>توثيق العمليات ومتابعة النسخ الاحتياطية.</p></div></div>' +
-      toggle(
-        "تفعيل سجل التدقيق",
-        "auditEnabled",
-        S.audit.enabled,
-        "يسجل المستخدم والعملية والتاريخ والقيم القديمة والجديدة عند ربطه بقاعدة البيانات.",
-      ) +
+      '<div class="is-info">سجل التدقيق مفعّل دائمًا: يسجّل المستخدم والعملية والتاريخ والقيم القديمة والجديدة لكل تعديل.</div>' +
       '<div class="is-grid two" style="margin-top:12px">' +
-      field("مدة الاحتفاظ بالسجل (يوم)", "auditRetention", S.audit.retention, "number") +
+      field(
+        "مدة الاحتفاظ بالسجل (يوم)",
+        "auditRetention",
+        S.audit.retention,
+        "number",
+        "تُحذف الأحداث الأقدم من هذه المدة تلقائيًا كل يوم.",
+      ) +
       '</div><div class="is-actions" style="margin-top:14px"><span class="muted">النسخ الاحتياطية الكاملة لقاعدة البيانات تنفذ من Supabase.</span><div class="actions"><button class="btn" type="button" onclick="icvSettingsExport()">تصدير الإعدادات</button><button class="btn" type="button" onclick="icvSettingsImport()">استيراد الإعدادات</button></div></div></div><div class="is-card is-danger"><div class="is-head"><div><h3>منطقة حساسة</h3><p>إعادة الإعدادات للقيم الافتراضية.</p></div></div><button class="btn danger" type="button" onclick="icvSettingsReset()">إعادة الإعدادات الافتراضية</button></div></section>' +
       '<section class="is-sec" data-sec="refs"><div class="is-card"><div class="is-head"><div><h3>البيانات المرجعية</h3><p>القوائم المستخدمة في المشتريات والخدمات والمقاولات.</p></div></div>' +
       chips("أنواع التوريد / المشتريات", "supplyTypes", S.refs.supplyTypes) +
@@ -488,7 +494,7 @@
         .from("user_notification_settings")
         .upsert(payload, { onConflict: "user_id" });
       if (error) {
-        toastA(error.message);
+        toastA(window.ICV.friendlyError(error));
         return;
       }
       document.getElementById("editorSettingsSaved").textContent = new Date().toLocaleString("ar-OM");
@@ -498,25 +504,18 @@
       const ids = [...b.querySelectorAll("[data-entity-id]:checked")].map((x) =>
         x.getAttribute("data-entity-id"),
       );
-      const { error: de } = await db.from("user_entity_assignments").delete().eq("user_id", uid);
-      if (de) {
-        toastA(de.message);
+      // One server call replaces the list atomically and only for the signed-in user.
+      const { error } = await db.rpc("set_my_entity_assignments", { p_entity_ids: ids });
+      if (error) {
+        toastA(window.ICV.friendlyError(error));
         return;
-      }
-      if (ids.length) {
-        const rows = ids.map((id) => ({ user_id: uid, government_entity_id: id }));
-        const { error: ie } = await db.from("user_entity_assignments").insert(rows);
-        if (ie) {
-          toastA(ie.message);
-          return;
-        }
       }
       window.icvSaveSuccess?.("تم حفظ الجهات الحكومية المرتبطة بحسابك");
     };
   }
   function render() {
     const role = window.__icvProfile?.role;
-    if (role === "editor") {
+    if (role === "editor" || role === "section_head") {
       renderEditor();
       return;
     }
@@ -720,11 +719,9 @@
           "تم حذف المشروع وسجلاته، لكن تعذر حذف بعض الملفات المرفقة من التخزين. يرجى مراجعة التخزين. " +
             cleanupErrors.join("؛ "),
         );
-      else if (typeof window.icvSaveSuccess === "function")
-        window.icvSaveSuccess("تم حذف المشروع وجميع سجلاته ومرفقاته المرتبطة.");
-      else toastA("تم حذف المشروع وجميع سجلاته ومرفقاته المرتبطة.");
+      else window.icvSaveSuccess("تم حذف المشروع وجميع سجلاته ومرفقاته المرتبطة.");
     } catch (error) {
-      toastA("تعذر حذف المشروع: " + String(error?.message || error));
+      toastA("تعذر حذف المشروع: " + window.ICV.friendlyError(error));
       await loadAdminProjectManagement();
     } finally {
       if (button && button.isConnected) {
@@ -767,7 +764,6 @@
       "quarters",
       "projectStatuses",
       "extensionTypes",
-      "roles",
       "supplyTypes",
       "supplierTypes",
     ].forEach(bindChip);
@@ -806,6 +802,8 @@
         foreignService: +v("foreignService"),
         smeService: +v("smeService"),
         smeSubcontract: +v("smeSubcontract"),
+        subcontractLocal: +v("subcontractLocal"),
+        subcontractForeign: +v("subcontractForeign"),
       };
       S.reports = {
         ...S.reports,
@@ -827,7 +825,12 @@
         requiredEntity: c("requiredEntity"),
         requiredCompany: c("requiredCompany"),
       };
-      S.users = { ...S.users, roles: arr("roles"), entityAccess: c("entityAccess") };
+      const roleLabels = {};
+      window.ICV.ROLE_ORDER.forEach((r) => {
+        const x = v("roleLabel_" + r).trim();
+        if (x && x !== window.ICV.DEFAULT_ROLE_LABELS[r]) roleLabels[r] = x;
+      });
+      S.users = { ...S.users, roleLabels, entityAccess: c("entityAccess") };
       S.notifications = {
         ...S.notifications,
         reportDue: c("reportDue"),
@@ -837,14 +840,14 @@
         planUpdate: c("planUpdate"),
         daysBefore: +v("daysBefore"),
       };
-      S.audit = { ...S.audit, enabled: c("auditEnabled"), retention: +v("auditRetention") };
+      S.audit = { ...S.audit, retention: Math.max(30, +v("auditRetention") || 365) };
       S.refs = { ...S.refs, supplyTypes: arr("supplyTypes"), supplierTypes: arr("supplierTypes") };
       try {
         await persistSettings();
         document.getElementById("settingsSaved").textContent = new Date().toLocaleString("ar-OM");
         window.icvSaveSuccess?.("تم حفظ جميع إعدادات المنصة في قاعدة البيانات");
       } catch (e) {
-        toastA("تعذر حفظ الإعدادات: " + e.message);
+        toastA("تعذر حفظ الإعدادات: " + window.ICV.friendlyError(e));
       }
     };
   }
@@ -862,23 +865,23 @@
     i.accept = ".json,application/json";
     i.onchange = async () => {
       try {
-        S = JSON.parse(await i.files[0].text());
+        S = normalize(JSON.parse(await i.files[0].text()));
         await persistSettings();
         render();
         window.icvSaveSuccess?.("تم استيراد الإعدادات وحفظها في قاعدة البيانات");
       } catch (e) {
-        toast("ملف الإعدادات غير صالح");
+        toastA("ملف الإعدادات غير صالح.");
       }
     };
     i.click();
   };
   window.icvSettingsReset = function () {
     if (!confirm("هل تريد إعادة جميع إعدادات المنصة للقيم الافتراضية؟")) return;
-    S = JSON.parse(JSON.stringify(D));
+    S = normalize({});
     persistSettings()
       .then(() => {
         render();
-        toast("تمت إعادة الإعدادات الافتراضية وحفظها في قاعدة البيانات");
+        window.icvSaveSuccess("تمت إعادة الإعدادات الافتراضية وحفظها في قاعدة البيانات");
       })
       .catch((e) => toastA("تعذر الحفظ: " + e.message));
   };

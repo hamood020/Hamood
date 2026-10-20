@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>إدخال تقرير ربع سنوي — ICV New</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+    <script src="icv-common.js?v=20261020-01"></script>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap");
       :root {
@@ -694,8 +695,27 @@
           foreignService: 0.1,
           smeService: 0.7,
           smeSubcontract: 0.7,
+          subcontractLocal: 0.7,
+          subcontractForeign: 0.1,
         },
       };
+      const ROLE_LABELS = {
+        admin: "مدير النظام",
+        section_head: "رئيس قسم",
+        editor: "أخصائي دعم ومتابعة",
+        viewer: "مشاهد",
+        temporary_viewer: "مشاهد مؤقت",
+      };
+      let saving = false;
+      // Turns database errors into messages the user can act on.
+      function friendlyError(e) {
+        const msg = String(e?.message || e || "");
+        if (e?.code === "23505" || /duplicate key/i.test(msg))
+          return "يوجد تقرير محفوظ لهذا المشروع في الربع والسنة نفسيهما. افتح التقرير الموجود وعدّله بدل إنشاء تقرير جديد.";
+        if (/REPORT_LOCKED/.test(msg)) return "هذا التقرير معتمد ومقفل. يعيد مدير النظام فتحه عند الحاجة.";
+        if (/row-level security|permission denied/i.test(msg)) return "لا تملك صلاحية حفظ التقارير.";
+        return msg || "حدث خطأ غير متوقع.";
+      }
       async function loadCalcSettings() {
         try {
           const { data, error } = await db
@@ -718,6 +738,8 @@
               foreignService: Number(L.foreignService ?? 10) / 100,
               smeService: Number(L.smeService ?? 70) / 100,
               smeSubcontract: Number(L.smeSubcontract ?? 70) / 100,
+              subcontractLocal: Number(L.subcontractLocal ?? L.smeSubcontract ?? 70) / 100,
+              subcontractForeign: Number(L.subcontractForeign ?? 10) / 100,
             },
           };
           window.__icvCalculationSettings = icvCalcSettings;
@@ -741,7 +763,6 @@
       }
       async function logout() {
         await db.auth.signOut();
-        sessionStorage.removeItem("icv-auth-session");
         location.href = "index.html";
       }
       function calc() {
@@ -765,8 +786,11 @@
         const pr = await db.from("user_profiles").select("*").eq("id", s.user.id).single();
         profile = pr.data || {};
         $("userName").textContent = profile.full_name || s.user.email;
-        $("userRole").textContent = profile.role || "viewer";
+        $("userRole").textContent = ROLE_LABELS[profile.role] || "مشاهد";
         if (profile.role !== "admin") $("usersNav").classList.add("hidden");
+        if (!["admin", "section_head", "editor"].includes(profile.role))
+          throw new Error("صلاحية حسابك للاطلاع فقط ولا تسمح بإدخال التقارير.");
+        if (!pid) throw new Error("لم يتم تحديد المشروع.");
         const p = await db.from("projects").select("*").eq("id", pid).single();
         if (p.error) throw p.error;
         project = p.data;
@@ -855,112 +879,6 @@
         window.open(data.signedUrl, "_blank", "noopener");
         return false;
       }
-      async function refreshProjectMetrics() {
-        const rr = await db
-          .from("quarterly_reports")
-          .select("report_data,annual_period,quarter,created_at")
-          .eq("project_id", pid);
-        if (rr.error) throw rr.error;
-        const rows = (rr.data || []).sort((a, b) => {
-          const qa = Number(String(a.quarter || "").replace(/\D/g, "")) || 0,
-            qb = Number(String(b.quarter || "").replace(/\D/g, "")) || 0;
-          return Number(a.annual_period || 0) * 10 + qa - (Number(b.annual_period || 0) * 10 + qb);
-        });
-        let om = 0,
-          fo = 0;
-        const fin = {
-          purchases: { made_in_oman: 0, local_supplier: 0, direct_import: 0, sme_purchase: 0 },
-          services: { local_service: 0, foreign_service: 0, sme_service: 0 },
-          subcontracts: { local: 0, foreign: 0, sme: 0 },
-        };
-        for (const r of rows) {
-          const d = r.report_data || {},
-            cumulative = String(d.report_type || "ربعي منفصل").includes("تراكمي"),
-            salaryCumulative = String(d.salary_input_type || "رواتب الربع").includes("تراكمية");
-          const a = n(d.omani_salary),
-            b = n(d.foreign_salary);
-          if (salaryCumulative) {
-            om = a;
-            fo = b;
-          } else {
-            om += a;
-            fo += b;
-          }
-          for (const [group, keys] of Object.entries({
-            purchases: ["made_in_oman", "local_supplier", "direct_import", "sme_purchase"],
-            services: ["local_service", "foreign_service", "sme_service"],
-            subcontracts: ["local", "foreign", "sme"],
-          })) {
-            const source = d[group] || {};
-            for (const key of keys) {
-              const value = n(source[key]);
-              fin[group][key] = cumulative ? value : fin[group][key] + value;
-            }
-          }
-        }
-        const k = icvCalcSettings.coefficients,
-          spend =
-            om +
-            fo +
-            Object.values(fin.purchases).reduce((a, v) => a + v, 0) +
-            Object.values(fin.services).reduce((a, v) => a + v, 0) +
-            Object.values(fin.subcontracts).reduce((a, v) => a + v, 0),
-          lc =
-            om * k.omaniSalary +
-            fo * k.foreignSalary +
-            fin.purchases.made_in_oman * k.madeInOman +
-            fin.purchases.local_supplier * k.localSupplier +
-            fin.purchases.direct_import * k.directImport +
-            fin.purchases.sme_purchase * k.smePurchase +
-            fin.services.local_service * k.localService +
-            fin.services.foreign_service * k.foreignService +
-            fin.services.sme_service * k.smeService +
-            Object.values(fin.subcontracts).reduce((a, v) => a + v, 0) * k.smeSubcontract,
-          smeActual = fin.services.sme_service + Object.values(fin.subcontracts).reduce((a, v) => a + v, 0),
-          projectValue = n(project?.total_project_value),
-          smePct = projectValue ? (smeActual / projectValue) * 100 : 0,
-          planMade = n(project?.plan_made_in_oman),
-          madeStatus = planMade
-            ? fin.purchases.made_in_oman >= planMade
-              ? "مستوفي"
-              : "غير مستوفي"
-            : "غير منطبق",
-          smeStatus = projectValue
-            ? smePct >= icvCalcSettings.thresholds.sme
-              ? "مستوفي"
-              : "غير مستوفي"
-            : "غير منطبق";
-        const payload = {
-          actual_omani_salary: om,
-          local_content_omani: om * k.omaniSalary,
-          actual_non_omani_salary: fo,
-          local_content_non_omani: fo * k.foreignSalary,
-          actual_made_in_oman: fin.purchases.made_in_oman,
-          local_content_made_in_oman: fin.purchases.made_in_oman * k.madeInOman,
-          actual_local_supplier: fin.purchases.local_supplier,
-          local_content_local_supplier: fin.purchases.local_supplier * k.localSupplier,
-          actual_direct_import: fin.purchases.direct_import,
-          local_content_direct_import: fin.purchases.direct_import * k.directImport,
-          actual_sme_supplier: fin.purchases.sme_purchase,
-          local_content_sme_supplier: fin.purchases.sme_purchase * k.smePurchase,
-          actual_local_service: fin.services.local_service,
-          local_content_local_service: fin.services.local_service * k.localService,
-          actual_foreign_service: fin.services.foreign_service,
-          local_content_foreign_service: fin.services.foreign_service * k.foreignService,
-          actual_sme_service: fin.services.sme_service,
-          local_content_sme_service: fin.services.sme_service * k.smeService,
-          total_spend: spend,
-          total_local_content: lc,
-          local_content_spend_pct: spend ? (lc / spend) * 100 : 0,
-          local_content_project_pct: projectValue ? (lc / projectValue) * 100 : 0,
-          sme_pct: smePct,
-          made_in_oman_status: madeStatus,
-          sme_10_status: smeStatus,
-        };
-        const { error } = await db.from("projects").update(payload).eq("id", pid);
-        if (error) throw error;
-        project = { ...project, ...payload };
-      }
       function collect() {
         const cats = [1, 2, 3].map((i) => ({
           category: "الفئة " + ["الأولى", "الثانية", "الثالثة"][i - 1],
@@ -997,7 +915,9 @@
           services.local_service * k.localService +
           services.foreign_service * k.foreignService +
           services.sme_service * k.smeService +
-          (subcontracts.local + subcontracts.foreign + subcontracts.sme) * k.smeSubcontract;
+          subcontracts.local * k.subcontractLocal +
+          subcontracts.foreign * k.subcontractForeign +
+          subcontracts.sme * k.smeSubcontract;
         return {
           report_type: $("rType").value,
           salary_input_type: $("salaryType").value,
@@ -1016,26 +936,41 @@
           total_local_content: localContent,
         };
       }
+      function setBusy(on) {
+        ["saveBtn", "draftBtn"].forEach((id) => ($(id).disabled = on));
+        $("saveBtn").textContent = on ? "جارٍ الحفظ..." : "حفظ التقرير";
+      }
       async function save(mode) {
+        if (saving) return;
+        const year = String($("rYear").value || "").trim();
+        if (!/^\d{4}$/.test(year)) return showReportError("أدخل السنة بأربعة أرقام، مثل 2026.");
+        saving = true;
+        setBusy(true);
         try {
           const d = collect();
           d.last_modified_at = new Date().toISOString();
+          // Keep the existing attachment unless a new file is uploaded below.
+          const prev = current?.report_data || {};
+          if (prev.attachment_path) {
+            d.attachment_path = prev.attachment_path;
+            d.attachment_name = prev.attachment_name;
+          }
           const pay = {
             project_id: pid,
             quarter: $("rQuarter").value,
-            annual_period: String($("rYear").value),
+            annual_period: year,
             status: mode === "مسودة" ? "مسودة" : $("rStatus").value,
             submitted_at: $("rReceived").value || null,
             notes: $("notes").value || null,
-            created_by: profile.id,
             report_data: d,
           };
+          if (!current) pay.created_by = profile.id; // the original author is never overwritten
           let r = current
             ? await db.from("quarterly_reports").update(pay).eq("id", current.id).select("*").single()
             : await db.from("quarterly_reports").insert(pay).select("*").single();
           if (r.error) throw r.error;
           current = r.data;
-          await refreshProjectMetrics();
+          // Project totals and compliance are recomputed by the database from approved reports.
           const file = $("rFile").files[0];
           if (file) {
             const path =
@@ -1046,14 +981,14 @@
               crypto.randomUUID() +
               "-" +
               file.name.replace(/[^a-zA-Z0-9._-]+/g, "_");
-            const up = await db.storage
-              .from("project-report-documents")
-              .upload(path, file, {
-                cacheControl: "3600",
-                upsert: false,
-                contentType: file.type || "application/octet-stream",
-              });
-            if (up.error) throw new Error("تم حفظ بيانات التقرير لكن تعذر حفظ المرفق: " + up.error.message);
+            const up = await db.storage.from("project-report-documents").upload(path, file, {
+              cacheControl: "3600",
+              upsert: false,
+              contentType: file.type || "application/octet-stream",
+            });
+            if (up.error)
+              throw new Error("تم حفظ بيانات التقرير لكن تعذر حفظ المرفق: " + friendlyError(up.error));
+            const oldPath = d.attachment_path;
             const updatedData = { ...d, attachment_name: file.name, attachment_path: path };
             const saved = await db
               .from("quarterly_reports")
@@ -1061,14 +996,24 @@
               .eq("id", r.data.id)
               .select("*")
               .single();
-            if (saved.error) throw new Error("تم رفع الملف لكن تعذر ربطه بالتقرير: " + saved.error.message);
+            if (saved.error) {
+              await db.storage.from("project-report-documents").remove([path]);
+              throw new Error("تعذر ربط الملف بالتقرير: " + friendlyError(saved.error));
+            }
+            // The replaced file is no longer referenced by any record, so remove it.
+            if (oldPath && oldPath !== path)
+              await db.storage.from("project-report-documents").remove([oldPath]);
             current = saved.data;
+            $("rFile").value = "";
             renderSavedAttachment(path, file.name);
           }
           showTopSaveMessage(file ? "تم حفظ التقرير والمرفق بنجاح." : "تم حفظ التقرير بنجاح.");
           $("msg").replaceChildren();
         } catch (e) {
-          showReportError(e.message || e);
+          showReportError(friendlyError(e));
+        } finally {
+          saving = false;
+          setBusy(false);
         }
       }
       $("saveBtn").onclick = () => save($("rStatus").value);
@@ -1077,44 +1022,22 @@
         save("مسودة");
       };
       (async function () {
-        let s = (await db.auth.getSession()).data.session;
+        const s = (await db.auth.getSession()).data.session;
         if (!s) {
-          try {
-            const raw = sessionStorage.getItem("icv-auth-session");
-            if (raw) {
-              const x = JSON.parse(raw),
-                z = await db.auth.setSession({
-                  access_token: x.access_token,
-                  refresh_token: x.refresh_token,
-                });
-              s = z.data?.session || null;
-            }
-          } catch (e) {
-            sessionStorage.removeItem("icv-auth-session");
-          }
-        }
-        if (s) {
-          session = s;
-          sessionStorage.setItem(
-            "icv-auth-session",
-            JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token }),
-          );
-          await boot(s);
-          document.body.classList.remove("auth-pending");
-        } else {
-          document.body.classList.remove("auth-pending");
           location.href = "index.html";
+          return;
+        }
+        try {
+          await boot(s);
+        } catch (e) {
+          const box = document.createElement("div");
+          box.className = "error";
+          box.textContent = friendlyError(e);
+          $("loading").replaceChildren(box);
+        } finally {
+          document.body.classList.remove("auth-pending");
         }
       })();
-      db.auth.onAuthStateChange((event, s) => {
-        if (s) {
-          sessionStorage.setItem(
-            "icv-auth-session",
-            JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token }),
-          );
-          if (!session) boot(s);
-        } else if (event === "SIGNED_OUT") sessionStorage.removeItem("icv-auth-session");
-      });
     </script>
   </body>
 </html>

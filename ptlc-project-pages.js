@@ -7,7 +7,7 @@
       ),
     N = (v) => Number(v || 0).toLocaleString("en-US", { maximumFractionDigits: 2 }),
     P = (v) => Number(v || 0).toFixed(1) + "%",
-    canEdit = () => ["admin", "editor"].includes(window.__icvProfile?.role || "viewer");
+    canEdit = () => window.ICV.canEdit(window.__icvProfile);
   let pid = null,
     oldShow = null;
   function reportSortKey(r) {
@@ -24,7 +24,12 @@
   }
   function cumulativeFinancials(rows) {
     const out = {
-      purchases: { made_in_oman: 0, local_supplier: 0, direct_import: 0, sme_purchase: 0 },
+      purchases: {
+        made_in_oman: 0,
+        local_supplier: 0,
+        direct_import: 0,
+        sme_purchase: 0,
+      },
       services: { local_service: 0, foreign_service: 0, sme_service: 0 },
       subcontracts: { local: 0, foreign: 0, sme: 0 },
     };
@@ -102,24 +107,6 @@
     cfg.thresholds.services = thresholdPct(cfg.thresholds.services ?? 10, 10);
     return cfg;
   }
-  function localContentFromFinancials(f, s) {
-    const c = calcCfg().coefficients;
-    return (
-      Number(s.omani || 0) * c.omaniSalary +
-      Number(s.foreign || 0) * c.foreignSalary +
-      Number(f.purchases.made_in_oman || 0) * c.madeInOman +
-      Number(f.purchases.local_supplier || 0) * c.localSupplier +
-      Number(f.purchases.direct_import || 0) * c.directImport +
-      Number(f.purchases.sme_purchase || 0) * c.smePurchase +
-      Number(f.services.local_service || 0) * c.localService +
-      Number(f.services.foreign_service || 0) * c.foreignService +
-      Number(f.services.sme_service || 0) * c.smeService +
-      (Number(f.subcontracts.local || 0) +
-        Number(f.subcontracts.foreign || 0) +
-        Number(f.subcontracts.sme || 0)) *
-        c.smeSubcontract
-    );
-  }
   function modal(t, b) {
     document.getElementById("icvV2Modal")?.remove();
     let d = document.createElement("div");
@@ -182,15 +169,7 @@
     const s = document.createElement("style");
     s.id = "projectReferenceVisual";
     s.textContent =
-      'html,body{max-width:100%;overflow-x:hidden}\n.comparison-stack{display:grid;gap:18px}.workforce-layout{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:stretch}.workforce-main-card,.workforce-category-card{min-width:0;display:flex}.omanization-status{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:145px;min-height:58px;padding:7px 14px;border:1px solid;border-radius:12px;box-sizing:border-box;flex-shrink:0}.omanization-status small{font-size:10px;font-weight:700}.omanization-status b{font-size:18px;line-height:1.2}.omanization-status span{font-size:10px;font-weight:800}.omanization-status.compliant{color:#087443;background:#eaf8f0;border-color:#bce8ce}.omanization-status.non-compliant{color:#b42318;background:#fff0ef;border-color:#f3c2bf}.omanization-status.not-applicable{color:#667085;background:#f5f7fa;border-color:#d8dee8}.workforce-main-card .comparison-card,.workforce-category-card .comparison-card{height:100%;width:100%;box-sizing:border-box}.workforce-main-card .compare-row,.workforce-category-card .compare-row{font-size:12px}.workforce-main-card .compare-label,.workforce-category-card .compare-label{font-size:12px}.workforce-main-card .compare-value b,.workforce-category-card .compare-value b{font-size:13px}.workforce-main-card .compare-value small,.workforce-category-card .compare-value small,.workforce-main-card .compare-result small,.workforce-category-card .compare-result small{font-size:10px}.workforce-main-card .compare-result span,.workforce-category-card .compare-result span{font-size:10px}.workforce-main-card .compare-head,.workforce-category-card .compare-head{font-size:10px}@media(max-width:900px){.workforce-layout{grid-template-columns:1fr}}.comparison-card{width:100%}.compare-head{display:grid;grid-template-columns:minmax(220px,1.6fr) 1fr 1fr 150px;gap:12px;padding:0 12px 8px;color:var(--muted);font-size:9px;font-weight:800}.compare-list{display:grid;gap:8px}.compare-row{display:grid;grid-template-columns:minmax(220px,1.6fr) 1fr 1fr 150px;gap:12px;align-items:center;padding:11px 12px;border:1px solid #edf1f5;border-radius:12px;background:#fafcfd}.compare-label{font-size:10px;font-weight:800}.compare-value{padding:7px 9px;border-radius:9px;background:#fff;border:1px solid #eef1f4}.compare-value small,.compare-result small{display:block;color:var(--muted);font-size:8px}.compare-value b{display:block;margin-top:2px;font-size:11px}.compare-result{display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center}.compare-result small{grid-column:1/-1}.compare-result b{font-size:11px}.compare-result span{font-size:8px;color:var(--muted)}.compare-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.compare-summary>div{padding:11px 13px;border-radius:11px;background:#f8fafc}.compare-summary small{display:block;color:var(--muted);font-size:8px}.compare-summary b{display:block;margin-top:3px;font-size:12px}.comparison-note-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.comparison-note-grid>div{padding:12px;border-radius:11px;background:#f8fafc}.comparison-note-grid b{display:block;font-size:10px}.comparison-note-grid span{display:block;margin-top:4px;color:var(--muted);font-size:9px;line-height:1.6}@media(max-width:760px){.compare-head{display:none}.compare-row{grid-template-columns:1fr 1fr;gap:8px}.compare-label{grid-column:1/-1}.compare-result{grid-column:1/-1}.compare-summary,.comparison-note-grid{grid-template-columns:1fr}}.project-shell{display:grid;gap:18px;min-width:0}.project-hero{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;min-width:0}.project-hero-main{padding:24px;background:linear-gradient(135deg,var(--primary2),var(--primary) 72%,var(--primary2));color:#fff}.project-breadcrumb{font-size:11px;color:#cde5e1;margin-bottom:12px}.project-title-row{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}.project-title-row h1{font-size:24px;margin:0 0 8px;line-height:1.5}.project-sub{font-size:11px;color:#cde5e1;display:flex;gap:18px;flex-wrap:wrap}.project-sub strong{color:#fff}.project-actions{display:flex;gap:8px;flex-wrap:wrap}.hero-btn{padding:9px 13px;border-radius:10px;border:1px solid rgba(255,255,255,.22);font:700 11px Cairo;background:rgba(255,255,255,.1);color:#fff}.hero-btn.primary{background:#fff;color:var(--primary2)}.project-meta{display:grid;grid-template-columns:repeat(6,1fr);background:#fff;border-bottom:1px solid var(--line)}.project-meta-item{padding:14px 15px;border-left:1px solid var(--line);min-width:0}.project-meta-item:last-child{border-left:0}.project-meta-item small{display:block;color:var(--muted);font-size:10px;margin-bottom:3px}.project-meta-item b{font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.compliance-strip{padding:16px 18px;background:#fbfcfe}.compliance-title{font-size:12px;font-weight:800;margin-bottom:10px}.compliance-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.compliance-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px;display:flex;justify-content:space-between;align-items:center}.compliance-card .label{font-size:11px;font-weight:800}.status-line{display:flex;align-items:center;gap:7px;margin-top:4px}.status-text{font-size:10px;font-weight:800}.compliance-card .percent{font-size:20px;font-weight:800}.status-dot{width:9px;height:9px;border-radius:50%;display:inline-block}.status-dot.ok{background:#16a34a}.status-dot.bad{background:#dc2626}.status-dot.neutral{background:#94a3b8}.project-nav{position:sticky;top:8px;z-index:5;padding:3px 0}.project-nav-inner{display:flex;gap:7px;overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px;box-shadow:0 4px 15px rgba(15,23,42,.04)}.project-nav a{white-space:nowrap;padding:8px 12px;border-radius:9px;font-size:10px;font-weight:800;color:#64748b}.project-nav a:hover{background:#eef7f5;color:var(--primary2)}.project-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.project-kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:var(--shadow);position:relative;min-width:0}.project-kpi:before{content:"";position:absolute;right:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--primary)}.project-kpi small{color:var(--muted);font-size:10px}.project-kpi b{display:block;font-size:20px;margin-top:4px}.project-kpi span{font-size:9px;color:var(--muted)}.two-col{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.section-card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:18px;min-width:0}.section-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:15px}.section-card-head h2{margin:0;font-size:15px}.section-card-head p{margin:3px 0 0;color:var(--muted);font-size:10px}.section-tag{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;background:#eef7f5;color:var(--primary2);font-size:9px;font-weight:800;white-space:nowrap}.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.data-list{display:grid;gap:8px}.data-row{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-radius:10px;background:#f8fafc;font-size:10px}.data-row b{font-size:11px}.salary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.salary-box{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}.salary-box small{display:block;color:var(--muted);font-size:9px}.salary-box b{display:block;margin-top:3px;font-size:14px}.salary-card{border:1px solid var(--line);border-radius:12px;padding:12px}.salary-card small{display:block;color:var(--muted);font-size:9px}.salary-card b{display:block;margin-top:3px;font-size:14px}.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.detail-item{padding:11px;border-radius:11px;background:#f8fafc}.detail-item small{display:block;color:var(--muted);font-size:9px}.detail-item b{font-size:10px;display:block;margin-top:3px;overflow-wrap:anywhere}.simple-chart{display:grid;gap:10px}.simple-chart-row{display:grid;grid-template-columns:125px minmax(0,1fr) 95px;gap:8px;align-items:center;font-size:10px}.track{height:9px;background:#edf1f5;border-radius:99px;overflow:hidden}.track i{display:block;height:100%;background:var(--primary);border-radius:99px}.chart-track{height:9px;background:#edf1f5;border-radius:99px;overflow:hidden}.chart-fill{display:block;height:100%;background:var(--primary);border-radius:99px}.report-list{display:grid;gap:9px}.report-item{display:grid;grid-template-columns:58px 1.1fr 1fr 1fr 90px;align-items:center;gap:12px;border:1px solid var(--line);border-radius:13px;padding:12px 13px;background:#fff;min-width:0}.report-quarter{width:46px;height:40px;border-radius:10px;background:#eaf7f5;color:var(--primary2);display:grid;place-items:center;font-weight:800;font-size:11px}.report-item small{display:block;color:var(--muted);font-size:9px}.report-item b{font-size:10px}.plan-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;background:#f0fdfa;border:1px solid #ccece7;border-radius:13px}.plan-banner strong{display:block;font-size:11px}.plan-banner span{display:block;color:var(--muted);font-size:9px;margin-top:3px}.extension-history{display:grid;gap:8px}.extension-history>div{display:flex;align-items:center;gap:10px;padding:11px 13px;background:#f8fafc;border-radius:11px;border:1px solid var(--line)}.extension-history .date{margin-right:auto;color:var(--muted);font-size:9px}@media(max-width:1100px){.project-meta{grid-template-columns:repeat(3,1fr)}.project-kpis{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.three-col{grid-template-columns:1fr 1fr}.report-item{grid-template-columns:55px 1fr 1fr 85px}}@media(max-width:760px){.project-title-row{display:block}.project-actions{margin-top:12px}.project-meta{grid-template-columns:1fr 1fr}.compliance-cards,.three-col,.project-kpis,.detail-grid{grid-template-columns:1fr}.salary-grid{grid-template-columns:1fr}.report-item{grid-template-columns:52px 1fr 78px}.report-item .report-type,.report-item .report-date{display:none}.section-card{padding:14px}.simple-chart-row{grid-template-columns:95px minmax(0,1fr) 58px}}\n\\n.icv-shell{display:grid;gap:18px;min-width:0}\\n.icv-hero{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden}\\n.icv-hero-main{padding:24px;background:linear-gradient(135deg,var(--primary2),var(--primary) 72%,var(--primary2));color:#fff}\\n.icv-crumb{font-size:11px;color:#cde5e1;margin-bottom:12px}\\n.icv-title-row{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}\\n.icv-title-row h1{font-size:24px;margin:0 0 8px;line-height:1.5}\\n.icv-sub{font-size:11px;color:#cde5e1;display:flex;gap:18px;flex-wrap:wrap}.icv-sub strong{color:#fff}\\n.icv-actions{display:flex;gap:8px;flex-wrap:wrap}\\n.icv-hbtn{padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.22);font:700 12px Cairo;background:rgba(255,255,255,.1);color:#fff;line-height:1.2;height:36px;box-sizing:border-box}.icv-hbtn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}.icv-hbtn.primary:hover{background:var(--primary2);border-color:var(--primary2);color:#fff}\\n.icv-meta{display:grid;grid-template-columns:repeat(6,1fr);background:#fff;border-bottom:1px solid var(--line)}\\n.icv-meta>div{padding:14px 15px;border-left:1px solid var(--line);min-width:0}.icv-meta small{display:block;color:var(--muted);font-size:10px;margin-bottom:3px}.icv-meta b{font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\\n.icv-compliance{padding:16px 18px;background:#fbfcfe}.icv-compliance-title{font-size:12px;font-weight:800;margin-bottom:10px}.icv-compliance-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.icv-compliance-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px;display:flex;justify-content:space-between;align-items:center}\\n.icv-nav{position:sticky;top:8px;z-index:5;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px;display:flex;gap:7px;overflow-x:auto;box-shadow:0 4px 15px rgba(15,23,42,.04)}.icv-nav a{white-space:nowrap;padding:8px 12px;border-radius:9px;font-size:10px;font-weight:800;color:#64748b}\\n.icv-card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:18px;min-width:0}.icv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:15px}.icv-head h2{margin:0;font-size:15px}.icv-head p{margin:3px 0 0;color:var(--muted);font-size:10px}\\n.icv-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.icv-kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:var(--shadow);position:relative;min-width:0}.icv-kpi:before{content:\\"\\";position:absolute;right:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--primary)}.icv-kpi small{color:var(--muted);font-size:10px}.icv-kpi b{display:block;font-size:20px;margin-top:4px}.icv-kpi span{font-size:9px;color:var(--muted)}\\n.icv-two{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.icv-three{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.icv-row{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-radius:10px;background:#f8fafc;font-size:10px;margin-bottom:8px}\\n.icv-salary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.icv-salary>div{border:1px solid var(--line);border-radius:12px;padding:12px}.icv-salary small{display:block;color:var(--muted);font-size:9px}.icv-salary b{display:block;margin-top:3px;font-size:14px}\\n.icv-detail{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.icv-detail>div{padding:11px;border-radius:11px;background:#f8fafc}.icv-detail small{display:block;color:var(--muted);font-size:14px}.icv-detail b{font-size:16px;line-height:1.45;display:block;margin-top:3px;overflow-wrap:anywhere}\\n.icv-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;background:#f0fdfa;border:1px solid #ccece7;border-radius:13px}.icv-reports{display:grid;gap:9px}.icv-report{display:grid;grid-template-columns:58px .8fr 1fr .9fr 1.35fr 130px;align-items:center;gap:12px;border:1px solid var(--line);border-radius:13px;padding:12px 13px;background:#fff;min-width:0}.icv-quarter{width:46px;height:40px;border-radius:10px;background:#eaf7f5;color:var(--primary2);display:grid;place-items:center;font-weight:800;font-size:11px}.icv-report small{display:block;color:var(--muted);font-size:9px}.icv-report b{font-size:10px}.icv-report-date{min-width:0}.icv-report-date b{white-space:normal;overflow-wrap:anywhere}\\n .project-note-form{display:grid;gap:12px;padding:16px;background:#f8fafc;border:1px solid var(--line);border-radius:14px;margin-bottom:15px}.project-note-form label{display:grid;gap:6px;font-size:11px;font-weight:700;color:var(--ink)}.project-note-form input,.project-note-form textarea,.project-note-form select{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:9px;padding:10px;background:#fff;font:inherit;color:var(--ink)}.project-note-form-row{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}.project-notes-list{display:grid;gap:10px}.project-note{border:1px solid var(--line);border-radius:13px;padding:14px;background:#fff}.project-note.is-closed{background:#f8fafc;opacity:.86}.project-note.is-closed h3,.project-note.is-closed>p{text-decoration:line-through;text-decoration-thickness:1.5px;color:#667085}.project-note-top,.project-note-bottom{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.project-note-top{margin-bottom:9px}.project-note h3{font-size:13px;margin:0 0 7px}.project-note p{font-size:12px;line-height:1.8;margin:0;white-space:pre-wrap}.project-note-bottom{border-top:1px solid var(--line);padding-top:10px;margin-top:12px;font-size:10px;color:var(--muted)}.project-note-bottom .btn{margin-right:auto}.note-priority,.note-status{padding:4px 9px;border-radius:20px;font-size:10px;font-weight:800}.priority-urgent{background:#fee2e2;color:#991b1b}.priority-high{background:#ffedd5;color:#9a3412}.priority-medium{background:#fef3c7;color:#92400e}.priority-low{background:#dcfce7;color:#166534}.note-status{background:#e0f2fe;color:#075985}.is-closed .note-status{background:#dcfce7;color:#166534}.note-date,.resolved-date{font-size:10px;color:var(--muted);margin-right:auto}.note-message{font-size:11px;color:var(--primary2)}@media(max-width:760px){.project-note-form-row{grid-template-columns:1fr}.project-note-bottom .btn{margin-right:0;width:100%}}\n.icv-history{display:grid;gap:8px}.icv-history>div{display:flex;align-items:center;gap:10px;padding:11px 13px;background:#f8fafc;border-radius:11px;border:1px solid var(--line);font-size:16px!important}.icv-history .date{margin-right:auto;color:var(--muted);font-size:9px;font-size:16px!important}\\n@media(max-width:1100px){.icv-meta{grid-template-columns:repeat(3,1fr)}.icv-kpis{grid-template-columns:repeat(2,1fr)}.icv-two{grid-template-columns:1fr}.icv-three{grid-template-columns:1fr 1fr}.icv-report{grid-template-columns:55px 1fr 1fr 85px}}\\n@media(max-width:760px){.icv-report{grid-template-columns:52px 1fr 78px}.icv-report>div:nth-child(2),.icv-report>div:nth-child(3),.icv-report>div:nth-child(4),.icv-report .icv-report-date{display:none}.icv-title-row{display:block}.icv-actions{margin-top:12px}.icv-meta{grid-template-columns:1fr 1fr}.icv-compliance-grid,.icv-three,.icv-kpis,.icv-detail{grid-template-columns:1fr}.icv-salary{grid-template-columns:1fr}.icv-report{grid-template-columns:52px 1fr 78px}.icv-card{padding:14px}}';
-    document.head.appendChild(s);
-  }
-  function ensureProjectPageStyles() {
-    if (document.getElementById("icvProjectPageStyles")) return;
-    const s = document.createElement("style");
-    s.id = "icvProjectPageStyles";
-    s.textContent =
-      '.icv-shell{ensureProjectReferenceVisual();display:grid;gap:18px}.icv-hero{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden}.icv-hero-main{padding:24px;background:linear-gradient(135deg,var(--primary2),var(--primary) 72%,var(--primary2));color:#fff}.icv-crumb{font-size:11px;color:#cde5e1;margin-bottom:12px}.icv-title-row{display:flex;justify-content:space-between;gap:20px}.icv-title-row h1{font-size:24px;margin:0 0 8px;line-height:1.5}.icv-sub{font-size:11px;color:#cde5e1;display:flex;gap:18px;flex-wrap:wrap}.icv-sub strong{color:#fff}.icv-actions{display:flex;gap:8px;flex-wrap:wrap}.icv-hbtn{padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.22);font:700 12px Cairo;background:rgba(255,255,255,.1);color:#fff;line-height:1.2;height:36px;box-sizing:border-box}.icv-hbtn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}.icv-meta{display:grid;grid-template-columns:repeat(6,1fr);background:#fff;border-bottom:1px solid var(--line)}.icv-meta>div{padding:14px 15px;border-left:1px solid var(--line);min-width:0}.icv-meta small{display:block;color:var(--muted);font-size:10px}.icv-meta b{display:block;font-size:12px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.icv-compliance{padding:16px 18px;background:#fbfcfe}.icv-compliance-title{font-size:12px;font-weight:800;margin-bottom:10px}.icv-compliance-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.icv-compliance-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px;display:flex;justify-content:space-between;align-items:center}.icv-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-left:6px}.icv-ok{background:#16a34a}.icv-bad{background:#dc2626}.icv-neutral{background:#94a3b8}.icv-nav{position:sticky;top:8px;z-index:5;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px;display:flex;gap:7px;overflow-x:auto}.icv-nav a{white-space:nowrap;padding:8px 12px;border-radius:9px;font-size:10px;font-weight:800;color:#64748b}.icv-card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:18px}.icv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:15px}.icv-head h2{margin:0;font-size:15px}.icv-head p{margin:3px 0 0;color:var(--muted);font-size:10px}.icv-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.icv-kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:var(--shadow);position:relative}.icv-kpi:before{content:"";position:absolute;right:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--primary)}.icv-kpi small{color:var(--muted);font-size:10px}.icv-kpi b{display:block;font-size:20px;margin-top:4px}.icv-kpi span{font-size:9px;color:var(--muted)}.icv-two{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.icv-three{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.icv-row{display:flex;justify-content:space-between;padding:9px 10px;border-radius:10px;background:#f8fafc;font-size:10px;margin-bottom:8px}.icv-chart{display:grid;gap:10px}.icv-chart>div{display:grid;grid-template-columns:125px minmax(0,1fr) 95px;gap:8px;align-items:center;font-size:10px}.icv-track{height:9px;background:#edf1f5;border-radius:99px;overflow:hidden}.icv-track i{display:block;height:100%;background:var(--primary);border-radius:99px}.icv-salary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.icv-salary>div,.icv-detail>div{border:1px solid var(--line);border-radius:12px;padding:11px;background:#fff}.icv-salary small,.icv-detail small{display:block;color:var(--muted);font-size:14px}.icv-salary b,.icv-detail b{font-size:16px;line-height:1.45;display:block;margin-top:3px;overflow-wrap:anywhere}.icv-detail{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.icv-banner{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 15px;background:#f0fdfa;border:1px solid #ccece7;border-radius:13px}.icv-reports{display:grid;gap:9px}.icv-report{display:grid;grid-template-columns:58px 1fr 1fr 1fr 110px;align-items:center;gap:12px;border:1px solid var(--line);border-radius:13px;padding:12px;background:#fff}.icv-quarter{width:46px;height:40px;border-radius:10px;background:#eaf7f5;color:var(--primary2);display:grid;place-items:center;font-weight:800}.icv-history{display:grid;gap:8px}.icv-history>div{display:flex;align-items:center;gap:10px;padding:11px 13px;background:#f8fafc;border-radius:11px;border:1px solid var(--line);font-size:16px!important}.icv-history .date{margin-right:auto;color:var(--muted);font-size:9px;font-size:16px!important}@media(max-width:1100px){.icv-meta{grid-template-columns:repeat(3,1fr)}.icv-kpis{grid-template-columns:repeat(2,1fr)}.icv-two{grid-template-columns:1fr}.icv-three{grid-template-columns:1fr 1fr}}@media(max-width:760px){.icv-title-row{display:block}.icv-actions{margin-top:12px}.icv-meta{grid-template-columns:1fr 1fr}.icv-compliance-grid,.icv-three,.icv-kpis,.icv-detail{grid-template-columns:1fr}.icv-salary{grid-template-columns:1fr}.icv-report{grid-template-columns:52px 1fr 78px}.icv-report .hide-mobile{display:none}}';
+      'html,body{max-width:100%;overflow-x:hidden}\n.comparison-stack{display:grid;gap:18px}.workforce-layout{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:stretch}.workforce-main-card,.workforce-category-card{min-width:0;display:flex}.omanization-status{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:145px;min-height:58px;padding:7px 14px;border:1px solid;border-radius:12px;box-sizing:border-box;flex-shrink:0}.omanization-status small{font-size:10px;font-weight:700}.omanization-status b{font-size:18px;line-height:1.2}.omanization-status span{font-size:10px;font-weight:800}.omanization-status.compliant{color:#087443;background:#eaf8f0;border-color:#bce8ce}.omanization-status.non-compliant{color:#b42318;background:#fff0ef;border-color:#f3c2bf}.omanization-status.not-applicable{color:#667085;background:#f5f7fa;border-color:#d8dee8}.workforce-main-card .comparison-card,.workforce-category-card .comparison-card{height:100%;width:100%;box-sizing:border-box}.workforce-main-card .compare-row,.workforce-category-card .compare-row{font-size:12px}.workforce-main-card .compare-label,.workforce-category-card .compare-label{font-size:12px}.workforce-main-card .compare-value b,.workforce-category-card .compare-value b{font-size:13px}.workforce-main-card .compare-value small,.workforce-category-card .compare-value small,.workforce-main-card .compare-result small,.workforce-category-card .compare-result small{font-size:10px}.workforce-main-card .compare-result span,.workforce-category-card .compare-result span{font-size:10px}.workforce-main-card .compare-head,.workforce-category-card .compare-head{font-size:10px}@media(max-width:900px){.workforce-layout{grid-template-columns:1fr}}.comparison-card{width:100%}.compare-head{display:grid;grid-template-columns:minmax(220px,1.6fr) 1fr 1fr 150px;gap:12px;padding:0 12px 8px;color:var(--muted);font-size:9px;font-weight:800}.compare-list{display:grid;gap:8px}.compare-row{display:grid;grid-template-columns:minmax(220px,1.6fr) 1fr 1fr 150px;gap:12px;align-items:center;padding:11px 12px;border:1px solid #edf1f5;border-radius:12px;background:#fafcfd}.compare-label{font-size:10px;font-weight:800}.compare-value{padding:7px 9px;border-radius:9px;background:#fff;border:1px solid #eef1f4}.compare-value small,.compare-result small{display:block;color:var(--muted);font-size:8px}.compare-value b{display:block;margin-top:2px;font-size:11px}.compare-result{display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center}.compare-result small{grid-column:1/-1}.compare-result b{font-size:11px}.compare-result span{font-size:8px;color:var(--muted)}.compare-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.compare-summary>div{padding:11px 13px;border-radius:11px;background:#f8fafc}.compare-summary small{display:block;color:var(--muted);font-size:8px}.compare-summary b{display:block;margin-top:3px;font-size:12px}.comparison-note-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.comparison-note-grid>div{padding:12px;border-radius:11px;background:#f8fafc}.comparison-note-grid b{display:block;font-size:10px}.comparison-note-grid span{display:block;margin-top:4px;color:var(--muted);font-size:9px;line-height:1.6}@media(max-width:760px){.compare-head{display:none}.compare-row{grid-template-columns:1fr 1fr;gap:8px}.compare-label{grid-column:1/-1}.compare-result{grid-column:1/-1}.compare-summary,.comparison-note-grid{grid-template-columns:1fr}}.project-shell{display:grid;gap:18px;min-width:0}.project-hero{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;min-width:0}.project-hero-main{padding:24px;background:linear-gradient(135deg,var(--primary2),var(--primary) 72%,var(--primary2));color:#fff}.project-breadcrumb{font-size:11px;color:#cde5e1;margin-bottom:12px}.project-title-row{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}.project-title-row h1{font-size:24px;margin:0 0 8px;line-height:1.5}.project-sub{font-size:11px;color:#cde5e1;display:flex;gap:18px;flex-wrap:wrap}.project-sub strong{color:#fff}.project-actions{display:flex;gap:8px;flex-wrap:wrap}.hero-btn{padding:9px 13px;border-radius:10px;border:1px solid rgba(255,255,255,.22);font:700 11px Cairo;background:rgba(255,255,255,.1);color:#fff}.hero-btn.primary{background:#fff;color:var(--primary2)}.project-meta{display:grid;grid-template-columns:repeat(6,1fr);background:#fff;border-bottom:1px solid var(--line)}.project-meta-item{padding:14px 15px;border-left:1px solid var(--line);min-width:0}.project-meta-item:last-child{border-left:0}.project-meta-item small{display:block;color:var(--muted);font-size:10px;margin-bottom:3px}.project-meta-item b{font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.compliance-strip{padding:16px 18px;background:#fbfcfe}.compliance-title{font-size:12px;font-weight:800;margin-bottom:10px}.compliance-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.compliance-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px;display:flex;justify-content:space-between;align-items:center}.compliance-card .label{font-size:11px;font-weight:800}.status-line{display:flex;align-items:center;gap:7px;margin-top:4px}.status-text{font-size:10px;font-weight:800}.compliance-card .percent{font-size:20px;font-weight:800}.status-dot{width:9px;height:9px;border-radius:50%;display:inline-block}.status-dot.ok{background:#16a34a}.status-dot.bad{background:#dc2626}.status-dot.neutral{background:#94a3b8}.project-nav{position:sticky;top:8px;z-index:5;padding:3px 0}.project-nav-inner{display:flex;gap:7px;overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px;box-shadow:0 4px 15px rgba(15,23,42,.04)}.project-nav a{white-space:nowrap;padding:8px 12px;border-radius:9px;font-size:10px;font-weight:800;color:#64748b}.project-nav a:hover{background:#eef7f5;color:var(--primary2)}.project-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.project-kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:var(--shadow);position:relative;min-width:0}.project-kpi:before{content:"";position:absolute;right:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--primary)}.project-kpi small{color:var(--muted);font-size:10px}.project-kpi b{display:block;font-size:20px;margin-top:4px}.project-kpi span{font-size:9px;color:var(--muted)}.two-col{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.section-card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:18px;min-width:0}.section-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:15px}.section-card-head h2{margin:0;font-size:15px}.section-card-head p{margin:3px 0 0;color:var(--muted);font-size:10px}.section-tag{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;background:#eef7f5;color:var(--primary2);font-size:9px;font-weight:800;white-space:nowrap}.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.data-list{display:grid;gap:8px}.data-row{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-radius:10px;background:#f8fafc;font-size:10px}.data-row b{font-size:11px}.salary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.salary-box{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}.salary-box small{display:block;color:var(--muted);font-size:9px}.salary-box b{display:block;margin-top:3px;font-size:14px}.salary-card{border:1px solid var(--line);border-radius:12px;padding:12px}.salary-card small{display:block;color:var(--muted);font-size:9px}.salary-card b{display:block;margin-top:3px;font-size:14px}.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.detail-item{padding:11px;border-radius:11px;background:#f8fafc}.detail-item small{display:block;color:var(--muted);font-size:9px}.detail-item b{font-size:10px;display:block;margin-top:3px;overflow-wrap:anywhere}.simple-chart{display:grid;gap:10px}.simple-chart-row{display:grid;grid-template-columns:125px minmax(0,1fr) 95px;gap:8px;align-items:center;font-size:10px}.track{height:9px;background:#edf1f5;border-radius:99px;overflow:hidden}.track i{display:block;height:100%;background:var(--primary);border-radius:99px}.chart-track{height:9px;background:#edf1f5;border-radius:99px;overflow:hidden}.chart-fill{display:block;height:100%;background:var(--primary);border-radius:99px}.report-list{display:grid;gap:9px}.report-item{display:grid;grid-template-columns:58px 1.1fr 1fr 1fr 90px;align-items:center;gap:12px;border:1px solid var(--line);border-radius:13px;padding:12px 13px;background:#fff;min-width:0}.report-quarter{width:46px;height:40px;border-radius:10px;background:#eaf7f5;color:var(--primary2);display:grid;place-items:center;font-weight:800;font-size:11px}.report-item small{display:block;color:var(--muted);font-size:9px}.report-item b{font-size:10px}.plan-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;background:#f0fdfa;border:1px solid #ccece7;border-radius:13px}.plan-banner strong{display:block;font-size:11px}.plan-banner span{display:block;color:var(--muted);font-size:9px;margin-top:3px}.extension-history{display:grid;gap:8px}.extension-history>div{display:flex;align-items:center;gap:10px;padding:11px 13px;background:#f8fafc;border-radius:11px;border:1px solid var(--line)}.extension-history .date{margin-right:auto;color:var(--muted);font-size:9px}@media(max-width:1100px){.project-meta{grid-template-columns:repeat(3,1fr)}.project-kpis{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.three-col{grid-template-columns:1fr 1fr}.report-item{grid-template-columns:55px 1fr 1fr 85px}}@media(max-width:760px){.project-title-row{display:block}.project-actions{margin-top:12px}.project-meta{grid-template-columns:1fr 1fr}.compliance-cards,.three-col,.project-kpis,.detail-grid{grid-template-columns:1fr}.salary-grid{grid-template-columns:1fr}.report-item{grid-template-columns:52px 1fr 78px}.report-item .report-type,.report-item .report-date{display:none}.section-card{padding:14px}.simple-chart-row{grid-template-columns:95px minmax(0,1fr) 58px}}\n\n.icv-shell{display:grid;gap:18px;min-width:0}\n.icv-hero{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden}\n.icv-hero-main{padding:24px;background:linear-gradient(135deg,var(--primary2),var(--primary) 72%,var(--primary2));color:#fff}\n.icv-crumb{font-size:11px;color:#cde5e1;margin-bottom:12px}\n.icv-title-row{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}\n.icv-title-row h1{font-size:24px;margin:0 0 8px;line-height:1.5}\n.icv-sub{font-size:11px;color:#cde5e1;display:flex;gap:18px;flex-wrap:wrap}.icv-sub strong{color:#fff}\n.icv-actions{display:flex;gap:8px;flex-wrap:wrap}\n.icv-hbtn{padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.22);font:700 12px Cairo;background:rgba(255,255,255,.1);color:#fff;line-height:1.2;height:36px;box-sizing:border-box}.icv-hbtn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}.icv-hbtn.primary:hover{background:var(--primary2);border-color:var(--primary2);color:#fff}\n.icv-meta{display:grid;grid-template-columns:repeat(6,1fr);background:#fff;border-bottom:1px solid var(--line)}\n.icv-meta>div{padding:14px 15px;border-left:1px solid var(--line);min-width:0}.icv-meta small{display:block;color:var(--muted);font-size:10px;margin-bottom:3px}.icv-meta b{font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n.icv-compliance{padding:16px 18px;background:#fbfcfe}.icv-compliance-title{font-size:12px;font-weight:800;margin-bottom:10px}.icv-compliance-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.icv-compliance-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px;display:flex;justify-content:space-between;align-items:center}\n.icv-nav{position:sticky;top:8px;z-index:5;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px;display:flex;gap:7px;overflow-x:auto;box-shadow:0 4px 15px rgba(15,23,42,.04)}.icv-nav a{white-space:nowrap;padding:8px 12px;border-radius:9px;font-size:10px;font-weight:800;color:#64748b}\n.icv-card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:18px;min-width:0}.icv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:15px}.icv-head h2{margin:0;font-size:15px}.icv-head p{margin:3px 0 0;color:var(--muted);font-size:10px}\n.icv-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.icv-kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:var(--shadow);position:relative;min-width:0}.icv-kpi:before{content:\"\";position:absolute;right:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--primary)}.icv-kpi small{color:var(--muted);font-size:10px}.icv-kpi b{display:block;font-size:20px;margin-top:4px}.icv-kpi span{font-size:9px;color:var(--muted)}\n.icv-two{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.icv-three{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.icv-row{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-radius:10px;background:#f8fafc;font-size:10px;margin-bottom:8px}\n.icv-salary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.icv-salary>div{border:1px solid var(--line);border-radius:12px;padding:12px}.icv-salary small{display:block;color:var(--muted);font-size:9px}.icv-salary b{display:block;margin-top:3px;font-size:14px}\n.icv-detail{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.icv-detail>div{padding:11px;border-radius:11px;background:#f8fafc}.icv-detail small{display:block;color:var(--muted);font-size:14px}.icv-detail b{font-size:16px;line-height:1.45;display:block;margin-top:3px;overflow-wrap:anywhere}\n.icv-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;background:#f0fdfa;border:1px solid #ccece7;border-radius:13px}.icv-reports{display:grid;gap:9px}.icv-report{display:grid;grid-template-columns:58px .8fr 1fr .9fr 1.35fr 130px;align-items:center;gap:12px;border:1px solid var(--line);border-radius:13px;padding:12px 13px;background:#fff;min-width:0}.icv-quarter{width:46px;height:40px;border-radius:10px;background:#eaf7f5;color:var(--primary2);display:grid;place-items:center;font-weight:800;font-size:11px}.icv-report small{display:block;color:var(--muted);font-size:9px}.icv-report b{font-size:10px}.icv-report-date{min-width:0}.icv-report-date b{white-space:normal;overflow-wrap:anywhere}\n .project-note-form{display:grid;gap:12px;padding:16px;background:#f8fafc;border:1px solid var(--line);border-radius:14px;margin-bottom:15px}.project-note-form label{display:grid;gap:6px;font-size:11px;font-weight:700;color:var(--ink)}.project-note-form input,.project-note-form textarea,.project-note-form select{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:9px;padding:10px;background:#fff;font:inherit;color:var(--ink)}.project-note-form-row{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}.project-notes-list{display:grid;gap:10px}.project-note{border:1px solid var(--line);border-radius:13px;padding:14px;background:#fff}.project-note.is-closed{background:#f8fafc;opacity:.86}.project-note.is-closed h3,.project-note.is-closed>p{text-decoration:line-through;text-decoration-thickness:1.5px;color:#667085}.project-note-top,.project-note-bottom{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.project-note-top{margin-bottom:9px}.project-note h3{font-size:13px;margin:0 0 7px}.project-note p{font-size:12px;line-height:1.8;margin:0;white-space:pre-wrap}.project-note-bottom{border-top:1px solid var(--line);padding-top:10px;margin-top:12px;font-size:10px;color:var(--muted)}.project-note-bottom .btn{margin-right:auto}.note-priority,.note-status{padding:4px 9px;border-radius:20px;font-size:10px;font-weight:800}.priority-urgent{background:#fee2e2;color:#991b1b}.priority-high{background:#ffedd5;color:#9a3412}.priority-medium{background:#fef3c7;color:#92400e}.priority-low{background:#dcfce7;color:#166534}.note-status{background:#e0f2fe;color:#075985}.is-closed .note-status{background:#dcfce7;color:#166534}.note-date,.resolved-date{font-size:10px;color:var(--muted);margin-right:auto}.note-message{font-size:11px;color:var(--primary2)}@media(max-width:760px){.project-note-form-row{grid-template-columns:1fr}.project-note-bottom .btn{margin-right:0;width:100%}}\n.icv-history{display:grid;gap:8px}.icv-history>div{display:flex;align-items:center;gap:10px;padding:11px 13px;background:#f8fafc;border-radius:11px;border:1px solid var(--line);font-size:16px!important}.icv-history .date{margin-right:auto;color:var(--muted);font-size:9px;font-size:16px!important}\n@media(max-width:1100px){.icv-meta{grid-template-columns:repeat(3,1fr)}.icv-kpis{grid-template-columns:repeat(2,1fr)}.icv-two{grid-template-columns:1fr}.icv-three{grid-template-columns:1fr 1fr}.icv-report{grid-template-columns:55px 1fr 1fr 85px}}\n@media(max-width:760px){.icv-report{grid-template-columns:52px 1fr 78px}.icv-report>div:nth-child(2),.icv-report>div:nth-child(3),.icv-report>div:nth-child(4),.icv-report .icv-report-date{display:none}.icv-title-row{display:block}.icv-actions{margin-top:12px}.icv-meta{grid-template-columns:1fr 1fr}.icv-compliance-grid,.icv-three,.icv-kpis,.icv-detail{grid-template-columns:1fr}.icv-salary{grid-template-columns:1fr}.icv-report{grid-template-columns:52px 1fr 78px}.icv-card{padding:14px}}';
     document.head.appendChild(s);
   }
   function fmtProjectDate(v) {
@@ -248,7 +227,7 @@
       history = hr.data || [];
     window.__icvProjectFollowups = followups;
     const pd = plan?.plan_data || {},
-      orderedReports = sortReports(reports),
+      orderedReports = sortReports(reports.filter((r) => String(r.status || "").trim() === "معتمد")),
       latest =
         orderedReports.filter((r) => String(r.status || "").includes("معتمد")).slice(-1)[0] ||
         orderedReports.slice(-1)[0],
@@ -260,9 +239,9 @@
     const om = n(ld.omani_total),
       foreign = n(ld.foreign_total),
       total = om + foreign,
-      omPct = total ? (om / total) * 100 : 0;
-    const yearNo = (String(p.annual_update || "").match(/\\d+/) || [""])[0],
-      qNo = String(p.current_quarter || "").replace(/\\D/g, "") || "",
+      omPct = p.omanization_pct != null ? n(p.omanization_pct) : total ? (om / total) * 100 : 0;
+    const yearNo = (String(p.annual_update || "").match(/\d+/) || [""])[0],
+      qNo = String(p.current_quarter || "").replace(/\D/g, "") || "",
       periodKey = yearNo && qNo ? yearNo + "_" + qNo : "";
     const workforceData = pd.workforce || {};
     const workforceCategories = Array.isArray(workforceData.categories) ? workforceData.categories : [];
@@ -270,8 +249,11 @@
     const planWorkTotals = {
       omani: workforceCategories.reduce((a, c) => a + n(c.omani), 0),
       foreign: workforceCategories.reduce((a, c) => a + n(c.foreign), 0),
-      omani_salary: 0,
-      foreign_salary: 0,
+      omani_salary: Object.values(workforceData.salaries || {}).reduce((a, x) => a + n(x?.omani_salary), 0),
+      foreign_salary: Object.values(workforceData.salaries || {}).reduce(
+        (a, x) => a + n(x?.foreign_salary),
+        0,
+      ),
     };
     const planPurchaseRows = pd.purchases || [],
       planServiceRows = pd.services || [],
@@ -352,82 +334,41 @@
       actualServices = cumulativeFinancial.services,
       actualSubcontracts = cumulativeFinancial.subcontracts;
     const actualSubcontractsTotal = Object.values(actualSubcontracts).reduce((a, v) => a + v, 0);
-    const totalExpenditure =
-      actualOmaniSalary +
-      actualForeignSalary +
-      Object.values(actualPurchases).reduce((a, v) => a + v, 0) +
-      Object.values(actualServices).reduce((a, v) => a + v, 0) +
-      actualSubcontractsTotal;
-    const totalLocalContent = localContentFromFinancials(cumulativeFinancial, {
-      omani: actualOmaniSalary,
-      foreign: actualForeignSalary,
-    });
-    const smeActual = actualSubcontractsTotal + n(actualServices.sme_service);
-    const sme = n(p.total_project_value) ? (smeActual / n(p.total_project_value)) * 100 : 0;
+    // Totals, percentages and compliance come from the database (approved reports, platform settings),
+    // so every page shows the same figures.
+    const totalExpenditure = n(p.total_spend);
+    const totalLocalContent = n(p.total_local_content);
+    const sme = n(p.sme_pct);
     const planPurchases = planPurchaseTotals;
     const planServices = planServiceTotals;
     const actualPurchaseVals = { ...actualPurchases };
     const actualServiceVals = { ...actualServices };
-    const hasPlan =
-      Object.values(planPurchases).some((v) => v > 0) ||
-      Object.values(planServices).some((v) => v > 0) ||
-      planOm > 0 ||
-      planForeign > 0 ||
-      planOmaniSalary > 0 ||
-      planForeignSalary > 0 ||
-      actualSubcontractsTotal > 0;
-    const workforceStatus = total
-      ? omPct >= calcCfg().thresholds.omanization
-        ? "مستوفي"
-        : "غير مستوفي"
-      : "غير منطبق";
-    const calcCoefficients = calcCfg().coefficients,
-      complianceThresholds = calcCfg().thresholds;
+    const complianceThresholds = calcCfg().thresholds;
     const goodsActual = Object.values(actualPurchaseVals).reduce((a, v) => a + v, 0),
-      goodsLocalContentActual =
-        actualPurchaseVals.made_in_oman * calcCoefficients.madeInOman +
-        actualPurchaseVals.local_supplier * calcCoefficients.localSupplier +
-        actualPurchaseVals.direct_import * calcCoefficients.directImport +
-        actualPurchaseVals.sme_purchase * calcCoefficients.smePurchase,
-      goodsPlan = Number(planPurchases.made_in_oman || 0),
-      goodsActualMadePct =
-        goodsActual > 0 ? (Number(actualPurchaseVals.made_in_oman || 0) / goodsActual) * 100 : 0,
+      goodsPlan = Object.values(planPurchases).reduce((a, v) => a + v, 0),
+      goodsActualMadePct = n(p.goods_pct),
       servicesActualTotal = Object.values(actualServiceVals).reduce((a, v) => a + v, 0),
-      servicesActualPct =
-        Number(p.total_project_value) > 0 ? (servicesActualTotal / Number(p.total_project_value)) * 100 : 0,
-      smeAssignedActual = Number(actualSubcontracts.sme || 0) + Number(actualServiceVals.sme_service || 0),
-      smeAssignedPct =
-        Number(p.total_project_value) > 0 ? (smeAssignedActual / Number(p.total_project_value)) * 100 : 0,
-      goodsStatus =
-        goodsActual > 0
-          ? goodsActualMadePct >= complianceThresholds.goods
-            ? "مستوفي"
-            : "غير مستوفي"
-          : "غير منطبق",
-      servicesStatus =
-        Number(p.total_project_value) > 0
-          ? servicesActualPct >= complianceThresholds.services
-            ? "مستوفي"
-            : "غير مستوفي"
-          : "غير منطبق",
-      smeAssignedStatus =
-        Number(p.total_project_value) > 0
-          ? smeAssignedPct >= complianceThresholds.sme
-            ? "مستوفي"
-            : "غير مستوفي"
-          : "غير منطبق";
-    const smeStatus = sme >= calcCfg().thresholds.sme ? "مستوفي" : sme ? "غير مستوفي" : "غير منطبق";
-    const compliance = omPct >= calcCfg().thresholds.omanization && sme >= calcCfg().thresholds.sme;
+      servicesActualPct = n(p.services_pct),
+      smeAssignedPct = n(p.sme_pct);
+    const workforceStatus = p.omanization_status || "غير منطبق",
+      goodsStatus = p.made_in_oman_status || "غير منطبق",
+      servicesStatus = p.services_status || "غير منطبق",
+      smeStatus = p.sme_10_status || "غير منطبق",
+      smeAssignedStatus = smeStatus;
+    const compliance = p.compliance_status || "غير منطبق";
+    const statusDot = (s) => (s === "مستوفي" ? "ok" : s === "غير مستوفي" ? "bad" : "neutral");
     const compareStatus = (plan, actual) =>
       plan <= 0 ? "غير منطبق" : actual >= plan ? "محقق" : "أقل من الخطة";
     const comparePct = (plan, actual) => (plan > 0 ? ((actual / plan) * 100).toFixed(1) + "%" : "—");
+    // mode: true = money, false = count, "pct" = percentage
+    const cmpFmt = (v, mode) => (mode === "pct" ? pct(v) : mode ? money(v) : n(v));
     const cmpRow = (label, plan, actual, moneyMode = true) =>
       '<div class="compare-row"><div class="compare-label">' +
       esc2(label) +
       '</div><div class="compare-value"><small>الخطة</small><b>' +
-      (moneyMode ? money(plan) : n(plan)) +
+      cmpFmt(plan, moneyMode) +
       '</b></div><div class="compare-value"><small>الأداء الفعلي</small><b>' +
-      (moneyMode ? money(actual) : n(actual)) +
+      cmpFmt(actual, moneyMode) +
       '</b></div><div class="compare-result"><small>التنفيذ</small><b class="' +
       (plan > 0 ? (actual >= plan ? "ok" : "bad") : "") +
       '">' +
@@ -498,14 +439,19 @@
         (reports || [])
           .filter((r) => {
             const y = Number(r.annual_period),
-              q = Number(String(r.quarter || "").replace(/\\D/g, ""));
+              q = Number(String(r.quarter || "").replace(/\D/g, ""));
             return y && q >= 1 && q <= 4 && targetKeys.has(y + "_Q" + q);
           })
-          .map((r) => Number(r.annual_period) + "_Q" + Number(String(r.quarter || "").replace(/\\D/g, ""))),
+          .map((r) => Number(r.annual_period) + "_Q" + Number(String(r.quarter || "").replace(/\D/g, ""))),
       );
-      const received = (reports || []).length;
+      const received = receivedKeys.size;
       const due = dueTargets.length;
-      return { target: targets.length, due, received, late: Math.max(0, due - received) };
+      return {
+        target: targets.length,
+        due,
+        received,
+        late: Math.max(0, due - received),
+      };
     };
     const reportStats = projectQuarterStats();
     const reportsTarget = reportStats.target,
@@ -581,7 +527,12 @@
               '<article class="project-note ' +
               (f.status === "closed" ? "is-closed" : "") +
               '"><div class="project-note-top"><span class="note-priority priority-' +
-              ({ عاجلة: "urgent", عالية: "high", متوسطة: "medium", منخفضة: "low" }[f.priority] || "medium") +
+              ({
+                عاجلة: "urgent",
+                عالية: "high",
+                متوسطة: "medium",
+                منخفضة: "low",
+              }[f.priority] || "medium") +
               '">' +
               esc2(f.priority || "متوسطة") +
               '</span><span class="note-status">' +
@@ -716,7 +667,11 @@
       '</b></div></div><div class="icv-history" style="margin-top:12px">' +
       historyHtml +
       "</div></section>" +
-      '<div class="compliance-strip"><div class="compliance-title">حالة الالتزام بالمحتوى المحلي</div><div class="compliance-cards"><div class="compliance-card"><div><div class="label">قوى العاملة</div><div class="status-line"><span class="status-dot ' +
+      '<div class="compliance-strip"><div class="compliance-title">حالة الالتزام بالمحتوى المحلي: <span class="status-text ' +
+      statusDot(compliance) +
+      '">' +
+      esc2(compliance) +
+      '</span></div><div class="compliance-cards" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))"><div class="compliance-card"><div><div class="label">القوى العاملة</div><div class="status-line"><span class="status-dot ' +
       (workforceStatus === "مستوفي" ? "ok" : workforceStatus === "غير مستوفي" ? "bad" : "neutral") +
       '"></span><span class="status-text">' +
       workforceStatus +
@@ -727,13 +682,19 @@
       '"></span><span class="status-text">' +
       goodsStatus +
       '</span></div></div><div class="percent">' +
-      (goodsPlan ? pct((goodsActual / goodsPlan) * 100) : "—") +
-      '</div></div><div class="compliance-card"><div><div class="label">الخدمات وعقود الباطن</div><div class="status-line"><span class="status-dot ' +
+      (goodsStatus === "غير منطبق" ? "—" : pct(goodsActualMadePct)) +
+      '</div></div><div class="compliance-card"><div><div class="label">الخدمات</div><div class="status-line"><span class="status-dot ' +
+      statusDot(servicesStatus) +
+      '"></span><span class="status-text">' +
+      servicesStatus +
+      '</span></div></div><div class="percent">' +
+      (servicesStatus === "غير منطبق" ? "—" : pct(servicesActualPct)) +
+      '</div></div><div class="compliance-card"><div><div class="label">المؤسسات الصغيرة والمتوسطة</div><div class="status-line"><span class="status-dot ' +
       (smeStatus === "مستوفي" ? "ok" : smeStatus === "غير مستوفي" ? "bad" : "neutral") +
       '"></span><span class="status-text">' +
       smeStatus +
       '</span></div></div><div class="percent">' +
-      pct(sme) +
+      (smeStatus === "غير منطبق" ? "—" : pct(sme)) +
       "</div></div></div></div></section>" +
       '<nav class="project-nav"><div class="project-nav-inner"><a href="#overview">نظرة عامة</a><a href="#workforce">العمالة والرواتب</a><a href="#purchases">المشتريات</a><a href="#services">الخدمات</a><a href="#subcontracts">عقود الباطن</a><a href="#basic">البيانات الأساسية</a><a href="#plan">الخطة</a><a href="#reports">التقارير</a><a href="#extension">التمديدات</a></div></nav>' +
       '<section id="overview" class="project-kpis"><div class="project-kpi"><small>إجمالي الصرف</small><b>' +
@@ -753,18 +714,29 @@
         "قوى عاملة",
         cmpRow("العمانيون", planOm, om, false) +
           cmpRow("الأجانب", planForeign, foreign, false) +
-          cmpRow("نسبة التعمين", planOm + planForeign, omPct, false) +
+          cmpRow(
+            "نسبة التعمين",
+            planOm + planForeign ? (planOm / (planOm + planForeign)) * 100 : 0,
+            omPct,
+            "pct",
+          ) +
           cmpRow("رواتب العمانيين", planOmaniSalary, actualOmaniSalary, true) +
           cmpRow("رواتب الأجانب", planForeignSalary, actualForeignSalary, true),
         planOm + planForeign,
         om + foreign,
         false,
         '<div class="omanization-status ' +
-          (total > 0 && omPct >= calcCfg().thresholds.omanization ? "compliant" : "non-compliant") +
+          (workforceStatus === "مستوفي"
+            ? "compliant"
+            : workforceStatus === "غير مستوفي"
+              ? "non-compliant"
+              : "not-applicable") +
           '"><small>نسبة التعمين</small><b>' +
           pct(omPct) +
           "</b><span>" +
-          (total > 0 && omPct >= calcCfg().thresholds.omanization ? "مستوفي" : "غير مستوفي") +
+          (workforceStatus === "غير منطبق"
+            ? "لا توجد بيانات"
+            : workforceStatus + " · الحد " + pct(complianceThresholds.omanization)) +
           "</span></div>",
         false,
       ) +
@@ -866,7 +838,7 @@
       "</div>" +
       '<section class="section-card comparison-note"><div class="section-card-head"><div><h2>قراءة المقارنة</h2><p>النسبة توضح مستوى تنفيذ الأداء الفعلي مقارنة بالخطة للفترة الحالية.</p></div><span class="section-tag">' +
       (periodKey ? "الفترة " + esc2(periodKey.replace("_", " / ")) : "الخطة") +
-      '</span></div><div class="comparison-note-grid"><div><b>طريقة القراءة</b><span>100% فأعلى = محقق أو متجاوز للخطة</span></div><div><b>مصدر الفعلي</b><span>آخر تقرير معتمد، أو آخر تقرير متاح عند عدم وجود تقرير معتمد.</span></div><div><b>مصدر الخطة</b><span>الفترة المقابلة من خطة المحتوى المحلي.</span></div></div></section>' +
+      '</span></div><div class="comparison-note-grid"><div><b>طريقة القراءة</b><span>100% فأعلى = محقق أو متجاوز للخطة</span></div><div><b>مصدر الفعلي</b><span>التقارير المعتمدة فقط. التقارير غير المعتمدة لا تدخل في الحساب.</span></div><div><b>مصدر الخطة</b><span>الفترة المقابلة من خطة المحتوى المحلي.</span></div></div></section>' +
       '<section id="plan" class="section-card"><div class="section-card-head"><div><h2>خطة المحتوى المحلي</h2><p>إضافة أو تحديث خطة المشروع من داخل صفحة المشروع</p></div><span class="section-tag">' +
       (plan ? "خطة متوفرة" : "لا توجد خطة") +
       '</span></div><div class="plan-banner"><div><strong>' +
@@ -914,9 +886,9 @@
       '</b></div><div class="detail-item"><small>SME</small><b>' +
       pct(sme) +
       '</b></div><div class="detail-item"><small>الحالة العامة</small><b class="' +
-      (compliance ? "ok" : "bad") +
+      statusDot(compliance) +
       '">' +
-      (compliance ? "مستوفي" : "غير مستوفي") +
+      esc2(compliance) +
       '</b></div><div class="detail-item"><small>إجمالي الصرف</small><b>' +
       money(totalExpenditure) +
       '</b></div><div class="detail-item"><small>إجمالي المحتوى المحلي</small><b>' +
@@ -1095,7 +1067,15 @@
     }
     const name = (window.prompt("أدخل اسم الشركة المنفذة الجديدة:") || "").trim();
     if (!name) return;
-    const existing = await dbx.from("companies").select("id,name").ilike("name", name).maybeSingle();
+    const existing = await dbx
+      .from("companies")
+      .select("id,name")
+      .ilike(
+        "name",
+        name.replace(/[\\%_]/g, (ch) => "\\" + ch),
+      )
+      .limit(1)
+      .maybeSingle();
     if (existing.error) return msg("vem", existing.error.message);
     if (existing.data) {
       document.getElementById("vcom").value = existing.data.name;
@@ -1117,12 +1097,25 @@
     window.icvSaveSuccess?.("تمت إضافة الشركة واختيارها للمشروع.");
   };
   window.icvV2SaveProject = async () => {
-    let p = (window.projects || []).find((x) => x.id === pid),
-      [e, c] = await Promise.all([
-        dbx.from("government_entities").select("id,name").eq("name", val("vent")).maybeSingle(),
-        dbx.from("companies").select("id,name").eq("name", val("vcom")).maybeSingle(),
-      ]);
-    let r = await dbx
+    const p = (window.projects || []).find((x) => x.id === pid);
+    if (!p) return msg("vem", "تعذر العثور على المشروع. حدّث الصفحة وحاول مرة أخرى.");
+    if (!val("vname").trim()) return msg("vem", "اسم المشروع مطلوب.");
+    const entityName = val("vent").trim(),
+      companyName = val("vcom").trim();
+    const [e, c] = await Promise.all([
+      entityName
+        ? dbx.from("government_entities").select("id,name").eq("name", entityName).maybeSingle()
+        : { data: null },
+      companyName
+        ? dbx.from("companies").select("id,name").eq("name", companyName).maybeSingle()
+        : { data: null },
+    ]);
+    if (e.error || c.error) return msg("vem", window.ICV.friendlyError(e.error || c.error));
+    // A name that does not match a record must not silently clear the link.
+    if (entityName && !e.data) return msg("vem", "الجهة «" + entityName + "» غير موجودة. اخترها من القائمة.");
+    if (companyName && !c.data)
+      return msg("vem", "الشركة «" + companyName + "» غير موجودة. اخترها من القائمة أو أضفها أولًا.");
+    const r = await dbx
       .from("projects")
       .update({
         project_name: val("vname").trim(),
@@ -1139,7 +1132,7 @@
         notes: val("vn") || null,
       })
       .eq("id", pid);
-    if (r.error) return msg("vem", r.error.message);
+    if (r.error) return msg("vem", window.ICV.friendlyError(r.error));
     document.getElementById("icvV2Modal")?.remove();
     await loadAll();
     await projectPage(p.id);
@@ -1332,81 +1325,28 @@
         .sort((a, b) => {
           const ay = Number(a.annual_period || 0),
             by = Number(b.annual_period || 0),
-            aq = Number(String(a.quarter || "").replace(/\\D/g, "")) || 0,
-            bq = Number(String(b.quarter || "").replace(/\\D/g, "")) || 0;
+            aq = Number(String(a.quarter || "").replace(/\D/g, "")) || 0,
+            bq = Number(String(b.quarter || "").replace(/\D/g, "")) || 0;
           return (
             ay * 10 + aq - (by * 10 + bq) ||
             String(a.created_at || "").localeCompare(String(b.created_at || ""))
           );
         });
+    // Figures are computed in the database from approved reports, like every other page.
     const metricsFor = (p) => {
-      const rr = reportsFor(p.id);
-      let omSalary = 0,
-        foSalary = 0;
-      const fin = {
-        purchases: { made_in_oman: 0, local_supplier: 0, direct_import: 0, sme_purchase: 0 },
-        services: { local_service: 0, foreign_service: 0, sme_service: 0 },
-        subcontracts: { local: 0, foreign: 0, sme: 0 },
-      };
-      for (const row of rr) {
-        const d = row.report_data || {},
-          cum = String(d.report_type || "ربعي منفصل").includes("تراكمي"),
-          salCum = String(d.salary_input_type || "رواتب الربع").includes("تراكمية");
-        const os = Number(d.omani_salary || 0),
-          fs = Number(d.foreign_salary || 0);
-        if (salCum) {
-          omSalary = os;
-          foSalary = fs;
-        } else {
-          omSalary += os;
-          foSalary += fs;
-        }
-        for (const [g, keys] of Object.entries({
-          purchases: ["made_in_oman", "local_supplier", "direct_import", "sme_purchase"],
-          services: ["local_service", "foreign_service", "sme_service"],
-          subcontracts: ["local", "foreign", "sme"],
-        })) {
-          for (const k of keys) {
-            const v = Number(d[g]?.[k] || 0);
-            fin[g][k] = cum ? v : fin[g][k] + v;
-          }
-        }
-      }
-      const c = calcCfg().coefficients,
-        goodsSpend = Object.values(fin.purchases).reduce((a, v) => a + v, 0),
-        made = fin.purchases.made_in_oman;
-      const spend =
-        omSalary +
-        foSalary +
-        goodsSpend +
-        Object.values(fin.services).reduce((a, v) => a + v, 0) +
-        Object.values(fin.subcontracts).reduce((a, v) => a + v, 0);
-      const lc =
-        omSalary * c.omaniSalary +
-        foSalary * c.foreignSalary +
-        made * c.madeInOman +
-        fin.purchases.local_supplier * c.localSupplier +
-        fin.purchases.direct_import * c.directImport +
-        fin.purchases.sme_purchase * c.smePurchase +
-        fin.services.local_service * c.localService +
-        fin.services.foreign_service * c.foreignService +
-        fin.services.sme_service * c.smeService +
-        Object.values(fin.subcontracts).reduce((a, v) => a + v, 0) * c.smeSubcontract;
-      const latest = rr[rr.length - 1],
-        w = latest?.report_data?.workforce_categories || [];
-      const omWorkers = w.reduce((a, x) => a + Number(x.omani || 0), 0),
-        foWorkers = w.reduce((a, x) => a + Number(x.foreign || 0), 0),
-        workforceTotal = omWorkers + foWorkers;
+      const pctOrNull = (v) => (v == null || v === "" ? null : Number(v));
       return {
-        reports: rr,
-        spend: Number(p.total_spend ?? spend),
-        lc: Number(p.total_local_content ?? lc),
-        omanization: workforceTotal ? (omWorkers / workforceTotal) * 100 : Number(p.omanization_pct || 0),
-        sme: Number(p.sme_pct || 0),
-        goods: goodsSpend ? (made / goodsSpend) * 100 : 0,
+        reports: reportsFor(p.id),
+        spend: Number(p.total_spend || 0),
+        lc: Number(p.total_local_content || 0),
+        omanization: pctOrNull(p.omanization_pct),
+        sme: pctOrNull(p.sme_pct),
+        goods: pctOrNull(p.goods_pct),
+        compliance: p.compliance_status || "غير منطبق",
         value: Number(p.total_project_value || 0),
       };
     };
+    const pctCell = (v) => (v == null ? "—" : v.toFixed(1) + "%");
     const E0 = E;
     const rows = entities
       .map((x, idx) => {
@@ -1430,12 +1370,12 @@
               "</td><td>" +
               N(m.lc) +
               "</td><td>" +
-              m.omanization.toFixed(1) +
-              "%</td><td>" +
-              m.sme.toFixed(1) +
-              "%</td><td>" +
-              m.goods.toFixed(1) +
-              "%</td></tr>",
+              pctCell(m.omanization) +
+              "</td><td>" +
+              pctCell(m.sme) +
+              "</td><td>" +
+              pctCell(m.goods) +
+              "</td></tr>",
           )
           .join("");
         return (
@@ -1500,14 +1440,14 @@
     );
     const normalizeEntitySearch = (value) =>
       String(value || "")
-        .normalize("NFD")
-        .replace(/[\\u064B-\\u065F\\u0670\\u0640]/g, "")
+        .normalize("NFC")
+        .replace(/[\u064B-\u065F\u0670\u0640]/g, "")
         .replace(/[أإآٱ]/g, "ا")
         .replace(/ى/g, "ي")
         .replace(/ة/g, "ه")
         .replace(/ؤ/g, "و")
         .replace(/ئ/g, "ي")
-        .replace(/[\\s\\u200f\\u200e]+/g, "")
+        .replace(/[\s\u200f\u200e]+/g, "")
         .toLowerCase();
     const applyEntitySearch = () => {
       const query = normalizeEntitySearch(document.getElementById("entitySearch")?.value);
@@ -1957,9 +1897,10 @@
         '<div id="cm2"></div><button class="btn primary" onclick="window.icvSaveCompanyV2()">حفظ</button>',
     );
   window.icvSaveCompanyV2 = async () => {
-    let r = await dbx
-      .from("companies")
-      .insert({ name: val("cn2").trim(), company_type: val("ct2").trim() || null });
+    let r = await dbx.from("companies").insert({
+      name: val("cn2").trim(),
+      company_type: val("ct2").trim() || null,
+    });
     if (r.error) return msg("cm2", r.error.message);
     document.getElementById("icvV2Modal")?.remove();
     window.icvSaveSuccess?.("تم حفظ الشركة بنجاح");
