@@ -187,6 +187,8 @@
     const t = String(s || "").trim();
     if (!t || lang !== "en") return s;
     if (dict[t]) return String(s).replace(t, dict[t]);
+    const prefix = Object.keys(dict).filter(k => k.endsWith(":") && t.startsWith(k)).sort((a,b) => b.length-a.length)[0];
+    if (prefix) return String(s).replace(t, dict[prefix] + t.slice(prefix.length));
     return s;
   };
   function walk(root) {
@@ -198,7 +200,8 @@
       if (!n.parentElement || /^(SCRIPT|STYLE|CODE|PRE|TEXTAREA)$/i.test(n.parentElement.tagName)) return;
       const original = n.nodeValue;
       const trimmed = original.trim();
-      if (dict[trimmed]) n.nodeValue = original.replace(trimmed, dict[trimmed]);
+      const translated = translate(trimmed);
+      if (translated !== trimmed) n.nodeValue = original.replace(trimmed, translated);
     });
     root.querySelectorAll("input[placeholder],textarea[placeholder],button[title],input[aria-label]").forEach(el => {
       ["placeholder","title","aria-label"].forEach(a => { if (el.hasAttribute(a)) { const v=el.getAttribute(a); if(dict[v]) el.setAttribute(a,dict[v]); }});
