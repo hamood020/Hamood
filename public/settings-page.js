@@ -6,7 +6,7 @@
   const toastA = (m) => window.ICV.showMessage(String(m), "error");
   const D = {
     general: {
-      platformName: "ICV New",
+      platformName: "متابعة المحتوى المحلي",
       owner: "هيئة المشاريع والمناقصات والمحتوى المحلي",
       language: "ar",
       currency: "OMR",
@@ -27,7 +27,7 @@
       localSupplier: 18,
       directImport: 6,
       smePurchase: 18,
-      localService: 100,
+      localService: 70,
       foreignService: 10,
       smeService: 70,
       smeSubcontract: 70,
@@ -37,7 +37,7 @@
     reports: {
       years: "2026,2027,2028,2029,2030,2031,2032,2033,2034,2035",
       quarters: ["Q1", "Q2", "Q3", "Q4"],
-      type: "تراكمي",
+      type: "ربعي منفصل",
       statuses: ["مسودة", "مستلم", "قيد المراجعة", "معتمد", "مرفوض"],
       lockApproved: false,
       multiReport: false,
@@ -46,11 +46,11 @@
     },
     projects: {
       statuses: ["مسند", "قيد التنفيذ", "منتهي", "متعثر"],
-      extensionTypes: ["تمديد مدة", "تغيير تاريخ الانتهاء", "تمديد معتمد", "تمديد قيد الدراسة"],
+      extensionTypes: ["تغيير تاريخ الانتهاء", "تمديد معتمد", "تمديد قيد الدراسة"],
       requiredValue: true,
-      requiredDates: true,
+      requiredDates: false,
       requiredEntity: true,
-      requiredCompany: false,
+      requiredCompany: true,
     },
     users: {
       roleLabels: {},
