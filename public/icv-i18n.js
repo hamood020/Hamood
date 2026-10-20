@@ -180,6 +180,110 @@
     "عقود الباطن — SME %":"Subcontracting — SME %","اقتراب موعد التقرير":"Report due date approaching","تعذر حفظ الإعدادات:":"Could not save settings:",
     "السلع (صنع في عُمان)":"Goods (Made in Oman)","جارٍ تسجيل الدخول...":"Signing in...","تم تحديث حالة المهمة":"Task status updated",
     "تم تحديث مهمة متابعة":"Follow-up task updated","تم حفظ جهات المتابعة":"Follow-up entities saved","إجمالي قيمة المشاريع":"Total project value","نشط":"Active","عنصر":"Item","القيمة":"Value","القطاع":"Sector","الأجانب":"Expatriates","الخدمات":"Services","الجهة «":"Entity “","الشركة «":"Company “","الرواتب":"Wages","التعمين":"Omanization","التوضيح":"Explanation","العنوان":"Title","المستخدم":"User","المؤشرات":"Indicators","المشتريات":"Purchases","قيد المراجعة":"Under review","غير مُسندة":"Unassigned","ملف الشركة:":"Company file:","نسبة التعمين":"Omanization rate","لم يتم اختيار ملف":"No file selected","خطة المحتوى المحلي":"Local content plan","هيئة المشاريع والمناقصات والمحتوى المحلي":"Authority of Projects, Tenders and Local Content","تعذر تحميل ملف الشركة:":"Could not load company file:","تأكيد حذف المشروع؟\n\n":"Confirm deleting this project?\n\n","الفئة الأولى — الأجانب":"Category 1 — expatriates","الفئة الثانية — الأجانب":"Category 2 — expatriates","الفئة الثالثة — الأجانب":"Category 3 — expatriates","الفئة الثانية — العمانيون":"Category 2 — Omanis","الفئة الثالثة — العمانيون":"Category 3 — Omanis","اكتب الاسم الجديد للمستند:":"Enter the new document name:","ICV - تقرير الشركة الكامل -":"ICV - Full company report -","التنبيه قبل الموعد بـ (أيام)":"Notify before due date (days)","إجمالي المحتوى المحلي المحسوب":"Total calculated local content","عددًا صحيحًا بين 0 و365 يومًا.":"an integer between 0 and 365 days.","» غير موجودة. اخترها من القائمة.":"” was not found. Select it from the list.","الأحمال والجهات غير المتابَعة":"Workload and unmonitored entities","ر.ع — وفق معاملات الحساب في الإعدادات":"OMR — using the coefficients in settings","% من المشاريع ذات البيانات تحقق المستهدف":"% of projects with data meeting the target","كل مشروع مرتبط بالشركة مع مؤشرات الامتثال":"Each project linked to the company with compliance indicators","(أحدث 1000 حدث؛ ضيّق الفترة لرؤية الأقدم)":"(Latest 1,000 events; narrow the date range to see older events)","يجب أن تكون الأرباع المعتمدة Q1 وQ2 وQ3 وQ4.":"The configured quarters must be Q1, Q2, Q3, and Q4.","قيمة المشروع مطلوبة ويجب أن تكون أكبر من صفر.":"Project value is required and must be greater than zero.","تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية.":"The end date must be after the start date.","أدخل أي ملاحظات أو توضيحات مرتبطة بالتقرير...":"Enter any notes or explanations related to the report...","المستوفية ÷ المشاريع التي لديها تقارير معتمدة":"Compliant ÷ projects with approved reports","تم استيراد الإعدادات وحفظها في قاعدة البيانات":"Settings imported and saved to the database","صلاحية المستخدم لا تسمح بإضافة أو تعديل الخطط.":"Your access does not allow adding or editing plans.","اكتب ملاحظة الإغلاق (مثال: تم تنسيق الاجتماع):":"Enter a closure note (e.g. meeting coordinated):","تم حذف المشروع وجميع سجلاته ومرفقاته المرتبطة.":"The project and its related records and attachments have been deleted.","صلاحية حسابك للاطلاع فقط ولا تسمح بإدخال التقارير.":"Your account is read-only and cannot enter reports.","تُحذف الأحداث الأقدم من هذه المدة تلقائيًا كل يوم.":"Events older than this period are automatically deleted each day.","هل تريد إعادة جميع إعدادات المنصة للقيم الافتراضية؟":"Reset all platform settings to their defaults?","تعذر العثور على المشروع. حدّث الصفحة وحاول مرة أخرى.":"Project not found. Refresh the page and try again.","أدخل اسم المستخدم أو البريد الإلكتروني وكلمة المرور.":"Enter your username or email and password.","المشروع مستوفٍ عندما يحقق جميع المعايير المنطبقة عليه":"A project is compliant when it meets all applicable criteria.","عند التفعيل لا يعدّل التقرير المعتمد إلا مدير النظام.":"When enabled, only an administrator can edit an approved report.","أدخل سنوات تقارير صحيحة من أربعة أرقام، من دون تكرار.":"Enter valid four-digit reporting years without duplicates.","تعديل نقاط التواصل متاح لموظفي القسم ومدير النظام فقط.":"Only section staff and administrators can edit contact points.","لا":"No","ر.ع":"OMR","· الحد":"· Limit","مشروع.":"Project.","👥 الفريق":"👥 Team","يجب أن تكون مدة":"Duration must be","مثال: V1":"Example: V1","العنوان":"Address","مثال:":"Example:","القيمة في":"Value in","غير مستلم من":"Not received from","جاري التحميل...":"Loading...","التنبيه قبل الموعد بـ (أيام)":"Notify before due date (days)","ICV - سجل التدقيق -":"ICV - Audit log -","منصة ICV FollowUp |":"ICV FollowUp Platform |","📋 تقارير Q":"📋 Q reports","— متبقي":"— remaining","· متأخر":"· overdue","· متبقي":"· remaining","— مستحق خلال":"— due in","· المسؤول:":"· Responsible:","· الصلاحية حتى":"· Access expires:","🕐 نشاط الفريق":"🕐 Team activity","📊 التزام القسم":"📊 Section compliance","%، SME ≥":"%, SME ≥","%، السلع ≥":"%, goods ≥","%، الخدمات ≥":"%, services ≥","ر.ع — من التقارير المعتمدة فقط":"OMR — approved reports only","% (المشاريع المنطبق عليها المعيار فقط)":"% (projects to which the criterion applies only)","% من المشاريع ذات البيانات تحقق المستهدف":"% of projects with data meeting the target","إنشاء حساب جديد بنفس آلية المنصة السابقة":"Create a new account using the platform's existing workflow","» غير موجودة. اخترها من القائمة أو أضفها أولًا.":"” was not found. Select it from the list or add it first.","⚖️ الأحمال والجهات غير المتابَعة":"⚖️ Workload and unmonitored entities","المستوفية ÷ المشاريع التي لديها تقارير معتمدة":"Compliant ÷ projects with approved reports","اكتب ملاحظة الإغلاق (مثال: تم تنسيق الاجتماع):":"Enter a closure note (e.g. meeting coordinated):","— التقرير غير مستلم · متأخر":"— report not received · overdue","(تعذر إنشاء رابط العرض)":"(Unable to create view link)","ICV - تقرير الشركة الكامل -":"ICV - Full company report -","عرض الجهات المسندة افتراضيًا":"Show assigned entities by default","ر.ع — وفق معاملات الحساب في الإعدادات":"OMR — using the calculation coefficients in settings","شعار هيئة المشاريع والمناقصات والمحتوى المحلي":"Authority of Projects, Tenders and Local Content logo","الفئة الأولى — الأجانب":"Category 1 — expatriates","الفئة الثانية — العمانيون":"Category 2 — Omanis","الفئة الثالثة — العمانيون":"Category 3 — Omanis","أقل من الحد (":"Below threshold (","مثال: V1":"Example: V1","أضاف":"Added","عدّل":"Edited","القيمة":"Value","السلع":"Goods","المستخدم":"User","العنوان":"Title","الرواتب":"Wages","المشتريات":"Purchases","خطة المحتوى المحلي":"Local content plan","قيد المراجعة":"Under review","غير مُسندة":"Unassigned","نسبة التعمين":"Omanization rate","تعذر تحميل ملف الشركة:":"Could not load company file:","تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية.":"The end date must be after the start date.","قيمة المشروع مطلوبة ويجب أن تكون أكبر من صفر.":"Project value is required and must be greater than zero.","صلاحية حسابك للاطلاع فقط ولا تسمح بإدخال التقارير.":"Your account is read-only and cannot enter reports.","المشروع مستوفٍ عندما يحقق جميع المعايير المنطبقة عليه":"A project is compliant when it meets all applicable criteria.","عند التفعيل لا يعدّل التقرير المعتمد إلا مدير النظام.":"When enabled, only an administrator can edit an approved report.","تم استيراد الإعدادات وحفظها في قاعدة البيانات":"Settings imported and saved to the database"
+    // Additional coverage for dashboard, forms, and settings labels.
+    "كل السنوات":"All years",
+    "جميع الجهات الحكومية":"All government entities",
+    "جميع الجهات":"All entities",
+    "فتح المشروع ←":"Open project ←",
+    "لا توجد مشاريع مرتبطة بهذه الجهة.":"No projects are linked to this entity.",
+    "لا توجد نقاط تواصل مضافة.":"No contact points have been added.",
+    "قائمة المشاريع مع المتابعة السريعة للتقارير والإنجاز.":"Project list with quick follow-up on reports and progress.",
+    "قيمة المشروع من":"Project value from",
+    "قيمة المشروع إلى":"Project value to",
+    "المشاريع التي تنتهي خلال":"Projects ending within",
+    "10 أيام":"10 days",
+    "30 يوم":"30 days",
+    "90 يوم":"90 days",
+    "مسح الفلاتر":"Clear filters",
+    "قائمة المشاريع":"Project list",
+    "هذا التقرير معتمد ومقفل. يعيد مدير النظام فتحه عند الحاجة.":"This report is approved and locked. An administrator can reopen it when needed.",
+    "آخر حفظ:":"Last saved:",
+    "حسابي":"My account",
+    "جهات المتابعة فقط":"Assigned entities only",
+    "كل الجهات":"All entities",
+    "مشروع مسجل":"Registered project",
+    "ريال عماني":"Omani Rial",
+    "الصرف المسجل للمشاريع":"Recorded project expenditure",
+    "وفق بيانات الخطط المتاحة":"Based on available plan data",
+    "وفق بيانات المشاريع الحالية":"Based on current project data",
+    "الصرف والمحتوى المحلي عبر الأرباع":"Expenditure and local content by quarter",
+    "مقارنة التقارير المسجلة في النظام":"Comparison of reports recorded in the system",
+    "الصرف الفعلي":"Actual expenditure",
+    "مستوى الالتزام":"Compliance level",
+    "الجهة الحكومية:":"Government entity:",
+    "مؤشرات الالتزام للجهة المختارة فقط":"Compliance indicators for the selected entity only",
+    "المعدل العام للمحتوى المحلي":"Overall local content rate",
+    "من الصرف الفعلي للجهة المختارة":"Of the selected entity's actual expenditure",
+    "متوسط التعمين":"Average Omanization",
+    "حسب بيانات المشاريع":"Based on project data",
+    "استيفاء SME":"SME compliance",
+    "مشاريع مستوفية":"Compliant projects",
+    "حالة المشاريع":"Project status",
+    "تنبيهات ومتابعة المشاريع":"Project alerts and follow-up",
+    "عناصر تحتاج إلى متابعة إدارية — حسب البيانات المسجلة":"Items requiring administrative follow-up — based on recorded data",
+    "مشاريع متعثرة":"Stalled projects",
+    "تحتاج إلى متابعة حالة التنفيذ":"Require implementation-status follow-up",
+    "مشاريع بدون خطة محتوى محلي":"Projects without a local content plan",
+    "الخطة اختيارية ويمكن استكمالها عند الحاجة":"The plan is optional and can be completed when needed",
+    "مشاريع بدون تقارير ربع سنوية":"Projects without quarterly reports",
+    "لم يُسجّل لها تقرير حتى الآن":"No report has been recorded yet",
+    "الجهات الأعلى صرفًا":"Entities with the highest expenditure",
+    "حسب مجموع الصرف المسجل":"By total recorded expenditure",
+    "الشركات الأعلى صرفًا":"Companies with the highest expenditure",
+    "حسب المشاريع المرتبطة بالشركة":"Based on projects linked to the company",
+    "أفضل 3 مشاريع في الاستيفاء":"Top 3 projects by compliance",
+    "مرتبة حسب نسبة المحتوى المحلي المسجلة":"Ranked by the recorded local content rate",
+    "إضافة تقرير":"Add report",
+    "إضافة خطة":"Add plan",
+    "إضافة خطة محتوى محلي":"Add local content plan",
+    "هذه الصفحة جاهزة لتسجيل المهام والتنبيهات المرتبطة بالمشاريع والتقارير.":"This page is ready to record tasks and alerts related to projects and reports.",
+    "هذه الصفحة متاحة لمسؤول النظام فقط.":"This page is available to administrators only.",
+    "الجهة غير موجودة في القائمة. أضفها أولاً من صفحة الجهات الحكومية ثم أعد المحاولة.":"The entity is not in the list. Add it from the Government Entities page first, then try again.",
+    "عرض الجهات الحكومية وعدد مشاريعها وقيمتها والإنفاق، مع إمكانية فتح بطاقة كل جهة.":"View government entities, their project counts, values and expenditure, and open each entity card.",
+    "بطاقة الجهة":"Entity card",
+    "معلومات الجهة":"Entity information",
+    "مشاريع الجهة":"Entity projects",
+    "رقم المشروع/المناقصة":"Project/tender number",
+    "جاري تحميل صفحة الشركات الجديدة...":"Loading the new Companies page...",
+    "إدخال التقرير على مراحل واضحة وفق النموذج المعتمد للتقارير.":"Enter the report in clear steps using the approved reporting form.",
+    "العودة للمشروع":"Back to project",
+    "تحديد الكل":"Select all",
+    "إلغاء الكل":"Clear selection",
+    "تعذر حفظ بيانات القوى العاملة والرواتب تلقائيًا:":"Could not automatically save workforce and wage data:",
+    "تعذر حفظ الرواتب للفترة السابقة، لذلك أبقينا المدخلات ظاهرة:":"Could not save wages for the previous period, so the entered values have been kept visible:",
+    "لا توجد مستندات مرفوعة":"No documents uploaded",
+    "يوجد تقرير محفوظ لهذا المشروع في الربع والسنة نفسيهما. افتح التقرير الموجود وعدّله بدل إنشاء تقرير جديد.":"A report already exists for this project, quarter and year. Open and edit the existing report instead of creating a duplicate.",
+    "تعذر تحميل معاملات المحتوى المحلي؛ سيتم استخدام المعاملات الافتراضية":"Could not load local content coefficients; default coefficients will be used.",
+    "خطة المحتوى المحلي — ICV New":"Local Content Plan — ICV New",
+    "إدخال تقرير ربع سنوي — ICV New":"Quarterly Report Entry — ICV New",
+    "لوحة المؤشرات":"Dashboard",
+    "متابعة المشاريع والمحتوى المحلي":"Project and Local Content Follow-up",
+    "إعدادات المظهر":"Appearance settings",
+    "الثيم والخط وحجم النص":"Theme, font and text size",
+    "اختيار الثيم":"Choose theme",
+    "أخضر مؤسسي":"Corporate green",
+    "كحلي فاخر":"Premium navy",
+    "إضافة نقطة تواصل":"Add contact point",
+    "إدارة نقاط التواصل متاحة لموظفي القسم ومدير النظام فقط.":"Contact-point management is available only to section staff and administrators.",
+    "اختر جهة من القائمة. لإضافة جهة جديدة، استخدم صفحة الجهات الحكومية.":"Choose an entity from the list. To add a new entity, use the Government Entities page.",
+    "اختر الشركة المنفذة":"Select implementing company",
+    "اختر قطاع العمل":"Select work sector",
+    "الإنشاءات":"Construction",
+    "الطرق":"Roads",
+    "الكهرباء والمياه":"Electricity and water",
+    "تقنية المعلومات":"Information technology",
+    "التوريد":"Supply",
+    "الاستشارات":"Consulting",
+    "أخرى":"Other",
+    "نسبة الإنجاز %":"Progress %",
+    "تاريخ آخر تعديل":"Last modified date",
+    "تاريخ الاستلام":"Received date",
+    "المصدر":"Source",
+    "خطة المشروع":"Project plan",
+    "نظرة عامة":"Overview",
+    "العمالة والرواتب":"Workforce and wages",
+    "الإنفاق":"Expenditure",
+    "قيمة المشاريع":"Project value",
 
   };
   let lang = localStorage.getItem(KEY) === "en" ? "en" : "ar";
@@ -213,20 +317,42 @@
     document.body.classList.toggle("icv-lang-en", lang === "en");
     document.body.classList.toggle("icv-lang-ar", lang === "ar");
     if (lang === "en") walk(document.body);
-    const btn = document.getElementById("icvLanguageToggle");
-    if (btn) { btn.textContent = lang === "ar" ? "English" : "العربية"; btn.setAttribute("aria-label", lang === "ar" ? "Switch language to English" : "التبديل إلى العربية"); }
+    document.querySelectorAll(".icv-language-choice").forEach(btn => {
+      const active = btn.dataset.lang === lang;
+      btn.classList.toggle("active", active);
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
+    });
     document.title = lang === "en" ? (dict[document.title] || "Local Content Follow-up") : (document.title === "Local Content Follow-up" ? "متابعة المحتوى المحلي" : document.title);
   }
   function mount() {
-    if (!document.body || document.getElementById("icvLanguageToggle")) return;
-    const btn = document.createElement("button");
-    btn.id = "icvLanguageToggle"; btn.type = "button"; btn.className = "btn";
-    btn.style.cssText = "position:fixed;top:12px;left:14px;z-index:100001;min-width:92px;background:#fff;border:1px solid #dbe3ec;box-shadow:0 4px 14px #0001";
-    btn.onclick = () => { lang = lang === "ar" ? "en" : "ar"; localStorage.setItem(KEY,lang); location.reload(); };
-    document.body.appendChild(btn);
+    if (!document.body) return;
     const style = document.createElement("style");
-    style.textContent = "html[dir=ltr] body{font-family:Arial,sans-serif}html[dir=ltr] .side{right:auto;left:0}html[dir=ltr] .main{margin-right:0;margin-left:250px}html[dir=ltr] .nav button{text-align:left}html[dir=ltr] .side .logout{right:14px;left:14px}html[dir=ltr] .is-nav button{text-align:left}html[dir=ltr] .icv-message{direction:ltr}";
+    style.textContent = "html[dir=ltr] body{font-family:Arial,sans-serif}html[dir=ltr] .side{right:auto;left:0}html[dir=ltr] .main{margin-right:0;margin-left:250px}html[dir=ltr] .nav button{text-align:left}html[dir=ltr] .side .logout{right:14px;left:14px}html[dir=ltr] .is-nav button{text-align:left}html[dir=ltr] .icv-message{direction:ltr}.icv-language-switch{display:flex;align-items:center;gap:4px;margin:7px 0 5px;direction:ltr;flex-wrap:nowrap}.icv-language-choice{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 8px;border:1px solid rgba(255,255,255,.24);border-radius:8px;background:rgba(255,255,255,.07);color:var(--nav-ink,#fff);font:700 12px/1.2 Arial,sans-serif;cursor:pointer;white-space:nowrap;min-width:58px}.icv-language-choice.active{background:#fff;color:#0c514b;border-color:#fff;box-shadow:0 2px 7px #0002}.icv-language-choice:focus-visible{outline:2px solid #d9a441;outline-offset:2px}.brand .icv-language-switch{margin-top:8px;margin-bottom:8px}.brand .icv-language-choice{flex:0 0 auto}";
     document.head.appendChild(style);
+    const brand = document.querySelector(".side .brand");
+    const brandTitle = brand && brand.querySelector(":scope > div:last-child > b");
+    if (brandTitle && !document.getElementById("icvLanguageSwitch")) {
+      const group = document.createElement("div");
+      group.id = "icvLanguageSwitch";
+      group.className = "icv-language-switch";
+      group.setAttribute("role","group");
+      group.setAttribute("aria-label","Choose language");
+      [["en","🇬🇧","EN"],["ar","🇴🇲","AR"]].forEach(([value,flag,label]) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "icv-language-choice";
+        btn.dataset.lang = value;
+        btn.textContent = flag + " " + label;
+        btn.setAttribute("aria-label", value === "en" ? "English" : "العربية");
+        btn.addEventListener("click", () => {
+          if (lang === value) return;
+          localStorage.setItem(KEY,value);
+          location.reload();
+        });
+        group.appendChild(btn);
+      });
+      brandTitle.insertAdjacentElement("afterend",group);
+    }
     apply();
     const observer = new MutationObserver(mutations => { if(lang === "en") mutations.forEach(m => m.addedNodes.forEach(n => { if(n.nodeType===Node.ELEMENT_NODE) walk(n); else if(n.nodeType===Node.TEXT_NODE && dict[n.nodeValue.trim()]) n.nodeValue=dict[n.nodeValue.trim()]; })); });
     observer.observe(document.body,{childList:true,subtree:true});
