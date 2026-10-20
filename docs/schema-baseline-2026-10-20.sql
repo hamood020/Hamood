@@ -1,6 +1,6 @@
--- REFERENCE SNAPSHOT ONLY. Captured from live project on 2026-10-20T17:20:11.068579+00:00.
--- Review dependencies, grants, helper functions, triggers, storage policies, and extension versions before replay.
--- This file is not a turnkey migration; the companion JSON snapshot documents functions/triggers/RLS policy state.
+-- REFERENCE SNAPSHOT ONLY. Captured from live project on 2026-10-20T17:23:23.298083+00:00.
+-- Includes public table definitions, constraints, indexes, RLS policies, plus the private multi-report guard.
+-- Not a turnkey restore script: validate dependencies, grants, other private functions, storage policies, and extension versions before replay.
 
 CREATE TABLE IF NOT EXISTS public.audit_log (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
@@ -328,8 +328,6 @@ ALTER TABLE public.quarterly_reports ADD CONSTRAINT quarterly_reports_pkey PRIMA
 
 ALTER TABLE public.quarterly_reports ADD CONSTRAINT quarterly_reports_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE;
 
-ALTER TABLE public.quarterly_reports ADD CONSTRAINT quarterly_reports_project_id_quarter_annual_period_key UNIQUE (project_id, quarter, annual_period);
-
 ALTER TABLE public.user_entity_assignments ADD CONSTRAINT user_entity_assignments_government_entity_id_fkey FOREIGN KEY (government_entity_id) REFERENCES government_entities(id) ON DELETE CASCADE;
 
 ALTER TABLE public.user_entity_assignments ADD CONSTRAINT user_entity_assignments_pkey PRIMARY KEY (id);
@@ -399,6 +397,8 @@ CREATE INDEX IF NOT EXISTS idx_projects_entity ON public.projects USING btree (g
 CREATE INDEX IF NOT EXISTS idx_reports_created_by ON public.quarterly_reports USING btree (created_by);
 
 CREATE INDEX IF NOT EXISTS idx_reports_project ON public.quarterly_reports USING btree (project_id);
+
+CREATE INDEX IF NOT EXISTS idx_reports_project_period ON public.quarterly_reports USING btree (project_id, annual_period, quarter);
 
 CREATE INDEX IF NOT EXISTS idx_user_entity_assignments_government_entity_id ON public.user_entity_assignments USING btree (government_entity_id);
 
@@ -591,3 +591,45 @@ CREATE POLICY "profile section head read" ON public.user_profiles AS permissive 
 CREATE POLICY "profile self read" ON public.user_profiles AS permissive FOR SELECT TO authenticated USING (((id = ( SELECT ( SELECT auth.uid() AS uid) AS uid)) OR ( SELECT private.is_admin() AS is_admin)));
 
 CREATE POLICY "profile self update" ON public.user_profiles AS permissive FOR UPDATE TO authenticated USING (((id = ( SELECT ( SELECT auth.uid() AS uid) AS uid)) OR ( SELECT private.is_admin() AS is_admin))) WITH CHECK (((id = ( SELECT ( SELECT auth.uid() AS uid) AS uid)) OR ( SELECT private.is_admin() AS is_admin)));
+
+CREATE OR REPLACE FUNCTION private.enforce_report_period_uniqueness()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+  v_multi_report boolean;
+  v_key text;
+BEGIN
+  SELECT coalesce((settings->'reports'->>'multiReport')::boolean, false)
+    INTO v_multi_report
+  FROM public.platform_settings
+  WHERE id = 'global';
+
+  IF coalesce(v_multi_report, false) THEN
+    RETURN NEW;
+  END IF;
+
+  v_key := NEW.project_id::text || ':' || coalesce(NEW.annual_period, '') || ':' || coalesce(NEW.quarter, '');
+  PERFORM pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(v_key, 0));
+
+  IF EXISTS (
+    SELECT 1
+    FROM public.quarterly_reports q
+    WHERE q.project_id = NEW.project_id
+      AND q.annual_period IS NOT DISTINCT FROM NEW.annual_period
+      AND q.quarter IS NOT DISTINCT FROM NEW.quarter
+      AND q.id IS DISTINCT FROM NEW.id
+  ) THEN
+    RAISE EXCEPTION 'A report already exists for this project, quarter, and year while multi-report mode is disabled.'
+      USING ERRCODE = '23505',
+            CONSTRAINT = 'quarterly_reports_project_id_quarter_annual_period_key';
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE TRIGGER enforce_report_period_uniqueness BEFORE INSERT OR UPDATE OF project_id, annual_period, quarter ON quarterly_reports FOR EACH ROW EXECUTE FUNCTION private.enforce_report_period_uniqueness();
