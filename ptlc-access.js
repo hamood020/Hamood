@@ -1090,7 +1090,10 @@
     msg.textContent = "جاري الحفظ...";
     const r = await client.functions.invoke("manage-platform-user", { body });
     if (r.error || r.data?.error) {
-      msg.innerHTML = errorBox(r.data?.error || r.error);
+      // A non-2xx reply carries the server's Arabic message in its body.
+      let text = r.data?.error;
+      if (!text && r.error?.context?.json) text = (await r.error.context.json().catch(() => null))?.error;
+      msg.innerHTML = errorBox(text || r.error);
       return;
     }
     msg.innerHTML = '<div class="ok">تم الحفظ بنجاح</div>';
