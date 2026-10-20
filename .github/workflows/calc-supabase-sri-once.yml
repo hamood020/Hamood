@@ -1,0 +1,40 @@
+name: One-time Supabase SRI calculation
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/calc-supabase-sri-once.yml"
+permissions:
+  contents: write
+jobs:
+  calculate-and-apply:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Calculate verified SHA-384 and update pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"
+          curl --fail --silent --show-error --location "$URL" --output /tmp/supabase.js
+          HASH="sha384-$(openssl dgst -sha384 -binary /tmp/supabase.js | openssl base64 -A)"
+          export SRI_HASH="$HASH"
+          python3 <<'PY'
+          import os
+          from pathlib import Path
+          old = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>'
+          new = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="' + os.environ["SRI_HASH"] + '" crossorigin="anonymous"></script>'
+          files = [Path("public/index.html"), Path("public/plan.html"), Path("public/report-form.html")]
+          for path in files:
+              text = path.read_text(encoding="utf-8")
+              if old not in text:
+                  raise SystemExit(f"Expected Supabase script tag not found in {path}")
+              path.write_text(text.replace(old, new), encoding="utf-8")
+          print("Applied verified SRI:", os.environ["SRI_HASH"])
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/index.html public/plan.html public/report-form.html
+          git commit -m "Add verified SRI to pinned Supabase browser SDK"
+          git push
