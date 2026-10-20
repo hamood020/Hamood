@@ -711,7 +711,7 @@
         btn.type = "button";
         btn.className = "icv-language-choice";
         btn.dataset.lang = value;
-        btn.textContent = label + " " + flag;
+        btn.textContent = flag + " " + label;
         btn.setAttribute("aria-label", value === "en" ? "English" : "العربية");
         btn.addEventListener("click", () => {
           if (lang === value) return;
