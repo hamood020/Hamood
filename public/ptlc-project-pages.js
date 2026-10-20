@@ -640,7 +640,9 @@
       esc2(p.current_quarter || "—") +
       "</b></div></div>" +
       "</section>" +
-      '<section id="basic" class="section-card"><div class="section-card-head"><div><h2>البيانات الأساسية</h2><p>معلومات مرجعية للمشروع</p></div><span class="section-tag">معلومات</span></div><div class="detail-grid"><div class="detail-item"><small>الاستشاري</small><b>' +
+      '<section id="basic" class="section-card"><div class="section-card-head"><div><h2>البيانات الأساسية</h2><p>معلومات مرجعية للمشروع</p></div><span class="section-tag">معلومات</span></div><div class="detail-grid"><div class="detail-item"><small>الموقع</small><b>' +
+      esc2(window.ICVLocation ? window.ICVLocation.format(p.location) : "—") +
+      '</b></div><div class="detail-item"><small>الاستشاري</small><b>' +
       esc2(p.consultant || "—") +
       '</b></div><div class="detail-item"><small>تاريخ البدء</small><b>' +
       fmtProjectDate(p.start_date) +
@@ -1066,8 +1068,9 @@
         fmtProjectDate(p.original_end_date || p.end_date) +
         '</b><div class="muted">تغيير التاريخ الحالي سيُحفظ تلقائياً في سجل التمديدات.</div></div><div class="field"><label>ملاحظات</label><textarea id="vn">' +
         E(p.notes || "") +
-        '</textarea></div><div id="vem"></div><button class="btn primary" onclick="window.icvV2SaveProject()">حفظ</button>',
+        '</textarea></div><div id="vloc"></div><div id="vem"></div><button class="btn primary" onclick="window.icvV2SaveProject()">حفظ</button>',
     );
+    window.ICVLocation?.mount("vloc", p.location || {});
   };
   window.icvAddCompanyFromProject = async () => {
     if (!canEdit()) {
@@ -1150,6 +1153,7 @@
         start_date: startDate || null,
         end_date: endDate || null,
         notes: val("vn") || null,
+        ...(window.ICVLocation && document.getElementById("vloc") ? { location: window.ICVLocation.value("vloc") } : {}),
       })
       .eq("id", pid);
     if (r.error) return msg("vem", window.ICV.friendlyError(r.error));

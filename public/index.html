@@ -1746,7 +1746,8 @@
               const safe = String(status).replace(/[&<>"']/g, "");
               return '<option value="' + safe + '" ' + (safe === "قيد التنفيذ" ? "selected" : "") + ">" + safe + "</option>";
             }).join("") +
-          '</select></div><div class="field"><label>قطاع العمل</label><select id="f_sector"><option value="">اختر قطاع العمل</option><option value="الإنشاءات">الإنشاءات</option><option value="الطرق">الطرق</option><option value="الكهرباء والمياه">الكهرباء والمياه</option><option value="تقنية المعلومات">تقنية المعلومات</option><option value="التوريد">التوريد</option><option value="الخدمات">الخدمات</option><option value="الاستشارات">الاستشارات</option><option value="أخرى">أخرى</option></select></div><div class="field"><label>قيمة المشروع</label><input id="f_value" type="number" min="0"></div><div class="field"><label>نسبة الإنجاز %</label><input id="f_progress" type="number" min="0" max="100"></div><div class="field"><label>تاريخ البدء</label><input id="f_start" type="date"></div><div class="field"><label>تاريخ الانتهاء</label><input id="f_end" type="date"></div></div><button class="btn primary" onclick="saveProject()">حفظ</button></div>';
+          '</select></div><div class="field"><label>قطاع العمل</label><select id="f_sector"><option value="">اختر قطاع العمل</option><option value="الإنشاءات">الإنشاءات</option><option value="الطرق">الطرق</option><option value="الكهرباء والمياه">الكهرباء والمياه</option><option value="تقنية المعلومات">تقنية المعلومات</option><option value="التوريد">التوريد</option><option value="الخدمات">الخدمات</option><option value="الاستشارات">الاستشارات</option><option value="أخرى">أخرى</option></select></div><div class="field"><label>قيمة المشروع</label><input id="f_value" type="number" min="0"></div><div class="field"><label>نسبة الإنجاز %</label><input id="f_progress" type="number" min="0" max="100"></div><div class="field"><label>تاريخ البدء</label><input id="f_start" type="date"></div><div class="field"><label>تاريخ الانتهاء</label><input id="f_end" type="date"></div></div><div id="f_loc"></div><button class="btn primary" onclick="saveProject()">حفظ</button></div>';
+        window.ICVLocation?.mount("f_loc", {}, { required: true });
         modal.classList.remove("hidden");
       }
       async function saveProject() {
@@ -1761,6 +1762,9 @@
           return toast("تاريخ البداية والنهاية مطلوبان.");
         if (f_start.value && f_end.value && f_end.value < f_start.value)
           return toast("تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية.");
+        const projectLocation = window.ICVLocation ? window.ICVLocation.value("f_loc") : {};
+        if (window.ICVLocation && window.ICVLocation.isEmpty(projectLocation))
+          return toast("اختر محافظة واحدة على الأقل لموقع المشروع.");
         const entityResult = en
           ? await db.from("government_entities").select("id").eq("name", en).maybeSingle()
           : { data: null, error: null };
@@ -1780,6 +1784,7 @@
             progress_pct: Number(f_progress.value) || 0,
             start_date: f_start.value || null,
             end_date: f_end.value || null,
+            location: projectLocation,
           })
           .select()
           .single();
@@ -2257,12 +2262,14 @@
       })();
     </script>
     <script src="ptlc-access.js?v=20261020-02"></script>
-    <script src="ptlc-project-pages.js?v=20261020-03"></script>
+    <script src="ptlc-project-pages.js?v=20261020-04"></script>
     <script src="icv-structure-v13.js?v=20261020-02"></script>
     <script src="companies-page-final.js?v=20261020-02"></script>
     <script src="settings-page.js?v=20261020-06"></script>
     <script src="icv-team.js?v=20261020-02"></script>
-    <script src="icv-local-content.js?v=20261020-01"></script>
+    <script src="icv-local-content.js?v=20261020-02"></script>
+    <script src="icv-location.js?v=20261020-01"></script>
+    <script src="icv-home.js?v=20261020-01"></script>
     <script id="icvSequentialNumberingPatch">
       (function () {
         function renumberProjectRows() {

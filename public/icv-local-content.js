@@ -13,7 +13,15 @@
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
-  const isEn = () => window.ICVLanguage?.get?.() === "en";
+  const isEn = () => {
+    // icv-i18n.js loads after this file, so fall back to the stored choice on the first render.
+    if (window.ICVLanguage?.get) return window.ICVLanguage.get() === "en";
+    try {
+      return localStorage.getItem("icv-ui-language") === "en";
+    } catch (e) {
+      return false;
+    }
+  };
   const T = (ar, en) => (isEn() ? en : ar);
   const esc = (v) =>
     String(v ?? "").replace(
