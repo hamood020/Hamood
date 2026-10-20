@@ -1055,7 +1055,7 @@
         (c.data || []).map((x) => '<option value="' + E(x.name) + '"></option>').join("") +
         "</datalist></div>" +
         field("رقم المناقصة", "vt", "text", p.tender_type) +
-        sel("الحالة", "vst", ["مسند", "قيد التنفيذ", "منتهي", "متعثر"], p.project_status) +
+        sel("الحالة", "vst", (window.__icvSettings?.projects?.statuses || ["مسند", "قيد التنفيذ", "منتهي", "متعثر"]), p.project_status) +
         field("الاستشاري", "vco", "text", p.consultant) +
         field("قطاع العمل", "vsec", "text", p.work_sector) +
         field("قيمة المشروع", "vv", "number", p.total_project_value) +
