@@ -1066,6 +1066,17 @@
             if (typeSelect && defaultType && [...typeSelect.options].some((o) => o.value === defaultType || o.textContent.trim() === defaultType)) {
               typeSelect.value = defaultType;
             }
+            const statusSelect = document.getElementById("rStatus");
+            const configuredStatuses = Array.isArray(settings?.reports?.statuses) ? settings.reports.statuses.map((x) => String(x).trim()).filter(Boolean) : [];
+            const reportStatuses = [...new Set([...configuredStatuses, "معتمد"])];
+            if (statusSelect && reportStatuses.length) {
+              const previousStatus = statusSelect.value;
+              statusSelect.innerHTML = reportStatuses.map((status) => {
+                const safe = status.replace(/[&<>"']/g, "");
+                return '<option value="' + safe + '">' + safe + '</option>';
+              }).join("");
+              statusSelect.value = reportStatuses.includes(previousStatus) ? previousStatus : (reportStatuses.includes("مستلم") ? "مستلم" : reportStatuses[0]);
+            }
           } catch (_) {}
         })();
       </script>
