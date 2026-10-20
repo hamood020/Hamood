@@ -797,7 +797,7 @@
         if (!Number.isInteger(n) || n < 0 || n > 365) return toastA("يجب أن تكون مدة " + id + " عددًا صحيحًا بين 0 و365 يومًا.");
       }
       const years = v("reportYears").split(",").map((x) => x.trim()).filter(Boolean);
-      if (!years.length || years.some((x) => !/^\\d{4}$/.test(x)) || new Set(years).size !== years.length)
+      if (!years.length || years.some((x) => !/^\d{4}$/.test(x)) || new Set(years).size !== years.length)
         return toastA("أدخل سنوات تقارير صحيحة من أربعة أرقام، من دون تكرار.");
       const quarters = arr("quarters");
       if (quarters.length !== 4 || ["Q1","Q2","Q3","Q4"].some((q) => !quarters.includes(q)))
