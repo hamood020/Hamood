@@ -676,9 +676,10 @@
       return;
     }
     try {
-      var cr = await db.from("companies").select("*").eq("id", id).maybeSingle();
+      var cr = await db.from("companies").select(window.ICV.COMPANY_COLS).eq("id", id).maybeSingle();
       if (cr.error) throw cr.error;
       if (!cr.data) throw new Error("الشركة غير موجودة.");
+      await window.ICV.attachContacts(db, "companies", cr.data);
       var results = await Promise.all([
         db.from("projects").select("*,government_entities(name)").order("project_name"),
         db.from("quarterly_reports").select("*").order("annual_period").order("quarter"),
@@ -755,11 +756,14 @@
       "</b></div><div><small>نسبة الاستيفاء</small><b>" +
       (ok + bad ? pct((ok / (ok + bad)) * 100) : "—") +
       "</b></div></div>" +
-      '<div class="panel" style="margin:14px 0"><div class="toolbar"><div><h3 style="margin:0">نقاط التواصل</h3><div class="muted">بيانات المختصين المسجلة لهذه الشركة أو المقاول.</div></div>' +
-      contactEditButton +
-      '</div><div id="icvCoContactView">' +
-      companyContactsHtml(contactPoints) +
-      "</div></div>" +
+      // Contact points are for staff only.
+      (window.ICV.canSeeContacts()
+        ? '<div class="panel" style="margin:14px 0"><div class="toolbar"><div><h3 style="margin:0">نقاط التواصل</h3><div class="muted">بيانات المختصين المسجلة لهذه الشركة أو المقاول.</div></div>' +
+          contactEditButton +
+          '</div><div id="icvCoContactView">' +
+          companyContactsHtml(contactPoints) +
+          "</div></div>"
+        : "") +
       '<div class="panel"><div class="toolbar"><div><h3 style="margin:0">مشاريع الشركة</h3><div class="muted">' +
       ps.length +
       ' مشروع</div></div></div><div class="table-wrap"><table><thead><tr><th>م</th><th>المشروع</th><th>الجهة الحكومية</th><th>القيمة</th><th>التعمين</th><th>SME</th><th>السلع</th><th>الخدمات</th><th>الحالة</th></tr></thead><tbody>' +
@@ -806,8 +810,9 @@
     try {
       var db = window.__icvAccessClient || window.__icvDb;
       if (!db) throw new Error("اتصال قاعدة البيانات غير متاح");
-      var cr = await db.from("companies").select("*").order("name");
+      var cr = await db.from("companies").select(window.ICV.COMPANY_COLS).order("name");
       if (cr.error) throw cr.error;
+      await window.ICV.attachContacts(db, "companies", cr.data);
       var pr = await db.from("projects").select("*,government_entities(name)").order("project_name");
       if (pr.error) throw pr.error;
       var rr = await db.from("quarterly_reports").select("*").order("annual_period").order("quarter");

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>متابعة المحتوى المحلي</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-    <script src="icv-common.js?v=20261020-01"></script>
+    <script src="icv-common.js?v=20261020-02"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap");
@@ -1753,7 +1753,7 @@
       async function renderEntities() {
         const root = document.getElementById("page-entities");
         if (!root) return;
-        const result = await db.from("government_entities").select("*").order("name");
+        const result = await db.from("government_entities").select(ICV.ENTITY_COLS).order("name");
         const entities = result.data || [],
           allProjects = window.projects || projects || [],
           allReports = window.reports || reports || [];
@@ -2218,12 +2218,12 @@
         window.icvThemeSettings = { applyTheme, applySize, applyFont, open: openPanel, close: closePanel };
       })();
     </script>
-    <script src="ptlc-access.js?v=20261020-01"></script>
-    <script src="ptlc-project-pages.js?v=20261020-01"></script>
-    <script src="icv-structure-v13.js?v=20261020-01"></script>
-    <script src="companies-page-final.js?v=20261020-01"></script>
-    <script src="settings-page.js?v=20261020-01"></script>
-    <script src="icv-team.js?v=20261020-01"></script>
+    <script src="ptlc-access.js?v=20261020-02"></script>
+    <script src="ptlc-project-pages.js?v=20261020-02"></script>
+    <script src="icv-structure-v13.js?v=20261020-02"></script>
+    <script src="companies-page-final.js?v=20261020-02"></script>
+    <script src="settings-page.js?v=20261020-02"></script>
+    <script src="icv-team.js?v=20261020-02"></script>
     <script id="icvSequentialNumberingPatch">
       (function () {
         function renumberProjectRows() {

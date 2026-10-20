@@ -342,8 +342,8 @@
     const r = await bl();
     const d = D(),
       [e, c] = await Promise.all([
-        d.from("government_entities").select("*").order("name"),
-        d.from("companies").select("*").order("name"),
+        d.from("government_entities").select(window.ICV.ENTITY_COLS).order("name"),
+        d.from("companies").select(window.ICV.COMPANY_COLS).order("name"),
       ]);
     window.icvEntities = e.data || [];
     window.icvCompanies = c.data || [];

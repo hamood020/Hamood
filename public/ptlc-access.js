@@ -760,7 +760,7 @@
   };
   window.openMyEntityCard = async function (id) {
     const [er, pr] = await Promise.all([
-      client.from("government_entities").select("*").eq("id", id).maybeSingle(),
+      client.from("government_entities").select(window.ICV.ENTITY_COLS).eq("id", id).maybeSingle(),
       client
         .from("projects")
         .select("id,project_name,project_status,end_date")
@@ -769,6 +769,7 @@
     ]);
     const e = er.data;
     if (!e) return;
+    await window.ICV.attachContacts(client, "government_entities", e);
     const projects = pr.data || [],
       contacts = Array.isArray(e.contact_points) ? e.contact_points : [];
     const old = document.getElementById("myEntityCardModal");
@@ -785,22 +786,26 @@
       projects.length +
       '</div><div class="label">إجمالي المشاريع</div></div><div class="profile-kpi"><div class="num green">' +
       projects.filter((p) => p.project_status === "قيد التنفيذ").length +
-      '</div><div class="label">مشاريع قيد التنفيذ</div></div></div><div style="border-top:1px solid #e8eeea;padding-top:16px;margin-top:4px"><b>نقاط التواصل</b>' +
-      (contacts.length
-        ? contacts
-            .map(
-              (x) =>
-                '<div class="profile-row" style="padding-left:0;padding-right:0"><div class="profile-row-main"><strong>' +
-                escA(x.name || "—") +
-                "</strong><span>📞 " +
-                escA(x.phone || "—") +
-                " &nbsp; | &nbsp; ✉ " +
-                escA(x.email || "—") +
-                "</span></div></div>",
-            )
-            .join("")
-        : '<div class="profile-empty">لا توجد نقاط تواصل مضافة.</div>') +
-      '</div><div style="border-top:1px solid #e8eeea;padding-top:16px;margin-top:16px"><b>مشاريع الجهة</b>' +
+      '</div><div class="label">مشاريع قيد التنفيذ</div></div></div>' +
+      (!window.ICV.canSeeContacts()
+        ? ""
+        : '<div style="border-top:1px solid #e8eeea;padding-top:16px;margin-top:4px"><b>نقاط التواصل</b>' +
+          (contacts.length
+            ? contacts
+                .map(
+                  (x) =>
+                    '<div class="profile-row" style="padding-left:0;padding-right:0"><div class="profile-row-main"><strong>' +
+                    escA(x.name || "—") +
+                    "</strong><span>📞 " +
+                    escA(x.phone || "—") +
+                    " &nbsp; | &nbsp; ✉ " +
+                    escA(x.email || "—") +
+                    "</span></div></div>",
+                )
+                .join("")
+            : '<div class="profile-empty">لا توجد نقاط تواصل مضافة.</div>') +
+          "</div>") +
+      '<div style="border-top:1px solid #e8eeea;padding-top:16px;margin-top:16px"><b>مشاريع الجهة</b>' +
       (projects.length
         ? projects
             .slice(0, 10)
