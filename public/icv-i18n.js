@@ -652,6 +652,8 @@
     "اكتب عنوان المهمة.":"Enter a task title.",
     "تحديد الكل كمقروء":"Mark all as read",
     "لا توجد إشعارات.":"No notifications.",
+    // Final labels.
+    "إسناد المهمة":"Assign task",
   };
   let lang = localStorage.getItem(KEY) === "en" ? "en" : "ar";
   const translate = (s) => {
