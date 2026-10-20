@@ -99,7 +99,7 @@
   // ---------------------------------------------------------------------------
   function section(n, title, sub, body, caption, extra) {
     return (
-      '<section class="panel hm-section"><div class="hm-head"><div><h2>' + (n ? '<span class="hm-num">' + n + "</span>" : "") + title + "</h2>" +
+      '<section class="panel hm-section"><div class="hm-head"><div><h2>' + "" + title + "</h2>" +
       (sub ? '<div class="hm-desc">' + sub + "</div>" : "") + "</div>" + (extra || "") + "</div>" + body +
       (caption ? '<p class="hm-caption">' + caption + "</p>" : "") + "</section>"
     );
