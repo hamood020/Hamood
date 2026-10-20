@@ -1,266 +1,1762 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>متابعة المحتوى المحلي</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
-:root{--icv-font-scale:1;--bg:#f5f7fb;--card:#fff;--ink:#162033;--muted:#6b7280;--line:#e8edf4;--primary:#0f766e;--primary2:#0b5f59;--blue:#2563eb;--green:#16a34a;--red:#dc2626;--amber:#d97706;--soft:#eef7f5;--shadow:0 8px 24px rgba(15,23,42,.06);--radius:18px}
-*{box-sizing:border-box}html,body{min-height:100%;margin:0}body{background:var(--bg);color:var(--ink);font-family:Cairo,Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}.auth-pending #login{display:none!important}.auth-pending #app{display:none!important}
-.login{min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#0e2f2c,#115e59);padding:20px}.login-card{width:min(430px,100%);background:#fff;border-radius:22px;padding:34px;box-shadow:0 25px 70px #0004}.logo{width:58px;height:58px;border-radius:16px;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:20px;font-weight:800;margin-bottom:18px}.login h1{margin:0 0 8px}.muted{color:var(--muted);font-size:12px}
-.app{display:flex;min-height:100vh}.side{width:250px;background:var(--nav-bg);color:var(--nav-ink);position:fixed;right:0;top:0;bottom:0;padding:22px 14px;z-index:10}.brand{display:flex;align-items:center;gap:10px;padding:8px 10px 24px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:16px}.brand-mark{width:48px;height:48px;flex:0 0 48px;border-radius:10px;background:transparent;display:grid;place-items:center;overflow:hidden}.brand-logo{display:block;width:100%;height:100%;object-fit:contain;filter:brightness(0) invert(1)}.brand b{font-size:15px;line-height:1.5}.brand small{display:block;color:var(--nav-muted);font-size:10px}.nav{display:grid;gap:6px}.nav button{width:100%;border:0;background:transparent;color:var(--nav-ink);padding:12px 14px;border-radius:12px;font-size:13px;display:flex;align-items:center;gap:10px;text-align:right}.nav button:hover,.nav button.active{background:var(--nav-hover);color:var(--nav-ink)}.nav .ico{width:24px;text-align:center;font-size:15px}.side .logout{position:absolute;bottom:22px;right:14px;left:14px}
-.main{margin-right:250px;width:calc(100% - 250px);padding:28px 32px 48px}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}.top h1{margin:0;font-size:26px}.top .muted{margin-top:4px}.pill{display:inline-flex;align-items:center;background:#eef7f5;color:var(--primary2);padding:6px 10px;border-radius:999px;font-size:11px;font-weight:700;margin-right:5px}
-.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;padding:10px 14px;font-family:inherit;cursor:pointer;font-weight:700;font-size:12px}.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}.btn.danger{background:#feecec;color:#b91c1c;border-color:#feecec}.btn.ghost{background:#f8fafc}
-.field{margin:0 0 12px}.field label{display:block;color:var(--muted);font-size:11px;font-weight:700;margin-bottom:5px}.field input,.field select,.field textarea,.search{width:100%;height:40px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:0 10px;font-family:inherit;font-size:12px;outline:none}.field textarea{height:100px;padding:10px}.field input:focus,.field select:focus,.field textarea:focus{border-color:#9bc9c4}.link{border:0;background:none;color:var(--blue);font-weight:700;margin-top:10px}
-.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}.card,.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}.card .label{color:var(--muted);font-size:11px}.card .value{font-size:24px;font-weight:800;margin:7px 0}.card .sub{font-size:10px;color:var(--muted)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.panel h2,.card h2{margin:0 0 5px;font-size:16px}.desc{color:var(--muted);font-size:11px;margin-bottom:15px}.metric{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:11px}.metric:last-child{border-bottom:0}
-.toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.toolbar h2{margin:0}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;margin-top:15px}.table-wrap table{width:100%;border-collapse:collapse;min-width:760px;background:#fff}.table-wrap th{background:#f8fafc;color:#667085;font-size:10px;font-weight:800;padding:11px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}.table-wrap td{padding:11px;font-size:11px;border-bottom:1px solid #f0f2f6;vertical-align:middle}.table-wrap tr:last-child td{border-bottom:0}.table-wrap tr:hover td{background:#fbfdfd}.status{font-weight:700}.ok{color:var(--green)}.bad{color:var(--red)}.warn{color:var(--amber)}.project-link{font-weight:800;color:var(--primary2)}
-.progress{height:8px;background:#edf1f5;border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;background:var(--primary);border-radius:999px}.bar-list{display:grid;gap:12px}.bar-row{display:grid;grid-template-columns:150px 1fr 75px;gap:10px;align-items:center;font-size:11px}.bar{height:10px;background:#edf1f5;border-radius:999px;overflow:hidden}.bar i{display:block;height:100%;background:var(--primary);border-radius:999px}.bar-row b{text-align:left}.donut{width:150px;height:150px;border-radius:50%;background:conic-gradient(var(--primary) 0 62%,#cbd5e1 62% 100%);position:relative;margin:auto}.donut:after{content:"";position:absolute;inset:30px;background:#fff;border-radius:50%}.donut-center{position:absolute;inset:0;display:grid;place-items:center;font-weight:800;font-size:20px;z-index:1}.chart-flex{display:flex;gap:25px;align-items:center}.legend{display:grid;gap:9px;font-size:11px}.legend span{display:flex;align-items:center;gap:7px}.dot{width:9px;height:9px;border-radius:50%;display:inline-block}.dot.primary{background:var(--primary)}.dot.gray{background:#cbd5e1}
-.split-status{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.status-box{text-align:center;border:1px solid var(--line);border-radius:14px;padding:13px}.status-box b{display:block;margin:4px 0;font-size:16px}.section{margin-top:20px}.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.section-head h2{font-size:18px;margin:0}
-.modal{position:fixed;inset:0;background:#0008;display:grid;place-items:center;padding:20px;z-index:20}.modal-card{background:#fff;border-radius:18px;width:min(1050px,100%);max-height:90vh;overflow:auto;padding:22px;box-shadow:var(--shadow)}.modal-head{display:flex;justify-content:space-between;align-items:center}.close{border:0;background:#eef2f7;border-radius:50%;width:34px;height:34px}.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.project-filter-card{padding:22px}.project-filter-grid{display:grid;gap:12px;margin-top:16px;align-items:end}.project-filter-grid-main{grid-template-columns:2fr 1.35fr 1fr 1.1fr 1.25fr}.project-filter-grid-secondary{grid-template-columns:1.2fr 1.15fr 1fr 1fr 1fr 1fr}.project-filter-grid .field{margin:0}.project-filter-grid .field input,.project-filter-grid .field select{height:44px}.project-expiry-filter{height:44px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:0 12px;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:var(--ink);white-space:nowrap}.project-expiry-filter input{width:18px;height:18px}.project-filter-actions{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}.full{grid-column:1/-1}.toast{position:fixed;left:20px;bottom:20px;background:#172033;color:#fff;padding:12px 16px;border-radius:10px;z-index:50}
-@media(max-width:1050px){.cards{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr 1fr}.project-filter-grid-main,.project-filter-grid-secondary{grid-template-columns:repeat(2,1fr)}}@media(max-width:760px){.side{position:static;width:100%;height:auto;padding:14px}.app{display:block}.main{margin:0;width:100%;padding:18px}.side .logout{position:static;margin-top:10px}.nav{grid-template-columns:repeat(2,1fr)}.top{align-items:flex-start;flex-direction:column}.cards{grid-template-columns:1fr 1fr}.project-filter-grid-main,.project-filter-grid-secondary{grid-template-columns:1fr}.project-filter-actions{align-items:flex-start;flex-direction:column;gap:8px}.form-grid{grid-template-columns:1fr}.split-status{grid-template-columns:1fr}.bar-row{grid-template-columns:110px 1fr 45px}.chart-flex{flex-direction:column}.pill{margin:0 4px 4px 0}}
-/* ICV New - Appearance settings */
-.theme-nav-btn{width:100%;border:0;background:transparent;color:var(--nav-ink);padding:12px 14px;border-radius:12px;font-size:13px;display:flex;align-items:center;gap:10px;text-align:right;cursor:pointer;font-family:inherit}
-.theme-nav-btn:hover,.theme-nav-btn.active{background:var(--nav-hover);color:var(--nav-ink)}
-.theme-panel{position:fixed;right:265px;top:20px;width:370px;max-width:calc(100vw - 285px);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 45px #0003;z-index:1000;overflow:hidden}
-.theme-panel.hidden{display:none!important}.theme-panel-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line);background:var(--card)}
-.theme-panel-head b{display:block;font-size:16px}.theme-panel-head small{display:block;color:var(--muted);font-size:10px;margin-top:3px}.theme-panel-head button{border:0;background:var(--soft);color:var(--ink);width:30px;height:30px;border-radius:9px;font-size:21px;cursor:pointer}
-.theme-panel-body{padding:16px;max-height:calc(100vh - 40px);overflow:auto}.theme-group{margin:0 0 18px}.theme-group>label{display:block;font-size:12px;font-weight:800;margin-bottom:8px;color:var(--ink)}
-.theme-options{display:grid;gap:7px}.theme-option{width:100%;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);background:#fff;color:var(--ink);padding:10px 11px;border-radius:11px;cursor:pointer;font-family:inherit;text-align:right}.theme-option:hover,.theme-option.active{border-color:var(--primary);background:var(--soft);color:var(--primary2)}.theme-option span{display:flex;gap:4px}.theme-option i{width:16px;height:16px;border-radius:50%;display:block}
-.theme-size{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}.theme-size button,#themeFont{height:40px;border:1px solid var(--line);background:#fff;border-radius:10px;color:var(--ink);font-family:inherit;cursor:pointer}.theme-size button:hover{background:var(--soft);color:var(--primary2)}#themeFont{width:100%;padding:0 10px}
-@media(max-width:900px){.theme-panel{right:235px;max-width:calc(100vw - 250px)}}
-@media(max-width:760px){.theme-panel{right:82px;width:330px;max-width:calc(100vw - 95px)}}
-/* readable-fonts */
-/* Readability: enlarge content text without changing header/sidebar */
-.main .panel h2,.main .card h2{font-size:18px}
-.main .panel h3,.main .card h3{font-size:15px}
-.main .desc,.main .muted{font-size:12px}
-.main .card .label,.main .card .sub{font-size:12px}
-.main .metric{font-size:13px}
-.main .metric b{font-size:13px}
-.main .table-wrap th{font-size:14px;padding:13px 11px}
-.main .table-wrap td{font-size:14px;padding:13px 11px}
-.main .table-wrap td b,.main .table-wrap td .project-link{font-size:14px}
-.main .btn{font-size:13px}
-.main .field label{font-size:12px}
-.main .field input,.main .field select,.main .field textarea,.main .search{font-size:13px}
-.main .project-expiry-filter{font-size:12px}
-.main .bar-row,.main .legend{font-size:12px}
-.main .section-head h2{font-size:19px}
-/* Project page */
-.main .comparison-card{font-size:13px}
-.main .compare-row{font-size:13px}
-.main .compare-label{font-size:13px}
-.main .compare-value b{font-size:14px}
-.main .compare-value small,.main .compare-result small{font-size:11px}
-.main .compare-result span{font-size:11px}
-.main .compare-head{font-size:11px}
-.main .workforce-main-card .compare-row,.main .workforce-category-card .compare-row{font-size:13px}
-.main .workforce-main-card .compare-label,.main .workforce-category-card .compare-label{font-size:13px}
-.main .workforce-main-card .compare-value b,.main .workforce-category-card .compare-value b{font-size:14px}
-.main .workforce-main-card .compare-value small,.main .workforce-category-card .compare-value small,
-.main .workforce-main-card .compare-result small,.main .workforce-category-card .compare-result small{font-size:11px}
-.main .workforce-main-card .compare-result span,.main .workforce-category-card .compare-result span{font-size:11px}
-.main .workforce-main-card .compare-head,.main .workforce-category-card .compare-head{font-size:11px}
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>متابعة المحتوى المحلي</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap");
+      :root {
+        --icv-font-scale: 1;
+        --bg: #f5f7fb;
+        --card: #fff;
+        --ink: #162033;
+        --muted: #6b7280;
+        --line: #e8edf4;
+        --primary: #0f766e;
+        --primary2: #0b5f59;
+        --blue: #2563eb;
+        --green: #16a34a;
+        --red: #dc2626;
+        --amber: #d97706;
+        --soft: #eef7f5;
+        --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        --radius: 18px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        min-height: 100%;
+        margin: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Cairo, Arial, sans-serif;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .auth-pending #login {
+        display: none !important;
+      }
+      .auth-pending #app {
+        display: none !important;
+      }
+      .login {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #0e2f2c, #115e59);
+        padding: 20px;
+      }
+      .login-card {
+        width: min(430px, 100%);
+        background: #fff;
+        border-radius: 22px;
+        padding: 34px;
+        box-shadow: 0 25px 70px #0004;
+      }
+      .logo {
+        width: 58px;
+        height: 58px;
+        border-radius: 16px;
+        background: var(--primary);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 20px;
+        font-weight: 800;
+        margin-bottom: 18px;
+      }
+      .login h1 {
+        margin: 0 0 8px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .app {
+        display: flex;
+        min-height: 100vh;
+      }
+      .side {
+        width: 250px;
+        background: var(--nav-bg);
+        color: var(--nav-ink);
+        position: fixed;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        padding: 22px 14px;
+        z-index: 10;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 16px;
+      }
+      .brand-mark {
+        width: 48px;
+        height: 48px;
+        flex: 0 0 48px;
+        border-radius: 10px;
+        background: transparent;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+      .brand-logo {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter: brightness(0) invert(1);
+      }
+      .brand b {
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      .brand small {
+        display: block;
+        color: var(--nav-muted);
+        font-size: 10px;
+      }
+      .nav {
+        display: grid;
+        gap: 6px;
+      }
+      .nav button {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: var(--nav-ink);
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-align: right;
+      }
+      .nav button:hover,
+      .nav button.active {
+        background: var(--nav-hover);
+        color: var(--nav-ink);
+      }
+      .nav .ico {
+        width: 24px;
+        text-align: center;
+        font-size: 15px;
+      }
+      .side .logout {
+        position: absolute;
+        bottom: 22px;
+        right: 14px;
+        left: 14px;
+      }
+      .main {
+        margin-right: 250px;
+        width: calc(100% - 250px);
+        padding: 28px 32px 48px;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 22px;
+      }
+      .top h1 {
+        margin: 0;
+        font-size: 26px;
+      }
+      .top .muted {
+        margin-top: 4px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        background: #eef7f5;
+        color: var(--primary2);
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        margin-right: 5px;
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+        border-radius: 11px;
+        padding: 10px 14px;
+        font-family: inherit;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 12px;
+      }
+      .btn.primary {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
+      }
+      .btn.danger {
+        background: #feecec;
+        color: #b91c1c;
+        border-color: #feecec;
+      }
+      .btn.ghost {
+        background: #f8fafc;
+      }
+      .field {
+        margin: 0 0 12px;
+      }
+      .field label {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+      .field input,
+      .field select,
+      .field textarea,
+      .search {
+        width: 100%;
+        height: 40px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        padding: 0 10px;
+        font-family: inherit;
+        font-size: 12px;
+        outline: none;
+      }
+      .field textarea {
+        height: 100px;
+        padding: 10px;
+      }
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        border-color: #9bc9c4;
+      }
+      .link {
+        border: 0;
+        background: none;
+        color: var(--blue);
+        font-weight: 700;
+        margin-top: 10px;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+      .card,
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 18px;
+        box-shadow: var(--shadow);
+      }
+      .card .label {
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .card .value {
+        font-size: 24px;
+        font-weight: 800;
+        margin: 7px 0;
+      }
+      .card .sub {
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+      }
+      .grid3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .panel h2,
+      .card h2 {
+        margin: 0 0 5px;
+        font-size: 16px;
+      }
+      .desc {
+        color: var(--muted);
+        font-size: 11px;
+        margin-bottom: 15px;
+      }
+      .metric {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 11px;
+      }
+      .metric:last-child {
+        border-bottom: 0;
+      }
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .toolbar h2 {
+        margin: 0;
+      }
+      .table-wrap {
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 15px;
+      }
+      .table-wrap table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: #fff;
+      }
+      .table-wrap th {
+        background: #f8fafc;
+        color: #667085;
+        font-size: 10px;
+        font-weight: 800;
+        padding: 11px;
+        text-align: right;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+      .table-wrap td {
+        padding: 11px;
+        font-size: 11px;
+        border-bottom: 1px solid #f0f2f6;
+        vertical-align: middle;
+      }
+      .table-wrap tr:last-child td {
+        border-bottom: 0;
+      }
+      .table-wrap tr:hover td {
+        background: #fbfdfd;
+      }
+      .status {
+        font-weight: 700;
+      }
+      .ok {
+        color: var(--green);
+      }
+      .bad {
+        color: var(--red);
+      }
+      .warn {
+        color: var(--amber);
+      }
+      .project-link {
+        font-weight: 800;
+        color: var(--primary2);
+      }
+      .progress {
+        height: 8px;
+        background: #edf1f5;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .progress span {
+        display: block;
+        height: 100%;
+        background: var(--primary);
+        border-radius: 999px;
+      }
+      .bar-list {
+        display: grid;
+        gap: 12px;
+      }
+      .bar-row {
+        display: grid;
+        grid-template-columns: 150px 1fr 75px;
+        gap: 10px;
+        align-items: center;
+        font-size: 11px;
+      }
+      .bar {
+        height: 10px;
+        background: #edf1f5;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .bar i {
+        display: block;
+        height: 100%;
+        background: var(--primary);
+        border-radius: 999px;
+      }
+      .bar-row b {
+        text-align: left;
+      }
+      .donut {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: conic-gradient(var(--primary) 0 62%, #cbd5e1 62% 100%);
+        position: relative;
+        margin: auto;
+      }
+      .donut:after {
+        content: "";
+        position: absolute;
+        inset: 30px;
+        background: #fff;
+        border-radius: 50%;
+      }
+      .donut-center {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: 20px;
+        z-index: 1;
+      }
+      .chart-flex {
+        display: flex;
+        gap: 25px;
+        align-items: center;
+      }
+      .legend {
+        display: grid;
+        gap: 9px;
+        font-size: 11px;
+      }
+      .legend span {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .dot.primary {
+        background: var(--primary);
+      }
+      .dot.gray {
+        background: #cbd5e1;
+      }
+      .split-status {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+      .status-box {
+        text-align: center;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 13px;
+      }
+      .status-box b {
+        display: block;
+        margin: 4px 0;
+        font-size: 16px;
+      }
+      .section {
+        margin-top: 20px;
+      }
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .section-head h2 {
+        font-size: 18px;
+        margin: 0;
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: #0008;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        z-index: 20;
+      }
+      .modal-card {
+        background: #fff;
+        border-radius: 18px;
+        width: min(1050px, 100%);
+        max-height: 90vh;
+        overflow: auto;
+        padding: 22px;
+        box-shadow: var(--shadow);
+      }
+      .modal-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .close {
+        border: 0;
+        background: #eef2f7;
+        border-radius: 50%;
+        width: 34px;
+        height: 34px;
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      .project-filter-card {
+        padding: 22px;
+      }
+      .project-filter-grid {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+        align-items: end;
+      }
+      .project-filter-grid-main {
+        grid-template-columns: 2fr 1.35fr 1fr 1.1fr 1.25fr;
+      }
+      .project-filter-grid-secondary {
+        grid-template-columns: 1.2fr 1.15fr 1fr 1fr 1fr 1fr;
+      }
+      .project-filter-grid .field {
+        margin: 0;
+      }
+      .project-filter-grid .field input,
+      .project-filter-grid .field select {
+        height: 44px;
+      }
+      .project-expiry-filter {
+        height: 44px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--ink);
+        white-space: nowrap;
+      }
+      .project-expiry-filter input {
+        width: 18px;
+        height: 18px;
+      }
+      .project-filter-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+      }
+      .full {
+        grid-column: 1/-1;
+      }
+      .toast {
+        position: fixed;
+        left: 20px;
+        bottom: 20px;
+        background: #172033;
+        color: #fff;
+        padding: 12px 16px;
+        border-radius: 10px;
+        z-index: 50;
+      }
+      @media (max-width: 1050px) {
+        .cards {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .grid2 {
+          grid-template-columns: 1fr;
+        }
+        .form-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .project-filter-grid-main,
+        .project-filter-grid-secondary {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 760px) {
+        .side {
+          position: static;
+          width: 100%;
+          height: auto;
+          padding: 14px;
+        }
+        .app {
+          display: block;
+        }
+        .main {
+          margin: 0;
+          width: 100%;
+          padding: 18px;
+        }
+        .side .logout {
+          position: static;
+          margin-top: 10px;
+        }
+        .nav {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .top {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .cards {
+          grid-template-columns: 1fr 1fr;
+        }
+        .project-filter-grid-main,
+        .project-filter-grid-secondary {
+          grid-template-columns: 1fr;
+        }
+        .project-filter-actions {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+        .split-status {
+          grid-template-columns: 1fr;
+        }
+        .bar-row {
+          grid-template-columns: 110px 1fr 45px;
+        }
+        .chart-flex {
+          flex-direction: column;
+        }
+        .pill {
+          margin: 0 4px 4px 0;
+        }
+      }
+      /* ICV New - Appearance settings */
+      .theme-nav-btn {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: var(--nav-ink);
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-align: right;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .theme-nav-btn:hover,
+      .theme-nav-btn.active {
+        background: var(--nav-hover);
+        color: var(--nav-ink);
+      }
+      .theme-panel {
+        position: fixed;
+        right: 265px;
+        top: 20px;
+        width: 370px;
+        max-width: calc(100vw - 285px);
+        background: var(--card);
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: 0 18px 45px #0003;
+        z-index: 1000;
+        overflow: hidden;
+      }
+      .theme-panel.hidden {
+        display: none !important;
+      }
+      .theme-panel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--card);
+      }
+      .theme-panel-head b {
+        display: block;
+        font-size: 16px;
+      }
+      .theme-panel-head small {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 3px;
+      }
+      .theme-panel-head button {
+        border: 0;
+        background: var(--soft);
+        color: var(--ink);
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        font-size: 21px;
+        cursor: pointer;
+      }
+      .theme-panel-body {
+        padding: 16px;
+        max-height: calc(100vh - 40px);
+        overflow: auto;
+      }
+      .theme-group {
+        margin: 0 0 18px;
+      }
+      .theme-group > label {
+        display: block;
+        font-size: 12px;
+        font-weight: 800;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .theme-options {
+        display: grid;
+        gap: 7px;
+      }
+      .theme-option {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+        padding: 10px 11px;
+        border-radius: 11px;
+        cursor: pointer;
+        font-family: inherit;
+        text-align: right;
+      }
+      .theme-option:hover,
+      .theme-option.active {
+        border-color: var(--primary);
+        background: var(--soft);
+        color: var(--primary2);
+      }
+      .theme-option span {
+        display: flex;
+        gap: 4px;
+      }
+      .theme-option i {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        display: block;
+      }
+      .theme-size {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+      }
+      .theme-size button,
+      #themeFont {
+        height: 40px;
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 10px;
+        color: var(--ink);
+        font-family: inherit;
+        cursor: pointer;
+      }
+      .theme-size button:hover {
+        background: var(--soft);
+        color: var(--primary2);
+      }
+      #themeFont {
+        width: 100%;
+        padding: 0 10px;
+      }
+      @media (max-width: 900px) {
+        .theme-panel {
+          right: 235px;
+          max-width: calc(100vw - 250px);
+        }
+      }
+      @media (max-width: 760px) {
+        .theme-panel {
+          right: 82px;
+          width: 330px;
+          max-width: calc(100vw - 95px);
+        }
+      }
+      /* readable-fonts */
+      /* Readability: enlarge content text without changing header/sidebar */
+      .main .panel h2,
+      .main .card h2 {
+        font-size: 18px;
+      }
+      .main .panel h3,
+      .main .card h3 {
+        font-size: 15px;
+      }
+      .main .desc,
+      .main .muted {
+        font-size: 12px;
+      }
+      .main .card .label,
+      .main .card .sub {
+        font-size: 12px;
+      }
+      .main .metric {
+        font-size: 13px;
+      }
+      .main .metric b {
+        font-size: 13px;
+      }
+      .main .table-wrap th {
+        font-size: 14px;
+        padding: 13px 11px;
+      }
+      .main .table-wrap td {
+        font-size: 14px;
+        padding: 13px 11px;
+      }
+      .main .table-wrap td b,
+      .main .table-wrap td .project-link {
+        font-size: 14px;
+      }
+      .main .btn {
+        font-size: 13px;
+      }
+      .main .field label {
+        font-size: 12px;
+      }
+      .main .field input,
+      .main .field select,
+      .main .field textarea,
+      .main .search {
+        font-size: 13px;
+      }
+      .main .project-expiry-filter {
+        font-size: 12px;
+      }
+      .main .bar-row,
+      .main .legend {
+        font-size: 12px;
+      }
+      .main .section-head h2 {
+        font-size: 19px;
+      }
+      /* Project page */
+      .main .comparison-card {
+        font-size: 13px;
+      }
+      .main .compare-row {
+        font-size: 13px;
+      }
+      .main .compare-label {
+        font-size: 13px;
+      }
+      .main .compare-value b {
+        font-size: 14px;
+      }
+      .main .compare-value small,
+      .main .compare-result small {
+        font-size: 11px;
+      }
+      .main .compare-result span {
+        font-size: 11px;
+      }
+      .main .compare-head {
+        font-size: 11px;
+      }
+      .main .workforce-main-card .compare-row,
+      .main .workforce-category-card .compare-row {
+        font-size: 13px;
+      }
+      .main .workforce-main-card .compare-label,
+      .main .workforce-category-card .compare-label {
+        font-size: 13px;
+      }
+      .main .workforce-main-card .compare-value b,
+      .main .workforce-category-card .compare-value b {
+        font-size: 14px;
+      }
+      .main .workforce-main-card .compare-value small,
+      .main .workforce-category-card .compare-value small,
+      .main .workforce-main-card .compare-result small,
+      .main .workforce-category-card .compare-result small {
+        font-size: 11px;
+      }
+      .main .workforce-main-card .compare-result span,
+      .main .workforce-category-card .compare-result span {
+        font-size: 11px;
+      }
+      .main .workforce-main-card .compare-head,
+      .main .workforce-category-card .compare-head {
+        font-size: 11px;
+      }
 
+      /* Global page typography scale. Excludes sidebar and top chrome. */
+      .main .panel,
+      .main .section-head,
+      .main .section-head h2,
+      .main .section-head .muted,
+      .main .table-wrap,
+      .main .table-wrap th,
+      .main .table-wrap td,
+      .main .table-wrap .project-link,
+      .main .btn,
+      .main .field label,
+      .main .field input,
+      .main .field select,
+      .main .field textarea,
+      .main .muted,
+      .main .pill,
+      .main .note,
+      .main .card,
+      .main .kpi,
+      .main .kpi-value,
+      .main .kpi-label,
+      .main .stat,
+      .main .stat-value,
+      .main .stat-label {
+        font-size: var(--icv-page-font-size) !important;
+        line-height: 1.45 !important;
+      }
+      .icv-shell .project-meta-item small,
+      .icv-shell .project-meta-item b,
+      .icv-shell .compliance-title,
+      .icv-shell .compliance-card .label,
+      .icv-shell .status-text,
+      .icv-shell .project-nav a,
+      .icv-shell .project-kpi small,
+      .icv-shell .project-kpi b,
+      .icv-shell .project-kpi span,
+      .icv-shell .section-card-head h2,
+      .icv-shell .section-card-head p,
+      .icv-shell .section-tag,
+      .icv-shell .compare-head,
+      .icv-shell .compare-row,
+      .icv-shell .compare-label,
+      .icv-shell .compare-value,
+      .icv-shell .compare-result,
+      .icv-shell .detail-item,
+      .icv-shell .detail-item small,
+      .icv-shell .detail-item b,
+      .icv-shell .hero-btn {
+        font-size: var(--icv-page-font-size) !important;
+        line-height: 1.5 !important;
+      }
+      .icv-shell .project-kpi b,
+      .icv-shell .compliance-card .percent {
+        font-size: var(--icv-page-font-size) !important;
+      }
+    </style>
+  </head>
+  <body class="auth-pending">
+    <section id="login" class="login">
+      <div class="login-card">
+        <div class="logo">م</div>
+        <h1>متابعة المحتوى المحلي</h1>
+        <div class="muted">منصة متابعة المشاريع والمحتوى المحلي</div>
+        <div id="loginBox">
+          <div class="field">
+            <label>البريد الإلكتروني</label><input id="email" type="email" autocomplete="username" />
+          </div>
+          <div class="field">
+            <label>كلمة المرور</label><input id="password" type="password" autocomplete="current-password" />
+          </div>
+          <button class="btn primary" style="width: 100%" onclick="login()">دخول</button>
+        </div>
 
-/* Global page typography scale. Excludes sidebar and top chrome. */
-.main .panel,.main .section-head,.main .section-head h2,.main .section-head .muted,.main .table-wrap,.main .table-wrap th,.main .table-wrap td,.main .table-wrap .project-link,.main .btn,.main .field label,.main .field input,.main .field select,.main .field textarea,.main .muted,.main .pill,.main .note,.main .card,.main .kpi,.main .kpi-value,.main .kpi-label,.main .stat,.main .stat-value,.main .stat-label{font-size:var(--icv-page-font-size)!important;line-height:1.45!important}
-.icv-shell .project-meta-item small,.icv-shell .project-meta-item b,.icv-shell .compliance-title,.icv-shell .compliance-card .label,.icv-shell .status-text,.icv-shell .project-nav a,.icv-shell .project-kpi small,.icv-shell .project-kpi b,.icv-shell .project-kpi span,.icv-shell .section-card-head h2,.icv-shell .section-card-head p,.icv-shell .section-tag,.icv-shell .compare-head,.icv-shell .compare-row,.icv-shell .compare-label,.icv-shell .compare-value,.icv-shell .compare-result,.icv-shell .detail-item,.icv-shell .detail-item small,.icv-shell .detail-item b,.icv-shell .hero-btn{font-size:var(--icv-page-font-size)!important;line-height:1.5!important}
-.icv-shell .project-kpi b,.icv-shell .compliance-card .percent{font-size:var(--icv-page-font-size)!important}
-</style></head>
-<body class="auth-pending">
-<section id="login" class="login"><div class="login-card">
-<div class="logo">م</div><h1>متابعة المحتوى المحلي</h1><div class="muted">منصة متابعة المشاريع والمحتوى المحلي</div>
-<div id="loginBox"><div class="field"><label>البريد الإلكتروني</label><input id="email" type="email" autocomplete="username"></div><div class="field"><label>كلمة المرور</label><input id="password" type="password" autocomplete="current-password"></div><button class="btn primary" style="width:100%" onclick="login()">دخول</button></div>
+        <div id="authMsg" class="muted" style="margin-top: 12px"></div>
+      </div>
+    </section>
 
-<div id="authMsg" class="muted" style="margin-top:12px"></div></div></section>
+    <section id="app" class="app hidden">
+      <aside class="side">
+        <div class="brand">
+          <div class="brand-mark">
+            <img
+              class="brand-logo"
+              src="https://www.ptlc.gov.om/ar/assets/Logo_color%20-%20Copy.png"
+              alt="شعار هيئة المشاريع والمناقصات والمحتوى المحلي"
+            />
+          </div>
+          <div><b>متابعة المحتوى المحلي</b><small>هيئة المشاريع والمناقصات والمحتوى المحلي</small></div>
+        </div>
+        <div class="nav">
+          <button data-theme-settings class="theme-nav-btn" type="button">
+            <span class="ico">⚙</span><span>المظهر</span>
+          </button>
+          <button data-page="dashboard" class="active" onclick="showPage('dashboard', this)">
+            <span class="ico">⌂</span><span>الصفحة الرئيسية</span>
+          </button>
+          <button data-page="projects" onclick="showPage('projects', this)">
+            <span class="ico">▦</span><span>المشاريع</span>
+          </button>
+          <button data-page="entities" onclick="showPage('entities', this)">
+            <span class="ico">🏛</span><span>الجهات الحكومية</span>
+          </button>
+          <button data-page="companies" onclick="showPage('companies', this)">
+            <span class="ico">▣</span><span>الشركات</span>
+          </button>
+          <button data-page="settings" onclick="showPage('settings', this)">
+            <span class="ico">⚙</span><span>الإعدادات</span>
+          </button>
+        </div>
+        <button class="btn logout" onclick="logout()">تسجيل الخروج</button>
+      </aside>
+      <div id="themePanel" class="theme-panel hidden" dir="rtl">
+        <div class="theme-panel-head">
+          <div><b>إعدادات المظهر</b><small>الثيم والخط وحجم النص</small></div>
+          <button type="button" data-theme-close>×</button>
+        </div>
+        <div class="theme-panel-body">
+          <div class="theme-group">
+            <label>اختيار الثيم</label>
+            <div class="theme-options">
+              <button type="button" class="theme-option active" data-theme="green">
+                <b>1. أخضر مؤسسي</b
+                ><span
+                  ><i style="background: #0f766e"></i><i style="background: #0b5f59"></i
+                  ><i style="background: #d9a441"></i
+                ></span></button
+              ><button type="button" class="theme-option" data-theme="navy">
+                <b>2. كحلي فاخر</b
+                ><span
+                  ><i style="background: #315b91"></i><i style="background: #172f52"></i
+                  ><i style="background: #c9a35b"></i
+                ></span></button
+              ><button type="button" class="theme-option" data-theme="sand">
+                <b>3. رملي رسمي</b
+                ><span
+                  ><i style="background: #9a6b3f"></i><i style="background: #5f4329"></i
+                  ><i style="background: #c79a53"></i
+                ></span></button
+              ><button type="button" class="theme-option" data-theme="teal">
+                <b>4. تركوازي عصري</b
+                ><span
+                  ><i style="background: #0d8b87"></i><i style="background: #075f60"></i
+                  ><i style="background: #e2b85b"></i
+                ></span></button
+              ><button type="button" class="theme-option" data-theme="slate">
+                <b>5. رمادي احترافي</b
+                ><span
+                  ><i style="background: #566575"></i><i style="background: #303b48"></i
+                  ><i style="background: #b7955b"></i
+                ></span>
+              </button>
+            </div>
+          </div>
+          <div class="theme-group">
+            <label>حجم الخط</label>
+            <div class="theme-size">
+              <button type="button" data-font-minus>A−</button><button type="button" data-font-reset>A</button
+              ><button type="button" data-font-plus>A+</button>
+            </div>
+          </div>
+          <div class="theme-group">
+            <label>نوع الخط</label
+            ><select id="themeFont">
+              <option value="Cairo,Arial,sans-serif">Cairo</option>
+              <option value="Tahoma,Arial,sans-serif">Tahoma</option>
+              <option value="Segoe UI,Tahoma,Arial,sans-serif">Segoe UI</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <main class="main">
+        <div class="top">
+          <div class="title">
+            <h1 id="pageTitle">الصفحة الرئيسية</h1>
+            <div class="muted">لوحة متابعة تنفيذ المشاريع ومؤشرات المحتوى المحلي</div>
+          </div>
+          <div><span id="userName" class="pill"></span><span id="userRole" class="pill"></span></div>
+        </div>
+        <div id="page-dashboard"></div>
+        <div id="page-projects" class="hidden"></div>
+        <div id="page-project-detail" class="hidden"></div>
+        <div id="page-entity-profiles" class="hidden"></div>
+        <div id="page-entities" class="hidden"></div>
+        <div id="page-companies" class="hidden"></div>
+        <div id="page-reports" class="hidden"></div>
+        <div id="page-plans" class="hidden"></div>
+        <div id="page-followups" class="hidden"></div>
+        <div id="page-audit" class="hidden"></div>
+        <div id="page-profile" class="hidden"></div>
+        <div id="page-users" class="hidden"></div>
+        <div id="page-local-content" class="hidden"></div>
+        <div id="page-settings" class="hidden"></div>
+      </main>
+    </section>
+    <div id="modal" class="modal hidden"></div>
+    <div id="toast" class="toast hidden"></div>
+    <script>
+      const SUPABASE_URL = "https://bmwtrnosqosbkezdswcx.supabase.co",
+        SUPABASE_KEY = "sb_publishable_Ge88ZuNnqW89l0SMfw_mvQ_nY2BzpPr";
+      const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      window.icvDb = db;
+      let session = null,
+        profile = null,
+        projects = [],
+        reports = [],
+        plans = [];
+      const esc = (s) =>
+        String(s ?? "").replace(
+          /[&<>"]/g,
+          (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[m],
+        );
+      const money = (n) => Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 2 });
+      const pct = (n) => (Number(n || 0) * 100).toFixed(1) + "%";
+      function toast(m) {
+        if (
+          /^تم (حفظ|تحديث|إضافة|إنشاء|حذف|اعتماد|رفع)/.test(String(m)) &&
+          typeof window.icvSaveSuccess === "function"
+        ) {
+          window.icvSaveSuccess(m);
+          return;
+        }
+        const e = document.getElementById("toast");
+        e.textContent = m;
+        e.classList.remove("hidden");
+        setTimeout(() => e.classList.add("hidden"), 2500);
+      }
 
-<section id="app" class="app hidden">
-<aside class="side">
-<div class="brand"><div class="brand-mark"><img class="brand-logo" src="https://www.ptlc.gov.om/ar/assets/Logo_color%20-%20Copy.png" alt="شعار هيئة المشاريع والمناقصات والمحتوى المحلي"></div><div><b>متابعة المحتوى المحلي</b><small>هيئة المشاريع والمناقصات والمحتوى المحلي</small></div></div>
-<div class="nav">
-<button data-theme-settings class="theme-nav-btn" type="button"><span class="ico">⚙</span><span>المظهر</span></button>
-<button data-page="dashboard" class="active" onclick="showPage('dashboard',this)"><span class="ico">⌂</span><span>الصفحة الرئيسية</span></button>
-<button data-page="projects" onclick="showPage('projects',this)"><span class="ico">▦</span><span>المشاريع</span></button>
-<button data-page="entities" onclick="showPage('entities',this)"><span class="ico">🏛</span><span>الجهات الحكومية</span></button>
-<button data-page="companies" onclick="showPage('companies',this)"><span class="ico">▣</span><span>الشركات</span></button>
-<button data-page="settings" onclick="showPage('settings',this)"><span class="ico">⚙</span><span>الإعدادات</span></button>
-
-</div><button class="btn logout" onclick="logout()">تسجيل الخروج</button></aside>
-<div id="themePanel" class="theme-panel hidden" dir="rtl"><div class="theme-panel-head"><div><b>إعدادات المظهر</b><small>الثيم والخط وحجم النص</small></div><button type="button" data-theme-close>×</button></div><div class="theme-panel-body"><div class="theme-group"><label>اختيار الثيم</label><div class="theme-options"><button type="button" class="theme-option active" data-theme="green"><b>1. أخضر مؤسسي</b><span><i style="background:#0f766e"></i><i style="background:#0b5f59"></i><i style="background:#d9a441"></i></span></button><button type="button" class="theme-option" data-theme="navy"><b>2. كحلي فاخر</b><span><i style="background:#315b91"></i><i style="background:#172f52"></i><i style="background:#c9a35b"></i></span></button><button type="button" class="theme-option" data-theme="sand"><b>3. رملي رسمي</b><span><i style="background:#9a6b3f"></i><i style="background:#5f4329"></i><i style="background:#c79a53"></i></span></button><button type="button" class="theme-option" data-theme="teal"><b>4. تركوازي عصري</b><span><i style="background:#0d8b87"></i><i style="background:#075f60"></i><i style="background:#e2b85b"></i></span></button><button type="button" class="theme-option" data-theme="slate"><b>5. رمادي احترافي</b><span><i style="background:#566575"></i><i style="background:#303b48"></i><i style="background:#b7955b"></i></span></button></div></div><div class="theme-group"><label>حجم الخط</label><div class="theme-size"><button type="button" data-font-minus>A−</button><button type="button" data-font-reset>A</button><button type="button" data-font-plus>A+</button></div></div><div class="theme-group"><label>نوع الخط</label><select id="themeFont"><option value="Cairo,Arial,sans-serif">Cairo</option><option value="Tahoma,Arial,sans-serif">Tahoma</option><option value="Segoe UI,Tahoma,Arial,sans-serif">Segoe UI</option></select></div></div></div><main class="main"><div class="top"><div class="title"><h1 id="pageTitle">الصفحة الرئيسية</h1><div class="muted">لوحة متابعة تنفيذ المشاريع ومؤشرات المحتوى المحلي</div></div><div><span id="userName" class="pill"></span><span id="userRole" class="pill"></span></div></div>
-<div id="page-dashboard"></div><div id="page-projects" class="hidden"></div>
-<div id="page-project-detail" class="hidden"></div><div id="page-entity-profiles" class="hidden"></div><div id="page-entities" class="hidden"></div><div id="page-companies" class="hidden"></div><div id="page-reports" class="hidden"></div><div id="page-plans" class="hidden"></div><div id="page-followups" class="hidden"></div><div id="page-audit" class="hidden"></div><div id="page-profile" class="hidden"></div><div id="page-users" class="hidden"></div><div id="page-local-content" class="hidden"></div><div id="page-settings" class="hidden"></div>
-</main></section><div id="modal" class="modal hidden"></div><div id="toast" class="toast hidden"></div>
-<script>
-const SUPABASE_URL='https://bmwtrnosqosbkezdswcx.supabase.co', SUPABASE_KEY='sb_publishable_Ge88ZuNnqW89l0SMfw_mvQ_nY2BzpPr';
-const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); window.icvDb=db; let session=null, profile=null, projects=[], reports=[], plans=[];
-const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-const money=n=>Number(n||0).toLocaleString('en-US',{maximumFractionDigits:2});
-const pct=n=>(Number(n||0)*100).toFixed(1)+'%';
-function toast(m){if(/^تم (حفظ|تحديث|إضافة|إنشاء|حذف|اعتماد|رفع)/.test(String(m))&&typeof window.icvSaveSuccess==='function'){window.icvSaveSuccess(m);return}const e=document.getElementById('toast');e.textContent=m;e.classList.remove('hidden');setTimeout(()=>e.classList.add('hidden'),2500)}
-
-
-async function login(){const e=email.value.trim(),p=password.value;const r=await db.auth.signInWithPassword({email:e,password:p});if(r.error)return authMsg.textContent=r.error.message;await boot(r.data.session)}
-async function logout(){await db.auth.signOut();location.reload()}
-async function boot(s){session=s||session;if(!session){document.body.classList.remove('auth-pending');document.getElementById('login').classList.remove('hidden');document.getElementById('app').classList.add('hidden');return;}document.body.classList.add('auth-pending');const r=await db.from('user_profiles').select('*').eq('id',session.user.id).single();if(r.error||!r.data){document.body.classList.remove('auth-pending');authMsg.textContent='تعذر تحميل صلاحيات الحساب.';return;}profile=r.data;document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden');document.body.classList.remove('auth-pending');userName.textContent=profile.full_name||session.user.email;userRole.textContent=profile.role||'viewer';window.__icvProfile=profile;await loadAll();if(typeof window.icvRefreshAccess==='function'){const fresh=await window.icvRefreshAccess();if(fresh){profile=fresh;window.__icvProfile=fresh;userName.textContent=fresh.full_name||session.user.email;userRole.textContent=fresh.role||'viewer';}}const q=new URLSearchParams(location.search);const requestedPage=q.get('page');const requestedProject=q.get('project');const routeButtons=[...document.querySelectorAll('[data-page]')];const pageButton=routeButtons.find(el=>el.dataset.page===requestedPage);if(requestedPage==='project'&&requestedProject&&typeof showPage==='function'){showPage('project',null);}else if(pageButton&&typeof showPage==='function'){showPage(requestedPage,pageButton);}else if(requestedProject&&typeof window.viewProject==='function'){window.viewProject(requestedProject);}else{const dashboardButton=routeButtons.find(el=>el.dataset.page==='dashboard');showPage('dashboard',dashboardButton);}}
-async function loadAll(){const [p,r,pl]=await Promise.all([db.from('projects').select('*,government_entities(name),companies(name)').order('serial_no'),db.from('quarterly_reports').select('*,projects(project_name)').order('created_at',{ascending:false}),db.from('local_content_plans').select('*,projects(project_name)').order('created_at',{ascending:false})]);projects=p.data||[];reports=r.data||[];plans=pl.data||[];window.projects=projects;window.reports=reports;window.plans=plans;renderDashboard();renderProjects();renderCompanies();renderReports();renderPlans();renderFollowups();renderAudit()}
-function showPage(name,btn){
- if(name==='project'){
-   const projectId=new URLSearchParams(location.search).get('project');
-   const open=()=>{if(projectId&&typeof window.viewProject==='function'){window.viewProject(projectId);return true}return false};
-   if(open())return;
-   let tries=0;const timer=setInterval(()=>{if(open()||++tries>80)clearInterval(timer)},50);
-   return;
- }
- document.querySelectorAll('[id^=page-]').forEach(e=>e.classList.add('hidden'));
- const target=document.getElementById('page-'+name);if(target)target.classList.remove('hidden');
- document.querySelectorAll('.nav button').forEach(e=>e.classList.remove('active'));
- if(btn)btn.classList.add('active');
- const titles={dashboard:'الصفحة الرئيسية',projects:'المشاريع','entity-profiles':'ملفات الجهات الحكومية',entities:'إدارة الجهات الحكومية',companies:'الشركات',reports:'التقارير الربع سنوية',plans:'خطط المحتوى المحلي',followups:'متابعة الموظفين',audit:'سجل التدقيق'};
- pageTitle.textContent=titles[name]||name;
-}
-function renderDashboard(){
- const root=document.getElementById('page-dashboard');if(!root)return;
- const entitiesForFilter=[...new Map(projects.filter(p=>p.government_entity_id).map(p=>[p.government_entity_id,p.government_entities?.name||'جهة حكومية']))].sort((a,b)=>String(a[1]).localeCompare(String(b[1]),'ar'));
- const selectedEntityId=document.getElementById('icv-dashboard-entity-filter')?.value||'all';
- const dashboardProjects=projects;
- const dashboardReports=reports||[];
- const complianceProjects=selectedEntityId==='all'?projects:projects.filter(p=>String(p.government_entity_id)===String(selectedEntityId));
- const complianceReports=(reports||[]).filter(r=>selectedEntityId==='all'||String(r.government_entity_id||r.projects?.government_entity_id||'')===String(selectedEntityId)||complianceProjects.some(p=>String(p.id)===String(r.project_id)));
- const value=dashboardProjects.reduce((a,p)=>a+Number(p.total_project_value||0),0);
- const lc=dashboardProjects.reduce((a,p)=>a+Number(p.total_local_content||0),0);
- const spend=dashboardProjects.reduce((a,p)=>a+Number(p.total_spend||0),0);
- const targetLC=dashboardProjects.reduce((a,p)=>a+Number(p.target_local_content||p.total_local_content_target||0),0);
- const pctSafe=(a,b)=>b?Math.max(0,Math.min(100,a/b*100)):0;
- const avgSpend=pctSafe(lc,spend);
- const complianceLC=complianceProjects.reduce((a,p)=>a+Number(p.total_local_content||0),0);
- const complianceSpend=complianceProjects.reduce((a,p)=>a+Number(p.total_spend||0),0);
- const complianceAvgSpend=pctSafe(complianceLC,complianceSpend);
- const avgTarget=pctSafe(lc,targetLC);
- const oman=complianceProjects.length?complianceProjects.reduce((a,p)=>a+Number(p.omanization_pct||0),0)/complianceProjects.length:0;
- const smeProjects=complianceProjects.filter(p=>p.sme_10_status&&p.sme_10_status!=='-');
- const smeOK=smeProjects.filter(p=>p.sme_10_status==='مستوفي').length;
- const goodsProjects=complianceProjects.filter(p=>p.made_in_oman_status&&p.made_in_oman_status!=='-');
- const goodsOK=goodsProjects.filter(p=>p.made_in_oman_status==='مستوفي').length;
- const entityTotals={};projects.forEach(p=>{const n=p.government_entities?.name||'غير محدد';entityTotals[n]=(entityTotals[n]||0)+Number(p.total_spend||0)});
- const companyTotals={};projects.forEach(p=>{const n=p.companies?.name||'غير محددة';companyTotals[n]=(companyTotals[n]||0)+Number(p.total_spend||0)});
- const topEntities=Object.entries(entityTotals).sort((a,b)=>b[1]-a[1]).slice(0,5);
- const topCompanies=Object.entries(companyTotals).filter(x=>x[0]!=='غير محددة').sort((a,b)=>b[1]-a[1]).slice(0,5);
- const bestProjects=[...dashboardProjects].sort((a,b)=>Number(b.local_content_project_pct||0)-Number(a.local_content_project_pct||0)).slice(0,3);
- const quarters={};
- dashboardReports.forEach(r=>{const d=r.report_data||{},year=Number(r.annual_period||d.year||new Date().getFullYear()),q=String(r.quarter||d.quarter||'').match(/[1-4]/)?.[0];if(!q)return;const key=year+'-Q'+q;if(!quarters[key])quarters[key]={spend:0,lc:0};quarters[key].spend+=Number(d.total_spend||d.actual_spend||d.spend||0);quarters[key].lc+=Number(d.total_local_content||d.local_content_actual||d.local_content||0)});
- const quarterKeys=Object.keys(quarters).sort().slice(-8);
- const maxQ=Math.max(1,...quarterKeys.flatMap(k=>[quarters[k].spend,quarters[k].lc]));
- const qBars=quarterKeys.length?quarterKeys.map(k=>'<div class="icv-q-col"><div class="icv-q-bars"><i class="spend" style="height:'+Math.max(2,quarters[k].spend/maxQ*100)+'%" title="الصرف '+money(quarters[k].spend)+'"></i><i class="local" style="height:'+Math.max(2,quarters[k].lc/maxQ*100)+'%" title="المحتوى المحلي '+money(quarters[k].lc)+'"></i></div><small>'+esc(k)+'</small></div>').join(''):'<div class="icv-empty">ستظهر البيانات بعد تسجيل التقارير الربع سنوية.</div>';
- const stalledCount=dashboardProjects.filter(p=>String(p.project_status||'').includes('متعثر')).length;
- const plannedProjectIds=new Set((plans||[]).map(p=>String(p.project_id)).filter(Boolean));
- const noPlanCount=dashboardProjects.filter(p=>!plannedProjectIds.has(String(p.id))).length;
- const reportedProjectIds=new Set(dashboardReports.map(r=>String(r.project_id)).filter(Boolean));
- const noReportCount=dashboardProjects.filter(p=>!reportedProjectIds.has(String(p.id))).length;
- const reportsReceived=new Set(dashboardReports.map(r=>[String(r.project_id||''),String(r.annual_period||r.report_data?.year||''),String(r.quarter||r.report_data?.quarter||'')].join('|'))).size;
- const reportsTargeted=dashboardProjects.length*4;
- const reportCompletionPct=reportsTargeted?Math.min(100,reportsReceived/reportsTargeted*100):0;
- const stateCounts=[...new Set(dashboardProjects.map(p=>p.project_status||'غير محدد'))].map(st=>[st,dashboardProjects.filter(p=>(p.project_status||'غير محدد')===st).length]);
- const stateHtml=stateCounts.map(x=>'<div class="icv-state-row"><span>'+esc(x[0])+'</span><div class="icv-track"><i style="width:'+(dashboardProjects.length?x[1]/dashboardProjects.length*100:0)+'%"></i></div><b>'+x[1]+'</b></div>').join('')||'<div class="icv-empty">لا توجد مشاريع مسجلة.</div>';
- const rankRows=rows=>rows.length?rows.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(x[0])+'</td><td>'+money(x[1])+'</td></tr>').join(''):'<tr><td colspan="3">لا توجد بيانات</td></tr>';
- root.innerHTML='<style>'+
- '#page-dashboard .icv-home{display:flex;flex-direction:column;gap:18px}'+
- '#page-dashboard .icv-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}'+
- '#page-dashboard .icv-kpi,#page-dashboard .icv-panel{background:#fff;border:1px solid #e5ebef;border-radius:16px;padding:17px;box-shadow:0 5px 18px rgba(20,50,60,.045);min-width:0}'+
- '#page-dashboard .icv-kpi .icv-label{font-size:12px;color:#71818a;margin-bottom:9px}'+
- '#page-dashboard .icv-kpi strong{display:block;font-size:clamp(17px,1.6vw,25px);color:#123b4a;overflow-wrap:anywhere;line-height:1.4}'+
- '#page-dashboard .icv-kpi small{display:block;color:#8a989e;font-size:11px;margin-top:6px}'+
- '#page-dashboard .icv-home-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,1fr);gap:18px}'+
- '#page-dashboard .icv-panel h2{font-size:16px;margin:0 0 5px;color:#20333b}'+
- '#page-dashboard .icv-subtitle{font-size:11px;color:#87959b;margin-bottom:16px}'+
- '#page-dashboard .icv-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:#71818a;margin-bottom:12px}'+
- '#page-dashboard .icv-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-left:5px}'+
- '#page-dashboard .icv-q-chart{height:185px;display:flex;align-items:stretch;gap:8px;border-bottom:1px solid #e8edef;padding:8px 0 0;overflow:hidden}'+
- '#page-dashboard .icv-q-col{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;text-align:center;gap:7px}'+
- '#page-dashboard .icv-q-bars{height:150px;display:flex;align-items:flex-end;justify-content:center;gap:5px;border-bottom:1px dashed #e8edef}'+
- '#page-dashboard .icv-q-bars i{display:block;width:min(24px,38%);min-height:2px;border-radius:5px 5px 0 0}'+
- '#page-dashboard .icv-q-bars .spend{background:#b9cbd2}#page-dashboard .icv-q-bars .local{background:#087f78}'+
- '#page-dashboard .icv-q-col small{font-size:10px;color:#71818a;white-space:nowrap}'+
- '#page-dashboard .icv-state-row{display:grid;grid-template-columns:90px minmax(30px,1fr) 25px;align-items:center;gap:9px;margin:15px 0;font-size:12px}'+
- '#page-dashboard .icv-track{height:8px;background:#edf1f3;border-radius:9px;overflow:hidden}#page-dashboard .icv-track i{display:block;height:100%;background:#087f78;border-radius:9px}'+
- '#page-dashboard .icv-compliance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}'+
- '#page-dashboard .icv-compliance div{background:#f5f8f9;border-radius:12px;padding:13px;min-width:0}'+
- '#page-dashboard .icv-compliance b{display:block;font-size:20px;color:#123b4a;margin:5px 0}#page-dashboard .icv-compliance small{font-size:11px;color:#71818a}'+
- '#page-dashboard .icv-bottom{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}'+
- '#page-dashboard .icv-mini-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px}'+
- '#page-dashboard .icv-mini-table th,#page-dashboard .icv-mini-table td{padding:8px 5px;border-bottom:1px solid #edf1f3;text-align:right;overflow-wrap:anywhere;vertical-align:top}'+
- '#page-dashboard .icv-mini-table th{color:#71818a;font-weight:600}#page-dashboard .icv-mini-table th:first-child,#page-dashboard .icv-mini-table td:first-child{width:28px}#page-dashboard .icv-mini-table th:last-child,#page-dashboard .icv-mini-table td:last-child{width:88px}'+
- '#page-dashboard .icv-empty{font-size:12px;color:#87959b;padding:16px 0}'+
- '@media(max-width:1100px){#page-dashboard .icv-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}#page-dashboard .icv-bottom{grid-template-columns:repeat(2,minmax(0,1fr))}}'+
- '@media(max-width:760px){#page-dashboard .icv-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#page-dashboard .icv-home-grid,#page-dashboard .icv-bottom{grid-template-columns:1fr}#page-dashboard .icv-compliance{grid-template-columns:repeat(3,minmax(0,1fr))}#page-dashboard .icv-kpi,#page-dashboard .icv-panel{padding:13px}}'+
- '</style><div class="icv-home">'+
- '<div class="icv-kpis">'+
- '<div class="icv-kpi"><div class="icv-label">عدد المشاريع</div><strong>'+dashboardProjects.length+'</strong><small>مشروع مسجل</small></div>'+
- '<div class="icv-kpi"><div class="icv-label">إجمالي قيمة المشاريع</div><strong>'+money(value)+'</strong><small>ريال عماني</small></div>'+
- '<div class="icv-kpi"><div class="icv-label">إجمالي الصرف</div><strong>'+money(spend)+'</strong><small>الصرف المسجل للمشاريع</small></div>'+
- '<div class="icv-kpi"><div class="icv-label">المحتوى المحلي المستهدف</div><strong>'+money(targetLC)+'</strong><small>وفق بيانات الخطط المتاحة</small></div>'+
- '<div class="icv-kpi"><div class="icv-label">المحتوى المحلي الفعلي</div><strong>'+money(lc)+'</strong><small>وفق بيانات المشاريع الحالية</small></div>'+
- 
- '</div>'+
- '<div class="icv-home-grid">'+
- '<div class="icv-panel"><h2>الصرف والمحتوى المحلي عبر الأرباع</h2><div class="icv-subtitle">مقارنة التقارير المسجلة في النظام</div><div class="icv-legend"><span><i style="background:#b9cbd2"></i>الصرف الفعلي</span><span><i style="background:#087f78"></i>المحتوى المحلي الفعلي</span></div><div class="icv-q-chart">'+qBars+'</div></div>'+
- '<div class="icv-panel"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px"><h2 style="margin:0">مستوى الالتزام</h2><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><label for="icv-dashboard-entity-filter" style="font-size:12px;font-weight:700;color:#20333b">الجهة الحكومية:</label><select id="icv-dashboard-entity-filter" onchange="renderDashboard()" style="min-width:180px;max-width:100%;border:1px solid #d7e1e5;border-radius:10px;padding:7px 10px;background:#fff;color:#20333b"><option value="all">جميع الجهات الحكومية</option>'+entitiesForFilter.map(e=>'<option value="'+esc(e[0])+'" '+(String(e[0])===String(selectedEntityId)?'selected':'')+'>'+esc(e[1])+'</option>').join('')+'</select></div></div><div class="icv-subtitle">مؤشرات الالتزام للجهة المختارة فقط</div><div class="icv-compliance">'+
- '<div><small>المعدل العام للمحتوى المحلي</small><b>'+complianceAvgSpend.toFixed(1)+'%</b><small>من الصرف الفعلي للجهة المختارة</small></div>'+
- '<div><small>متوسط التعمين</small><b>'+pct(oman/100)+'</b><small>حسب بيانات المشاريع</small></div>'+
- '<div><small>استيفاء SME</small><b>'+smeOK+' / '+smeProjects.length+'</b><small>مشاريع مستوفية</small></div>'+
- '</div><div style="height:14px"></div><h2>حالة المشاريع</h2>'+stateHtml+'</div>'+
- '</div>'+
- '<div class="icv-panel"><h2>تنبيهات ومتابعة المشاريع</h2><div class="icv-subtitle">عناصر تحتاج إلى متابعة إدارية — حسب البيانات المسجلة</div><div class="icv-compliance">'+
- '<div><small>مشاريع متعثرة</small><b>'+stalledCount+'</b><small>تحتاج إلى متابعة حالة التنفيذ</small></div>'+
- '<div><small>مشاريع بدون خطة محتوى محلي</small><b>'+noPlanCount+'</b><small>الخطة اختيارية ويمكن استكمالها عند الحاجة</small></div>'+
- '<div><small>مشاريع بدون تقارير ربع سنوية</small><b>'+noReportCount+'</b><small>لم يُسجّل لها تقرير حتى الآن</small></div>'+
- '</div></div>'+
- '<div class="icv-bottom">'+
- '<div class="icv-panel"><h2>الجهات الأعلى صرفًا</h2><div class="icv-subtitle">حسب مجموع الصرف المسجل</div><table class="icv-mini-table"><thead><tr><th>#</th><th>الجهة الحكومية</th><th>الصرف</th></tr></thead><tbody>'+rankRows(topEntities)+'</tbody></table></div>'+
- '<div class="icv-panel"><h2>الشركات الأعلى صرفًا</h2><div class="icv-subtitle">حسب المشاريع المرتبطة بالشركة</div><table class="icv-mini-table"><thead><tr><th>#</th><th>الشركة</th><th>الصرف</th></tr></thead><tbody>'+rankRows(topCompanies)+'</tbody></table></div>'+
- '<div class="icv-panel"><h2>أفضل 3 مشاريع في الاستيفاء</h2><div class="icv-subtitle">مرتبة حسب نسبة المحتوى المحلي المسجلة</div><table class="icv-mini-table"><thead><tr><th>#</th><th>المشروع</th><th>النسبة</th></tr></thead><tbody>'+(bestProjects.length?bestProjects.map((p,i)=>'<tr><td>'+(i+1)+'</td><td><a class="project-link" href="javascript:viewProject(\''+p.id+'\')">'+esc(p.project_name||'مشروع')+'</a></td><td>'+pct(p.local_content_project_pct)+'</td></tr>').join(''):'<tr><td colspan="3">لا توجد بيانات</td></tr>')+'</tbody></table></div>'+
- '</div></div>';
-}
-function renderProjects(){
- const root=document.getElementById('page-projects');if(!root)return;
- const es=[...new Map(projects.map(p=>[p.government_entity_id,p.government_entities?.name]).filter(x=>x[0]))];
- const cs=[...new Map(projects.map(p=>[p.implementing_company_id,p.companies?.name]).filter(x=>x[0]))];
- const years=[...new Set((window.reports||reports||[]).map(r=>r.annual_period).filter(Boolean))].sort();
- root.innerHTML='<div class="panel project-filter-card"><div class="toolbar"><div><h2>المشاريع</h2><div class="muted">قائمة المشاريع مع المتابعة السريعة للتقارير والإنجاز.</div></div><div class="actions"><button class="btn" onclick="exportProjects()">تصدير Excel</button><button class="btn primary" onclick="openProject()">إضافة مشروع</button></div></div><div class="project-filter-grid project-filter-grid-main"><div class="field"><label>بحث</label><input id="pq" class="search" placeholder="اسم المشروع أو رقم المناقصة" oninput="icvProjectApply()"></div><div class="field"><label>الجهة الحكومية</label><select id="pe" onchange="icvProjectApply()"><option value="">الكل</option>'+es.map(x=>'<option value="'+esc(x[0])+'">'+esc(x[1])+'</option>').join('')+'</select></div><div class="field"><label>رقم المناقصة</label><input id="ptender" placeholder="رقم المناقصة" oninput="icvProjectApply()"></div><div class="field"><label>حالة المشروع</label><select id="pst" onchange="icvProjectApply()"><option value="">الكل</option>'+['مسند','قيد التنفيذ','منتهي','متعثر'].map(x=>'<option>'+esc(x)+'</option>').join('')+'</select></div></div><div class="project-filter-grid project-filter-grid-secondary"><div class="field"><label>الشركة المنفذة</label><select id="pc" onchange="icvProjectApply()"><option value="">الكل</option>'+cs.map(x=>'<option value="'+esc(x[0])+'">'+esc(x[1])+'</option>').join('')+'</select></div><div class="field"><label>السنة</label><select id="py" onchange="icvProjectApply()"><option value="">كل السنوات</option>'+years.map(x=>'<option>'+esc(x)+'</option>').join('')+'</select></div><div class="field"><label>قيمة المشروع من</label><input id="pmn" type="number" placeholder="0" oninput="icvProjectApply()"></div><div class="field"><label>قيمة المشروع إلى</label><input id="pmx" type="number" placeholder="0" oninput="icvProjectApply()"></div><div class="field"><label>المشاريع التي تنتهي خلال</label><select id="pend" onchange="icvProjectApply()"><option value="">الكل</option><option value="10">10 أيام</option><option value="30">30 يوم</option><option value="90">90 يوم</option></select></div></div><div class="project-filter-actions"><button class="btn ghost" onclick="icvProjectClear()">مسح الفلاتر</button><span id="projectFilterCount" class="muted"></span></div></div><div id="pg" style="margin-top:18px"></div>';
- window.icvProjectClear=function(){['pq','ptender','pmn','pmx'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});['pe','pc','pst','py','pend'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});icvProjectApply()};
- window.icvProjectApply=function(){
-   let x=(projects||[]).slice(),q=(document.getElementById('pq')?.value||'').toLowerCase().trim(),t=(document.getElementById('ptender')?.value||'').toLowerCase().trim();
-   if(q)x=x.filter(p=>(p.project_name||'').toLowerCase().includes(q)||(p.tender_type||'').toLowerCase().includes(q)||String(p.serial_no||'').toLowerCase().includes(q));
-   if(t)x=x.filter(p=>(p.tender_type||'').toLowerCase().includes(t)||String(p.serial_no||'').toLowerCase().includes(t));
-   const pe=document.getElementById('pe')?.value||'',pc=document.getElementById('pc')?.value||'',pst=document.getElementById('pst')?.value||'',year=document.getElementById('py')?.value||'',pmn=Number(document.getElementById('pmn')?.value||0),pmx=Number(document.getElementById('pmx')?.value||0),days=Number(document.getElementById('pend')?.value||0);
-   if(pe)x=x.filter(p=>String(p.government_entity_id)===String(pe));
-   if(pc)x=x.filter(p=>String(p.implementing_company_id)===String(pc));
-   if(pst)x=x.filter(p=>p.project_status===pst);
-   if(pmn)x=x.filter(p=>Number(p.total_project_value||0)>=pmn);
-   if(pmx)x=x.filter(p=>Number(p.total_project_value||0)<=pmx);
-   if(days)x=x.filter(p=>p.end_date&&((new Date(p.end_date)-new Date())/86400000)<=days&&((new Date(p.end_date)-new Date())/86400000)>=0);
-   if(year){const ids=new Set((window.reports||reports||[]).filter(r=>String(r.annual_period)===String(year)).map(r=>r.project_id));x=x.filter(p=>ids.has(p.id))}
-   const fc=document.getElementById('projectFilterCount');if(fc)fc.textContent=x.length+' مشروع';
-   const rows=x.map((p,idx)=>'<tr><td>'+String(idx+1)+'</td><td><a class="project-link" href="#" data-project-id="'+esc(p.id)+'"><b>'+esc(p.project_name)+'</b></a></td><td>'+esc(p.government_entities?.name||'—')+'</td><td>'+esc(p.tender_type||p.serial_no||'—')+'</td><td>'+esc(p.companies?.name||'—')+'</td><td>'+money(p.total_project_value)+'</td><td>'+Number(p.progress_pct||0).toFixed(1)+'%</td><td>'+esc(p.project_status||'—')+'</td></tr>').join('');
-   document.getElementById('pg').innerHTML='<div class="panel"><div class="section-head"><h2>قائمة المشاريع</h2><span class="muted">'+x.length+' مشروع</span></div><div class="table-wrap"><table><thead><tr><th>م</th><th>اسم المشروع</th><th>الجهة الحكومية</th><th>رقم المشروع/المناقصة</th><th>الشركة المنفذة</th><th>القيمة</th><th>الإنجاز</th><th>الحالة</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
-   document.querySelectorAll('#pg a[data-project-id]').forEach(a=>a.addEventListener('click',function(e){e.preventDefault();openICVProject(this.dataset.projectId)}));
- };
- icvProjectApply();
-}
-function openICVProject(id){const go=()=>{if(window.icvV2&&typeof window.icvV2.projectPage==='function'){window.icvV2.projectPage(String(id));return true}if(typeof window.viewProject==='function'&&window.viewProject!==openICVProject){window.viewProject(String(id));return true}return false};if(go())return false;let n=0,t=setInterval(()=>{if(go()||++n>40)clearInterval(t)},50);return false}
-function viewProject(id){if(window.icvV2?.projectPage){return window.icvV2.projectPage(id)}return false}
-async function openProject(){const [er,cr]=await Promise.all([db.from('government_entities').select('name').order('name'),db.from('companies').select('id,name').order('name')]);const names=(er.data||[]).map(x=>x.name).filter(Boolean);const companiesList=cr.data||[];modal.innerHTML='<div class="modal-card"><div class="modal-head"><h2>إضافة مشروع</h2><button class="close" onclick="closeModal()">×</button></div><div class="form-grid"><div class="field"><label>رقم المناقصة</label><input id="f_serial" inputmode="numeric" placeholder="أدخل رقم المناقصة"></div><div class="field full"><label>اسم المشروع</label><input id="f_name"></div><div class="field full"><label>الجهة الحكومية</label><input id="f_entity" list="f_entity_options" autocomplete="off" placeholder="ابحث واختر جهة حكومية موجودة"><datalist id="f_entity_options">'+names.map(n=>'<option value="'+String(n).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')+'"></option>').join('')+'</datalist><div class="muted" style="margin-top:6px">اختر جهة من القائمة. لإضافة جهة جديدة، استخدم صفحة الجهات الحكومية.</div></div><div class="field"><label>الشركة المنفذة</label><select id="f_company"><option value="">اختر الشركة المنفذة</option>'+companiesList.map(c=>'<option value="'+c.id+'">'+String(c.name).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</option>').join('')+'</select></div><div class="field"><label>حالة المشروع</label><select id="f_status"><option value="مسند">مسند</option><option value="قيد التنفيذ" selected>قيد التنفيذ</option><option value="منتهي">منتهي</option><option value="متعثر">متعثر</option></select></div><div class="field"><label>قطاع العمل</label><select id="f_sector"><option value="">اختر قطاع العمل</option><option value="الإنشاءات">الإنشاءات</option><option value="الطرق">الطرق</option><option value="الكهرباء والمياه">الكهرباء والمياه</option><option value="تقنية المعلومات">تقنية المعلومات</option><option value="التوريد">التوريد</option><option value="الخدمات">الخدمات</option><option value="الاستشارات">الاستشارات</option><option value="أخرى">أخرى</option></select></div><div class="field"><label>قيمة المشروع</label><input id="f_value" type="number" min="0"></div><div class="field"><label>نسبة الإنجاز %</label><input id="f_progress" type="number" min="0" max="100"></div><div class="field"><label>تاريخ البدء</label><input id="f_start" type="date"></div><div class="field"><label>تاريخ الانتهاء</label><input id="f_end" type="date"></div></div><button class="btn primary" onclick="saveProject()">حفظ</button></div>';modal.classList.remove('hidden')}
-async function saveProject(){const en=f_entity.value.trim();if(!en)return toast('اختر جهة حكومية من القائمة');const entityResult=await db.from('government_entities').select('id').eq('name',en).maybeSingle();if(entityResult.error)return toast('تعذّر التحقق من الجهة الحكومية: '+entityResult.error.message);if(!entityResult.data?.id)return toast('الجهة غير موجودة في القائمة. أضفها أولاً من صفحة الجهات الحكومية ثم أعد المحاولة.');const r=await db.from('projects').insert({serial_no:Number(f_serial.value)||null,government_entity_id:entityResult.data.id,implementing_company_id:f_company.value||null,project_name:f_name.value.trim(),project_status:f_status.value,work_sector:f_sector.value,total_project_value:Number(f_value.value)||0,progress_pct:Number(f_progress.value)||0,start_date:f_start.value||null,end_date:f_end.value||null}).select().single();if(r.error)return toast(r.error.message);closeModal();await loadAll();toast('تم حفظ المشروع')}
-async function renderEntities(){
- const root=document.getElementById('page-entities');if(!root)return;
- const result=await db.from('government_entities').select('*').order('name');
- const entities=result.data||[], allProjects=window.projects||projects||[], allReports=window.reports||reports||[];
- if(!document.getElementById('icvEntitiesStyle')){
-  const st=document.createElement('style');st.id='icvEntitiesStyle';
-  st.textContent=`
+      async function login() {
+        const e = email.value.trim(),
+          p = password.value;
+        const r = await db.auth.signInWithPassword({ email: e, password: p });
+        if (r.error) return (authMsg.textContent = r.error.message);
+        await boot(r.data.session);
+      }
+      async function logout() {
+        await db.auth.signOut();
+        location.reload();
+      }
+      async function boot(s) {
+        session = s || session;
+        if (!session) {
+          document.body.classList.remove("auth-pending");
+          document.getElementById("login").classList.remove("hidden");
+          document.getElementById("app").classList.add("hidden");
+          return;
+        }
+        document.body.classList.add("auth-pending");
+        const r = await db.from("user_profiles").select("*").eq("id", session.user.id).single();
+        if (r.error || !r.data) {
+          document.body.classList.remove("auth-pending");
+          authMsg.textContent = "تعذر تحميل صلاحيات الحساب.";
+          return;
+        }
+        profile = r.data;
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
+        document.body.classList.remove("auth-pending");
+        userName.textContent = profile.full_name || session.user.email;
+        userRole.textContent = profile.role || "viewer";
+        window.__icvProfile = profile;
+        await loadAll();
+        if (typeof window.icvRefreshAccess === "function") {
+          const fresh = await window.icvRefreshAccess();
+          if (fresh) {
+            profile = fresh;
+            window.__icvProfile = fresh;
+            userName.textContent = fresh.full_name || session.user.email;
+            userRole.textContent = fresh.role || "viewer";
+          }
+        }
+        const q = new URLSearchParams(location.search);
+        const requestedPage = q.get("page");
+        const requestedProject = q.get("project");
+        const routeButtons = [...document.querySelectorAll("[data-page]")];
+        const pageButton = routeButtons.find((el) => el.dataset.page === requestedPage);
+        if (requestedPage === "project" && requestedProject && typeof showPage === "function") {
+          showPage("project", null);
+        } else if (pageButton && typeof showPage === "function") {
+          showPage(requestedPage, pageButton);
+        } else if (requestedProject && typeof window.viewProject === "function") {
+          window.viewProject(requestedProject);
+        } else {
+          const dashboardButton = routeButtons.find((el) => el.dataset.page === "dashboard");
+          showPage("dashboard", dashboardButton);
+        }
+      }
+      async function loadAll() {
+        const [p, r, pl] = await Promise.all([
+          db.from("projects").select("*,government_entities(name),companies(name)").order("serial_no"),
+          db
+            .from("quarterly_reports")
+            .select("*,projects(project_name)")
+            .order("created_at", { ascending: false }),
+          db
+            .from("local_content_plans")
+            .select("*,projects(project_name)")
+            .order("created_at", { ascending: false }),
+        ]);
+        projects = p.data || [];
+        reports = r.data || [];
+        plans = pl.data || [];
+        window.projects = projects;
+        window.reports = reports;
+        window.plans = plans;
+        renderDashboard();
+        renderProjects();
+        renderCompanies();
+        renderReports();
+        renderPlans();
+        renderFollowups();
+        renderAudit();
+      }
+      function showPage(name, btn) {
+        if (name === "project") {
+          const projectId = new URLSearchParams(location.search).get("project");
+          const open = () => {
+            if (projectId && typeof window.viewProject === "function") {
+              window.viewProject(projectId);
+              return true;
+            }
+            return false;
+          };
+          if (open()) return;
+          let tries = 0;
+          const timer = setInterval(() => {
+            if (open() || ++tries > 80) clearInterval(timer);
+          }, 50);
+          return;
+        }
+        document.querySelectorAll("[id^=page-]").forEach((e) => e.classList.add("hidden"));
+        const target = document.getElementById("page-" + name);
+        if (target) target.classList.remove("hidden");
+        document.querySelectorAll(".nav button").forEach((e) => e.classList.remove("active"));
+        if (btn) btn.classList.add("active");
+        const titles = {
+          dashboard: "الصفحة الرئيسية",
+          projects: "المشاريع",
+          "entity-profiles": "ملفات الجهات الحكومية",
+          entities: "إدارة الجهات الحكومية",
+          companies: "الشركات",
+          reports: "التقارير الربع سنوية",
+          plans: "خطط المحتوى المحلي",
+          followups: "متابعة الموظفين",
+          audit: "سجل التدقيق",
+        };
+        pageTitle.textContent = titles[name] || name;
+      }
+      function renderDashboard() {
+        const root = document.getElementById("page-dashboard");
+        if (!root) return;
+        const entitiesForFilter = [
+          ...new Map(
+            projects
+              .filter((p) => p.government_entity_id)
+              .map((p) => [p.government_entity_id, p.government_entities?.name || "جهة حكومية"]),
+          ),
+        ].sort((a, b) => String(a[1]).localeCompare(String(b[1]), "ar"));
+        const selectedEntityId = document.getElementById("icv-dashboard-entity-filter")?.value || "all";
+        const dashboardProjects = projects;
+        const dashboardReports = reports || [];
+        const complianceProjects =
+          selectedEntityId === "all"
+            ? projects
+            : projects.filter((p) => String(p.government_entity_id) === String(selectedEntityId));
+        const complianceReports = (reports || []).filter(
+          (r) =>
+            selectedEntityId === "all" ||
+            String(r.government_entity_id || r.projects?.government_entity_id || "") ===
+              String(selectedEntityId) ||
+            complianceProjects.some((p) => String(p.id) === String(r.project_id)),
+        );
+        const value = dashboardProjects.reduce((a, p) => a + Number(p.total_project_value || 0), 0);
+        const lc = dashboardProjects.reduce((a, p) => a + Number(p.total_local_content || 0), 0);
+        const spend = dashboardProjects.reduce((a, p) => a + Number(p.total_spend || 0), 0);
+        const targetLC = dashboardProjects.reduce(
+          (a, p) => a + Number(p.target_local_content || p.total_local_content_target || 0),
+          0,
+        );
+        const pctSafe = (a, b) => (b ? Math.max(0, Math.min(100, (a / b) * 100)) : 0);
+        const avgSpend = pctSafe(lc, spend);
+        const complianceLC = complianceProjects.reduce((a, p) => a + Number(p.total_local_content || 0), 0);
+        const complianceSpend = complianceProjects.reduce((a, p) => a + Number(p.total_spend || 0), 0);
+        const complianceAvgSpend = pctSafe(complianceLC, complianceSpend);
+        const avgTarget = pctSafe(lc, targetLC);
+        const oman = complianceProjects.length
+          ? complianceProjects.reduce((a, p) => a + Number(p.omanization_pct || 0), 0) /
+            complianceProjects.length
+          : 0;
+        const smeProjects = complianceProjects.filter((p) => p.sme_10_status && p.sme_10_status !== "-");
+        const smeOK = smeProjects.filter((p) => p.sme_10_status === "مستوفي").length;
+        const goodsProjects = complianceProjects.filter(
+          (p) => p.made_in_oman_status && p.made_in_oman_status !== "-",
+        );
+        const goodsOK = goodsProjects.filter((p) => p.made_in_oman_status === "مستوفي").length;
+        const entityTotals = {};
+        projects.forEach((p) => {
+          const n = p.government_entities?.name || "غير محدد";
+          entityTotals[n] = (entityTotals[n] || 0) + Number(p.total_spend || 0);
+        });
+        const companyTotals = {};
+        projects.forEach((p) => {
+          const n = p.companies?.name || "غير محددة";
+          companyTotals[n] = (companyTotals[n] || 0) + Number(p.total_spend || 0);
+        });
+        const topEntities = Object.entries(entityTotals)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5);
+        const topCompanies = Object.entries(companyTotals)
+          .filter((x) => x[0] !== "غير محددة")
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5);
+        const bestProjects = [...dashboardProjects]
+          .sort((a, b) => Number(b.local_content_project_pct || 0) - Number(a.local_content_project_pct || 0))
+          .slice(0, 3);
+        const quarters = {};
+        dashboardReports.forEach((r) => {
+          const d = r.report_data || {},
+            year = Number(r.annual_period || d.year || new Date().getFullYear()),
+            q = String(r.quarter || d.quarter || "").match(/[1-4]/)?.[0];
+          if (!q) return;
+          const key = year + "-Q" + q;
+          if (!quarters[key]) quarters[key] = { spend: 0, lc: 0 };
+          quarters[key].spend += Number(d.total_spend || d.actual_spend || d.spend || 0);
+          quarters[key].lc += Number(d.total_local_content || d.local_content_actual || d.local_content || 0);
+        });
+        const quarterKeys = Object.keys(quarters).sort().slice(-8);
+        const maxQ = Math.max(1, ...quarterKeys.flatMap((k) => [quarters[k].spend, quarters[k].lc]));
+        const qBars = quarterKeys.length
+          ? quarterKeys
+              .map(
+                (k) =>
+                  '<div class="icv-q-col"><div class="icv-q-bars"><i class="spend" style="height:' +
+                  Math.max(2, (quarters[k].spend / maxQ) * 100) +
+                  '%" title="الصرف ' +
+                  money(quarters[k].spend) +
+                  '"></i><i class="local" style="height:' +
+                  Math.max(2, (quarters[k].lc / maxQ) * 100) +
+                  '%" title="المحتوى المحلي ' +
+                  money(quarters[k].lc) +
+                  '"></i></div><small>' +
+                  esc(k) +
+                  "</small></div>",
+              )
+              .join("")
+          : '<div class="icv-empty">ستظهر البيانات بعد تسجيل التقارير الربع سنوية.</div>';
+        const stalledCount = dashboardProjects.filter((p) =>
+          String(p.project_status || "").includes("متعثر"),
+        ).length;
+        const plannedProjectIds = new Set((plans || []).map((p) => String(p.project_id)).filter(Boolean));
+        const noPlanCount = dashboardProjects.filter((p) => !plannedProjectIds.has(String(p.id))).length;
+        const reportedProjectIds = new Set(dashboardReports.map((r) => String(r.project_id)).filter(Boolean));
+        const noReportCount = dashboardProjects.filter((p) => !reportedProjectIds.has(String(p.id))).length;
+        const reportsReceived = new Set(
+          dashboardReports.map((r) =>
+            [
+              String(r.project_id || ""),
+              String(r.annual_period || r.report_data?.year || ""),
+              String(r.quarter || r.report_data?.quarter || ""),
+            ].join("|"),
+          ),
+        ).size;
+        const reportsTargeted = dashboardProjects.length * 4;
+        const reportCompletionPct = reportsTargeted
+          ? Math.min(100, (reportsReceived / reportsTargeted) * 100)
+          : 0;
+        const stateCounts = [...new Set(dashboardProjects.map((p) => p.project_status || "غير محدد"))].map(
+          (st) => [st, dashboardProjects.filter((p) => (p.project_status || "غير محدد") === st).length],
+        );
+        const stateHtml =
+          stateCounts
+            .map(
+              (x) =>
+                '<div class="icv-state-row"><span>' +
+                esc(x[0]) +
+                '</span><div class="icv-track"><i style="width:' +
+                (dashboardProjects.length ? (x[1] / dashboardProjects.length) * 100 : 0) +
+                '%"></i></div><b>' +
+                x[1] +
+                "</b></div>",
+            )
+            .join("") || '<div class="icv-empty">لا توجد مشاريع مسجلة.</div>';
+        const rankRows = (rows) =>
+          rows.length
+            ? rows
+                .map(
+                  (x, i) =>
+                    "<tr><td>" + (i + 1) + "</td><td>" + esc(x[0]) + "</td><td>" + money(x[1]) + "</td></tr>",
+                )
+                .join("")
+            : '<tr><td colspan="3">لا توجد بيانات</td></tr>';
+        root.innerHTML =
+          "<style>" +
+          "#page-dashboard .icv-home{display:flex;flex-direction:column;gap:18px}" +
+          "#page-dashboard .icv-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}" +
+          "#page-dashboard .icv-kpi,#page-dashboard .icv-panel{background:#fff;border:1px solid #e5ebef;border-radius:16px;padding:17px;box-shadow:0 5px 18px rgba(20,50,60,.045);min-width:0}" +
+          "#page-dashboard .icv-kpi .icv-label{font-size:12px;color:#71818a;margin-bottom:9px}" +
+          "#page-dashboard .icv-kpi strong{display:block;font-size:clamp(17px,1.6vw,25px);color:#123b4a;overflow-wrap:anywhere;line-height:1.4}" +
+          "#page-dashboard .icv-kpi small{display:block;color:#8a989e;font-size:11px;margin-top:6px}" +
+          "#page-dashboard .icv-home-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,1fr);gap:18px}" +
+          "#page-dashboard .icv-panel h2{font-size:16px;margin:0 0 5px;color:#20333b}" +
+          "#page-dashboard .icv-subtitle{font-size:11px;color:#87959b;margin-bottom:16px}" +
+          "#page-dashboard .icv-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:#71818a;margin-bottom:12px}" +
+          "#page-dashboard .icv-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-left:5px}" +
+          "#page-dashboard .icv-q-chart{height:185px;display:flex;align-items:stretch;gap:8px;border-bottom:1px solid #e8edef;padding:8px 0 0;overflow:hidden}" +
+          "#page-dashboard .icv-q-col{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;text-align:center;gap:7px}" +
+          "#page-dashboard .icv-q-bars{height:150px;display:flex;align-items:flex-end;justify-content:center;gap:5px;border-bottom:1px dashed #e8edef}" +
+          "#page-dashboard .icv-q-bars i{display:block;width:min(24px,38%);min-height:2px;border-radius:5px 5px 0 0}" +
+          "#page-dashboard .icv-q-bars .spend{background:#b9cbd2}#page-dashboard .icv-q-bars .local{background:#087f78}" +
+          "#page-dashboard .icv-q-col small{font-size:10px;color:#71818a;white-space:nowrap}" +
+          "#page-dashboard .icv-state-row{display:grid;grid-template-columns:90px minmax(30px,1fr) 25px;align-items:center;gap:9px;margin:15px 0;font-size:12px}" +
+          "#page-dashboard .icv-track{height:8px;background:#edf1f3;border-radius:9px;overflow:hidden}#page-dashboard .icv-track i{display:block;height:100%;background:#087f78;border-radius:9px}" +
+          "#page-dashboard .icv-compliance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}" +
+          "#page-dashboard .icv-compliance div{background:#f5f8f9;border-radius:12px;padding:13px;min-width:0}" +
+          "#page-dashboard .icv-compliance b{display:block;font-size:20px;color:#123b4a;margin:5px 0}#page-dashboard .icv-compliance small{font-size:11px;color:#71818a}" +
+          "#page-dashboard .icv-bottom{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}" +
+          "#page-dashboard .icv-mini-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px}" +
+          "#page-dashboard .icv-mini-table th,#page-dashboard .icv-mini-table td{padding:8px 5px;border-bottom:1px solid #edf1f3;text-align:right;overflow-wrap:anywhere;vertical-align:top}" +
+          "#page-dashboard .icv-mini-table th{color:#71818a;font-weight:600}#page-dashboard .icv-mini-table th:first-child,#page-dashboard .icv-mini-table td:first-child{width:28px}#page-dashboard .icv-mini-table th:last-child,#page-dashboard .icv-mini-table td:last-child{width:88px}" +
+          "#page-dashboard .icv-empty{font-size:12px;color:#87959b;padding:16px 0}" +
+          "@media(max-width:1100px){#page-dashboard .icv-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}#page-dashboard .icv-bottom{grid-template-columns:repeat(2,minmax(0,1fr))}}" +
+          "@media(max-width:760px){#page-dashboard .icv-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#page-dashboard .icv-home-grid,#page-dashboard .icv-bottom{grid-template-columns:1fr}#page-dashboard .icv-compliance{grid-template-columns:repeat(3,minmax(0,1fr))}#page-dashboard .icv-kpi,#page-dashboard .icv-panel{padding:13px}}" +
+          '</style><div class="icv-home">' +
+          '<div class="icv-kpis">' +
+          '<div class="icv-kpi"><div class="icv-label">عدد المشاريع</div><strong>' +
+          dashboardProjects.length +
+          "</strong><small>مشروع مسجل</small></div>" +
+          '<div class="icv-kpi"><div class="icv-label">إجمالي قيمة المشاريع</div><strong>' +
+          money(value) +
+          "</strong><small>ريال عماني</small></div>" +
+          '<div class="icv-kpi"><div class="icv-label">إجمالي الصرف</div><strong>' +
+          money(spend) +
+          "</strong><small>الصرف المسجل للمشاريع</small></div>" +
+          '<div class="icv-kpi"><div class="icv-label">المحتوى المحلي المستهدف</div><strong>' +
+          money(targetLC) +
+          "</strong><small>وفق بيانات الخطط المتاحة</small></div>" +
+          '<div class="icv-kpi"><div class="icv-label">المحتوى المحلي الفعلي</div><strong>' +
+          money(lc) +
+          "</strong><small>وفق بيانات المشاريع الحالية</small></div>" +
+          "</div>" +
+          '<div class="icv-home-grid">' +
+          '<div class="icv-panel"><h2>الصرف والمحتوى المحلي عبر الأرباع</h2><div class="icv-subtitle">مقارنة التقارير المسجلة في النظام</div><div class="icv-legend"><span><i style="background:#b9cbd2"></i>الصرف الفعلي</span><span><i style="background:#087f78"></i>المحتوى المحلي الفعلي</span></div><div class="icv-q-chart">' +
+          qBars +
+          "</div></div>" +
+          '<div class="icv-panel"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px"><h2 style="margin:0">مستوى الالتزام</h2><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><label for="icv-dashboard-entity-filter" style="font-size:12px;font-weight:700;color:#20333b">الجهة الحكومية:</label><select id="icv-dashboard-entity-filter" onchange="renderDashboard()" style="min-width:180px;max-width:100%;border:1px solid #d7e1e5;border-radius:10px;padding:7px 10px;background:#fff;color:#20333b"><option value="all">جميع الجهات الحكومية</option>' +
+          entitiesForFilter
+            .map(
+              (e) =>
+                '<option value="' +
+                esc(e[0]) +
+                '" ' +
+                (String(e[0]) === String(selectedEntityId) ? "selected" : "") +
+                ">" +
+                esc(e[1]) +
+                "</option>",
+            )
+            .join("") +
+          '</select></div></div><div class="icv-subtitle">مؤشرات الالتزام للجهة المختارة فقط</div><div class="icv-compliance">' +
+          "<div><small>المعدل العام للمحتوى المحلي</small><b>" +
+          complianceAvgSpend.toFixed(1) +
+          "%</b><small>من الصرف الفعلي للجهة المختارة</small></div>" +
+          "<div><small>متوسط التعمين</small><b>" +
+          pct(oman / 100) +
+          "</b><small>حسب بيانات المشاريع</small></div>" +
+          "<div><small>استيفاء SME</small><b>" +
+          smeOK +
+          " / " +
+          smeProjects.length +
+          "</b><small>مشاريع مستوفية</small></div>" +
+          '</div><div style="height:14px"></div><h2>حالة المشاريع</h2>' +
+          stateHtml +
+          "</div>" +
+          "</div>" +
+          '<div class="icv-panel"><h2>تنبيهات ومتابعة المشاريع</h2><div class="icv-subtitle">عناصر تحتاج إلى متابعة إدارية — حسب البيانات المسجلة</div><div class="icv-compliance">' +
+          "<div><small>مشاريع متعثرة</small><b>" +
+          stalledCount +
+          "</b><small>تحتاج إلى متابعة حالة التنفيذ</small></div>" +
+          "<div><small>مشاريع بدون خطة محتوى محلي</small><b>" +
+          noPlanCount +
+          "</b><small>الخطة اختيارية ويمكن استكمالها عند الحاجة</small></div>" +
+          "<div><small>مشاريع بدون تقارير ربع سنوية</small><b>" +
+          noReportCount +
+          "</b><small>لم يُسجّل لها تقرير حتى الآن</small></div>" +
+          "</div></div>" +
+          '<div class="icv-bottom">' +
+          '<div class="icv-panel"><h2>الجهات الأعلى صرفًا</h2><div class="icv-subtitle">حسب مجموع الصرف المسجل</div><table class="icv-mini-table"><thead><tr><th>#</th><th>الجهة الحكومية</th><th>الصرف</th></tr></thead><tbody>' +
+          rankRows(topEntities) +
+          "</tbody></table></div>" +
+          '<div class="icv-panel"><h2>الشركات الأعلى صرفًا</h2><div class="icv-subtitle">حسب المشاريع المرتبطة بالشركة</div><table class="icv-mini-table"><thead><tr><th>#</th><th>الشركة</th><th>الصرف</th></tr></thead><tbody>' +
+          rankRows(topCompanies) +
+          "</tbody></table></div>" +
+          '<div class="icv-panel"><h2>أفضل 3 مشاريع في الاستيفاء</h2><div class="icv-subtitle">مرتبة حسب نسبة المحتوى المحلي المسجلة</div><table class="icv-mini-table"><thead><tr><th>#</th><th>المشروع</th><th>النسبة</th></tr></thead><tbody>' +
+          (bestProjects.length
+            ? bestProjects
+                .map(
+                  (p, i) =>
+                    "<tr><td>" +
+                    (i + 1) +
+                    '</td><td><a class="project-link" href="javascript:viewProject(\'' +
+                    p.id +
+                    "')\">" +
+                    esc(p.project_name || "مشروع") +
+                    "</a></td><td>" +
+                    pct(p.local_content_project_pct) +
+                    "</td></tr>",
+                )
+                .join("")
+            : '<tr><td colspan="3">لا توجد بيانات</td></tr>') +
+          "</tbody></table></div>" +
+          "</div></div>";
+      }
+      function renderProjects() {
+        const root = document.getElementById("page-projects");
+        if (!root) return;
+        const es = [
+          ...new Map(
+            projects.map((p) => [p.government_entity_id, p.government_entities?.name]).filter((x) => x[0]),
+          ),
+        ];
+        const cs = [
+          ...new Map(projects.map((p) => [p.implementing_company_id, p.companies?.name]).filter((x) => x[0])),
+        ];
+        const years = [
+          ...new Set((window.reports || reports || []).map((r) => r.annual_period).filter(Boolean)),
+        ].sort();
+        root.innerHTML =
+          '<div class="panel project-filter-card"><div class="toolbar"><div><h2>المشاريع</h2><div class="muted">قائمة المشاريع مع المتابعة السريعة للتقارير والإنجاز.</div></div><div class="actions"><button class="btn" onclick="exportProjects()">تصدير Excel</button><button class="btn primary" onclick="openProject()">إضافة مشروع</button></div></div><div class="project-filter-grid project-filter-grid-main"><div class="field"><label>بحث</label><input id="pq" class="search" placeholder="اسم المشروع أو رقم المناقصة" oninput="icvProjectApply()"></div><div class="field"><label>الجهة الحكومية</label><select id="pe" onchange="icvProjectApply()"><option value="">الكل</option>' +
+          es.map((x) => '<option value="' + esc(x[0]) + '">' + esc(x[1]) + "</option>").join("") +
+          '</select></div><div class="field"><label>رقم المناقصة</label><input id="ptender" placeholder="رقم المناقصة" oninput="icvProjectApply()"></div><div class="field"><label>حالة المشروع</label><select id="pst" onchange="icvProjectApply()"><option value="">الكل</option>' +
+          ["مسند", "قيد التنفيذ", "منتهي", "متعثر"].map((x) => "<option>" + esc(x) + "</option>").join("") +
+          '</select></div></div><div class="project-filter-grid project-filter-grid-secondary"><div class="field"><label>الشركة المنفذة</label><select id="pc" onchange="icvProjectApply()"><option value="">الكل</option>' +
+          cs.map((x) => '<option value="' + esc(x[0]) + '">' + esc(x[1]) + "</option>").join("") +
+          '</select></div><div class="field"><label>السنة</label><select id="py" onchange="icvProjectApply()"><option value="">كل السنوات</option>' +
+          years.map((x) => "<option>" + esc(x) + "</option>").join("") +
+          '</select></div><div class="field"><label>قيمة المشروع من</label><input id="pmn" type="number" placeholder="0" oninput="icvProjectApply()"></div><div class="field"><label>قيمة المشروع إلى</label><input id="pmx" type="number" placeholder="0" oninput="icvProjectApply()"></div><div class="field"><label>المشاريع التي تنتهي خلال</label><select id="pend" onchange="icvProjectApply()"><option value="">الكل</option><option value="10">10 أيام</option><option value="30">30 يوم</option><option value="90">90 يوم</option></select></div></div><div class="project-filter-actions"><button class="btn ghost" onclick="icvProjectClear()">مسح الفلاتر</button><span id="projectFilterCount" class="muted"></span></div></div><div id="pg" style="margin-top:18px"></div>';
+        window.icvProjectClear = function () {
+          ["pq", "ptender", "pmn", "pmx"].forEach((id) => {
+            const e = document.getElementById(id);
+            if (e) e.value = "";
+          });
+          ["pe", "pc", "pst", "py", "pend"].forEach((id) => {
+            const e = document.getElementById(id);
+            if (e) e.value = "";
+          });
+          icvProjectApply();
+        };
+        window.icvProjectApply = function () {
+          let x = (projects || []).slice(),
+            q = (document.getElementById("pq")?.value || "").toLowerCase().trim(),
+            t = (document.getElementById("ptender")?.value || "").toLowerCase().trim();
+          if (q)
+            x = x.filter(
+              (p) =>
+                (p.project_name || "").toLowerCase().includes(q) ||
+                (p.tender_type || "").toLowerCase().includes(q) ||
+                String(p.serial_no || "")
+                  .toLowerCase()
+                  .includes(q),
+            );
+          if (t)
+            x = x.filter(
+              (p) =>
+                (p.tender_type || "").toLowerCase().includes(t) ||
+                String(p.serial_no || "")
+                  .toLowerCase()
+                  .includes(t),
+            );
+          const pe = document.getElementById("pe")?.value || "",
+            pc = document.getElementById("pc")?.value || "",
+            pst = document.getElementById("pst")?.value || "",
+            year = document.getElementById("py")?.value || "",
+            pmn = Number(document.getElementById("pmn")?.value || 0),
+            pmx = Number(document.getElementById("pmx")?.value || 0),
+            days = Number(document.getElementById("pend")?.value || 0);
+          if (pe) x = x.filter((p) => String(p.government_entity_id) === String(pe));
+          if (pc) x = x.filter((p) => String(p.implementing_company_id) === String(pc));
+          if (pst) x = x.filter((p) => p.project_status === pst);
+          if (pmn) x = x.filter((p) => Number(p.total_project_value || 0) >= pmn);
+          if (pmx) x = x.filter((p) => Number(p.total_project_value || 0) <= pmx);
+          if (days)
+            x = x.filter(
+              (p) =>
+                p.end_date &&
+                (new Date(p.end_date) - new Date()) / 86400000 <= days &&
+                (new Date(p.end_date) - new Date()) / 86400000 >= 0,
+            );
+          if (year) {
+            const ids = new Set(
+              (window.reports || reports || [])
+                .filter((r) => String(r.annual_period) === String(year))
+                .map((r) => r.project_id),
+            );
+            x = x.filter((p) => ids.has(p.id));
+          }
+          const fc = document.getElementById("projectFilterCount");
+          if (fc) fc.textContent = x.length + " مشروع";
+          const rows = x
+            .map(
+              (p, idx) =>
+                "<tr><td>" +
+                String(idx + 1) +
+                '</td><td><a class="project-link" href="#" data-project-id="' +
+                esc(p.id) +
+                '"><b>' +
+                esc(p.project_name) +
+                "</b></a></td><td>" +
+                esc(p.government_entities?.name || "—") +
+                "</td><td>" +
+                esc(p.tender_type || p.serial_no || "—") +
+                "</td><td>" +
+                esc(p.companies?.name || "—") +
+                "</td><td>" +
+                money(p.total_project_value) +
+                "</td><td>" +
+                Number(p.progress_pct || 0).toFixed(1) +
+                "%</td><td>" +
+                esc(p.project_status || "—") +
+                "</td></tr>",
+            )
+            .join("");
+          document.getElementById("pg").innerHTML =
+            '<div class="panel"><div class="section-head"><h2>قائمة المشاريع</h2><span class="muted">' +
+            x.length +
+            ' مشروع</span></div><div class="table-wrap"><table><thead><tr><th>م</th><th>اسم المشروع</th><th>الجهة الحكومية</th><th>رقم المشروع/المناقصة</th><th>الشركة المنفذة</th><th>القيمة</th><th>الإنجاز</th><th>الحالة</th></tr></thead><tbody>' +
+            rows +
+            "</tbody></table></div></div>";
+          document.querySelectorAll("#pg a[data-project-id]").forEach((a) =>
+            a.addEventListener("click", function (e) {
+              e.preventDefault();
+              openICVProject(this.dataset.projectId);
+            }),
+          );
+        };
+        icvProjectApply();
+      }
+      function openICVProject(id) {
+        const go = () => {
+          if (window.icvV2 && typeof window.icvV2.projectPage === "function") {
+            window.icvV2.projectPage(String(id));
+            return true;
+          }
+          if (typeof window.viewProject === "function" && window.viewProject !== openICVProject) {
+            window.viewProject(String(id));
+            return true;
+          }
+          return false;
+        };
+        if (go()) return false;
+        let n = 0,
+          t = setInterval(() => {
+            if (go() || ++n > 40) clearInterval(t);
+          }, 50);
+        return false;
+      }
+      function viewProject(id) {
+        if (window.icvV2?.projectPage) {
+          return window.icvV2.projectPage(id);
+        }
+        return false;
+      }
+      async function openProject() {
+        const [er, cr] = await Promise.all([
+          db.from("government_entities").select("name").order("name"),
+          db.from("companies").select("id,name").order("name"),
+        ]);
+        const names = (er.data || []).map((x) => x.name).filter(Boolean);
+        const companiesList = cr.data || [];
+        modal.innerHTML =
+          '<div class="modal-card"><div class="modal-head"><h2>إضافة مشروع</h2><button class="close" onclick="closeModal()">×</button></div><div class="form-grid"><div class="field"><label>رقم المناقصة</label><input id="f_serial" inputmode="numeric" placeholder="أدخل رقم المناقصة"></div><div class="field full"><label>اسم المشروع</label><input id="f_name"></div><div class="field full"><label>الجهة الحكومية</label><input id="f_entity" list="f_entity_options" autocomplete="off" placeholder="ابحث واختر جهة حكومية موجودة"><datalist id="f_entity_options">' +
+          names
+            .map(
+              (n) =>
+                '<option value="' +
+                String(n).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;") +
+                '"></option>',
+            )
+            .join("") +
+          '</datalist><div class="muted" style="margin-top:6px">اختر جهة من القائمة. لإضافة جهة جديدة، استخدم صفحة الجهات الحكومية.</div></div><div class="field"><label>الشركة المنفذة</label><select id="f_company"><option value="">اختر الشركة المنفذة</option>' +
+          companiesList
+            .map(
+              (c) =>
+                '<option value="' +
+                c.id +
+                '">' +
+                String(c.name).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") +
+                "</option>",
+            )
+            .join("") +
+          '</select></div><div class="field"><label>حالة المشروع</label><select id="f_status"><option value="مسند">مسند</option><option value="قيد التنفيذ" selected>قيد التنفيذ</option><option value="منتهي">منتهي</option><option value="متعثر">متعثر</option></select></div><div class="field"><label>قطاع العمل</label><select id="f_sector"><option value="">اختر قطاع العمل</option><option value="الإنشاءات">الإنشاءات</option><option value="الطرق">الطرق</option><option value="الكهرباء والمياه">الكهرباء والمياه</option><option value="تقنية المعلومات">تقنية المعلومات</option><option value="التوريد">التوريد</option><option value="الخدمات">الخدمات</option><option value="الاستشارات">الاستشارات</option><option value="أخرى">أخرى</option></select></div><div class="field"><label>قيمة المشروع</label><input id="f_value" type="number" min="0"></div><div class="field"><label>نسبة الإنجاز %</label><input id="f_progress" type="number" min="0" max="100"></div><div class="field"><label>تاريخ البدء</label><input id="f_start" type="date"></div><div class="field"><label>تاريخ الانتهاء</label><input id="f_end" type="date"></div></div><button class="btn primary" onclick="saveProject()">حفظ</button></div>';
+        modal.classList.remove("hidden");
+      }
+      async function saveProject() {
+        const en = f_entity.value.trim();
+        if (!en) return toast("اختر جهة حكومية من القائمة");
+        const entityResult = await db.from("government_entities").select("id").eq("name", en).maybeSingle();
+        if (entityResult.error) return toast("تعذّر التحقق من الجهة الحكومية: " + entityResult.error.message);
+        if (!entityResult.data?.id)
+          return toast("الجهة غير موجودة في القائمة. أضفها أولاً من صفحة الجهات الحكومية ثم أعد المحاولة.");
+        const r = await db
+          .from("projects")
+          .insert({
+            serial_no: Number(f_serial.value) || null,
+            government_entity_id: entityResult.data.id,
+            implementing_company_id: f_company.value || null,
+            project_name: f_name.value.trim(),
+            project_status: f_status.value,
+            work_sector: f_sector.value,
+            total_project_value: Number(f_value.value) || 0,
+            progress_pct: Number(f_progress.value) || 0,
+            start_date: f_start.value || null,
+            end_date: f_end.value || null,
+          })
+          .select()
+          .single();
+        if (r.error) return toast(r.error.message);
+        closeModal();
+        await loadAll();
+        toast("تم حفظ المشروع");
+      }
+      async function renderEntities() {
+        const root = document.getElementById("page-entities");
+        if (!root) return;
+        const result = await db.from("government_entities").select("*").order("name");
+        const entities = result.data || [],
+          allProjects = window.projects || projects || [],
+          allReports = window.reports || reports || [];
+        if (!document.getElementById("icvEntitiesStyle")) {
+          const st = document.createElement("style");
+          st.id = "icvEntitiesStyle";
+          st.textContent = `
   #page-entities .entities-filter{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:16px}
   #page-entities .entities-filter .field{min-width:min(360px,100%);margin:0}
   #page-entities .entities-table .entity-name{font-weight:800}
@@ -284,288 +1780,728 @@ async function renderEntities(){
   #page-entities .entity-modal-empty{color:var(--muted);font-size:13px;padding:14px 0}
   @media(max-width:700px){#page-entities .entity-info-grid{grid-template-columns:1fr}}
   `;
-  document.head.appendChild(st);
- }
- const getProjectReports=id=>allReports.filter(x=>String(x.project_id)===String(id)).sort((a,b)=>String(a.created_at||'').localeCompare(String(b.created_at||'')));
- const stats=entities.map(entity=>{const list=allProjects.filter(p=>String(p.government_entity_id||'')===String(entity.id));return {entity,projects:list,totalValue:list.reduce((s,p)=>s+Number(p.total_project_value||0),0),totalSpend:list.reduce((s,p)=>s+Number(p.total_spend||0),0)}});
- const fmt=n=>Number(n||0).toLocaleString('en-US',{maximumFractionDigits:2})+' ر.ع';
- const rows=stats.map((s,i)=>'<tr data-entity-row="'+esc(s.entity.id)+'"><td class="entity-name">'+esc(s.entity.name)+'</td><td class="num">'+s.projects.length+'</td><td class="money">'+fmt(s.totalValue)+'</td><td class="money">'+fmt(s.totalSpend)+'</td><td class="num"><button type="button" class="entity-view-btn" data-view-entity="'+i+'">عرض</button></td></tr>').join('');
- root.innerHTML='<div class="panel"><div class="toolbar"><div><h2>الجهات الحكومية</h2><div class="muted">عرض الجهات الحكومية وعدد مشاريعها وقيمتها والإنفاق، مع إمكانية فتح بطاقة كل جهة.</div></div>'+(['admin','editor'].includes(window.__icvProfile?.role)&&typeof window.icvAddEntityV2==='function'?'<button class="btn primary" onclick="window.icvAddEntityV2()">+ إضافة جهة</button>':'')+'</div><div class="entities-filter"><div class="field"><label>فلتر الجهة</label><select id="entityFilter"><option value="">جميع الجهات</option>'+entities.map(e=>'<option value="'+esc(e.id)+'">'+esc(e.name)+'</option>').join('')+'</select></div></div><div class="table-wrap entities-table"><table><thead><tr><th>الجهة الحكومية</th><th>عدد المشاريع</th><th>قيمة المشاريع</th><th>الإنفاق</th><th>بطاقة الجهة</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+(entities.length?'':'<div class="empty">لا توجد جهات حكومية مسجلة.</div>')+'<div id="entityCardModal" class="entity-modal" role="dialog" aria-modal="true"><div class="entity-modal-card"><div class="entity-modal-head"><h3 id="entityCardTitle">بطاقة الجهة</h3><button type="button" class="entity-modal-close" id="entityCardClose" aria-label="إغلاق">×</button></div><div id="entityCardContent"></div></div></div></div>';
- const filter=document.getElementById('entityFilter');
- filter.addEventListener('change',e=>root.querySelectorAll('[data-entity-row]').forEach(row=>row.style.display=(!e.target.value||row.dataset.entityRow===e.target.value)?'':'none'));
- const closeCard=()=>document.getElementById('entityCardModal')?.classList.remove('show');
- document.getElementById('entityCardClose').addEventListener('click',closeCard);
- document.getElementById('entityCardModal').addEventListener('click',e=>{if(e.target.id==='entityCardModal')closeCard()});
- root.querySelectorAll('[data-view-entity]').forEach(btn=>btn.addEventListener('click',()=>{
-  const s=stats[Number(btn.dataset.viewEntity)];if(!s)return;
-  document.getElementById('entityCardTitle').textContent='بطاقة الجهة: '+s.entity.name;
-  const projectRows=s.projects.map((p,i)=>{const rr=getProjectReports(p.id),last=rr[rr.length-1];return '<tr><td>'+(i+1)+'</td><td><a href="#" class="project-link entity-modal-project-link" data-project-id="'+esc(p.id)+'">'+esc(p.project_name)+'</a></td><td>'+esc(p.serial_no||p.tender_type||'—')+'</td><td>'+fmt(p.total_project_value)+'</td><td>'+esc(p.project_status||'—')+'</td><td>'+esc(last?String(last.annual_period||'')+' / '+String(last.quarter||''):'—')+'</td></tr>'}).join('');
-  document.getElementById('entityCardContent').innerHTML='<div class="entity-info-grid"><div class="entity-info-box"><label>عدد المشاريع</label><b>'+s.projects.length+'</b></div><div class="entity-info-box"><label>قيمة المشاريع</label><b>'+fmt(s.totalValue)+'</b></div><div class="entity-info-box"><label>الإنفاق</label><b>'+fmt(s.totalSpend)+'</b></div><div class="entity-info-box"><label>حالة البطاقة</label><b>معلومات الجهة</b></div></div><div class="entity-modal-projects"><h4>مشاريع الجهة</h4>'+(projectRows?'<div class="table-wrap"><table><thead><tr><th>م</th><th>اسم المشروع</th><th>رقم المشروع/المناقصة</th><th>القيمة</th><th>الحالة</th><th>آخر تقرير</th></tr></thead><tbody>'+projectRows+'</tbody></table></div>':'<div class="entity-modal-empty">لا توجد مشاريع مرتبطة بهذه الجهة.</div>')+'</div>';
-  document.getElementById('entityCardModal').classList.add('show');
-  document.querySelectorAll('#entityCardContent .entity-modal-project-link').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();closeCard();if(window.openICVProject)window.openICVProject(a.dataset.projectId)}));
- }));
-}
-window.icvEntitiesPage=renderEntities;
-function renderCompanies(){if(typeof window.icvCompaniesPage==='function'){return window.icvCompaniesPage()}const el=document.getElementById('page-companies');if(el)el.innerHTML='<div class="panel"><h2>الشركات</h2><p style="padding:20px;color:#b91c1c">جاري تحميل صفحة الشركات الجديدة...</p></div>';setTimeout(function(){if(typeof window.icvCompaniesPage==='function')window.icvCompaniesPage()},300)}
-function renderReports(){document.getElementById('page-reports').innerHTML='<div class="panel"><div class="toolbar"><h2>التقارير الربع سنوية</h2><button class="btn primary" onclick="openReport()">إضافة تقرير</button></div><div class="table-wrap"><table><thead><tr><th>المشروع</th><th>الربع</th><th>السنة</th><th>الحالة</th><th>تاريخ الاستلام</th></tr></thead><tbody>'+reports.map(r=>'<tr><td>'+esc(r.projects?.project_name)+'</td><td>'+esc(r.quarter)+'</td><td>'+esc(r.annual_period)+'</td><td>'+esc(r.status)+'</td><td>'+esc(r.submitted_at)+'</td></tr>').join('')+'</tbody></table></div></div>'}
-function openReport(){modal.innerHTML='<div class="modal-card"><div class="modal-head"><h2>إضافة تقرير ربع سنوي</h2><button class="close" onclick="closeModal()">×</button></div><div class="form-grid"><div class="field full"><label>المشروع</label><select id="r_project">'+projects.map(p=>'<option value="'+p.id+'">'+esc(p.project_name)+'</option>').join('')+'</select></div><div class="field"><label>الربع</label><input id="r_q" placeholder="Q1"></div><div class="field"><label>السنة</label><input id="r_y" placeholder="Year1"></div><div class="field"><label>تاريخ الاستلام</label><input id="r_date" type="date"></div><div class="field full"><label>ملاحظات</label><textarea id="r_notes"></textarea></div></div><button class="btn primary" onclick="saveReport()">حفظ</button></div>';modal.classList.remove('hidden')}
-async function saveReport(){const r=await db.from('quarterly_reports').insert({project_id:r_project.value,quarter:r_q.value,annual_period:r_y.value,submitted_at:r_date.value||null,notes:r_notes.value,created_by:session.user.id}).select().single();if(r.error)return toast(r.error.message);closeModal();await loadAll();toast('تم حفظ التقرير')}
-function renderPlans(){document.getElementById('page-plans').innerHTML='<div class="panel"><div class="toolbar"><h2>خطط المحتوى المحلي</h2><button class="btn primary" onclick="openPlan()">إضافة خطة</button></div><div class="table-wrap"><table><thead><tr><th>المشروع</th><th>الإصدار</th><th>الحالة</th><th>المصدر</th></tr></thead><tbody>'+plans.map(r=>'<tr><td>'+esc(r.projects?.project_name)+'</td><td>'+esc(r.version)+'</td><td>'+esc(r.status)+'</td><td>'+esc(r.source_file)+'</td></tr>').join('')+'</tbody></table></div></div>'}
-function openPlan(){modal.innerHTML='<div class="modal-card"><div class="modal-head"><h2>إضافة خطة محتوى محلي</h2><button class="close" onclick="closeModal()">×</button></div><div class="form-grid"><div class="field full"><label>المشروع</label><select id="pl_project">'+projects.map(p=>'<option value="'+p.id+'">'+esc(p.project_name)+'</option>').join('')+'</select></div><div class="field"><label>الإصدار</label><input id="pl_ver"></div><div class="field"><label>المصدر</label><input id="pl_source"></div><div class="field"><label>الحالة</label><select id="pl_status"><option>received</option><option>reviewed</option><option>approved</option></select></div></div><button class="btn primary" onclick="savePlan()">حفظ</button></div>';modal.classList.remove('hidden')}
-async function savePlan(){const r=await db.from('local_content_plans').insert({project_id:pl_project.value,version:pl_ver.value,source_file:pl_source.value,status:pl_status.value,created_by:session.user.id});if(r.error)return toast(r.error.message);closeModal();await loadAll();toast('تم حفظ الخطة')}
-function renderFollowups(){document.getElementById('page-followups').innerHTML='<div class="panel"><h2>متابعة الموظفين</h2><p class="muted">هذه الصفحة جاهزة لتسجيل المهام والتنبيهات المرتبطة بالمشاريع والتقارير.</p></div>'}
-async function renderAudit(){const e=document.getElementById('page-audit');if(profile?.role!=='admin'){e.innerHTML='<div class="panel"><h2>سجل التدقيق</h2><p class="muted">هذه الصفحة متاحة لمسؤول النظام فقط.</p></div>';return}const r=await db.from('audit_log').select('*').order('changed_at',{ascending:false}).limit(100);e.innerHTML='<div class="panel"><h2>سجل التدقيق</h2><div class="table-wrap"><table><thead><tr><th>العملية</th><th>الجدول</th><th>السجل</th><th>التاريخ</th></tr></thead><tbody>'+((r.data||[]).map(x=>'<tr><td>'+esc(x.operation)+'</td><td>'+esc(x.table_name)+'</td><td>'+esc(x.record_id)+'</td><td>'+esc(x.changed_at)+'</td></tr>').join(''))+'</tbody></table></div></div>'}
-function exportProjects(){const rows=projects.map(p=>({'م':p.serial_no,'الجهة الحكومية':p.government_entities?.name,'اسم المشروع':p.project_name,'حالة المشروع':p.project_status,'قيمة المشروع الاجمالي':p.total_project_value,'نسبة الانجاز':p.progress_pct,'إجمالي الصرف':p.total_spend,'إجمالي المحتوى المحلي':p.total_local_content,'نسبة المحتوى المحلي إلى إجمالي الصرف':p.local_content_spend_pct,'نسبة المحتوى المحلي إلى قيمة المشروع':p.local_content_project_pct,'نسبة SME':p.sme_pct,'الملاحظات':p.notes}));const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'المشاريع');XLSX.writeFile(wb,'ICV-New-Projects.xlsx')}
-function closeModal(){modal.classList.add('hidden');modal.innerHTML=''}
-(async function(){
-  let s=(await db.auth.getSession()).data.session;
-  if(!s){
-    try{
-      const raw=sessionStorage.getItem('icv-auth-session');
-      if(raw){
-        const cached=JSON.parse(raw);
-        const restored=await db.auth.setSession({access_token:cached.access_token,refresh_token:cached.refresh_token});
-        s=restored.data?.session||null;
+          document.head.appendChild(st);
+        }
+        const getProjectReports = (id) =>
+          allReports
+            .filter((x) => String(x.project_id) === String(id))
+            .sort((a, b) => String(a.created_at || "").localeCompare(String(b.created_at || "")));
+        const stats = entities.map((entity) => {
+          const list = allProjects.filter((p) => String(p.government_entity_id || "") === String(entity.id));
+          return {
+            entity,
+            projects: list,
+            totalValue: list.reduce((s, p) => s + Number(p.total_project_value || 0), 0),
+            totalSpend: list.reduce((s, p) => s + Number(p.total_spend || 0), 0),
+          };
+        });
+        const fmt = (n) => Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 2 }) + " ر.ع";
+        const rows = stats
+          .map(
+            (s, i) =>
+              '<tr data-entity-row="' +
+              esc(s.entity.id) +
+              '"><td class="entity-name">' +
+              esc(s.entity.name) +
+              '</td><td class="num">' +
+              s.projects.length +
+              '</td><td class="money">' +
+              fmt(s.totalValue) +
+              '</td><td class="money">' +
+              fmt(s.totalSpend) +
+              '</td><td class="num"><button type="button" class="entity-view-btn" data-view-entity="' +
+              i +
+              '">عرض</button></td></tr>',
+          )
+          .join("");
+        root.innerHTML =
+          '<div class="panel"><div class="toolbar"><div><h2>الجهات الحكومية</h2><div class="muted">عرض الجهات الحكومية وعدد مشاريعها وقيمتها والإنفاق، مع إمكانية فتح بطاقة كل جهة.</div></div>' +
+          (["admin", "editor"].includes(window.__icvProfile?.role) &&
+          typeof window.icvAddEntityV2 === "function"
+            ? '<button class="btn primary" onclick="window.icvAddEntityV2()">+ إضافة جهة</button>'
+            : "") +
+          '</div><div class="entities-filter"><div class="field"><label>فلتر الجهة</label><select id="entityFilter"><option value="">جميع الجهات</option>' +
+          entities.map((e) => '<option value="' + esc(e.id) + '">' + esc(e.name) + "</option>").join("") +
+          '</select></div></div><div class="table-wrap entities-table"><table><thead><tr><th>الجهة الحكومية</th><th>عدد المشاريع</th><th>قيمة المشاريع</th><th>الإنفاق</th><th>بطاقة الجهة</th></tr></thead><tbody>' +
+          rows +
+          "</tbody></table></div>" +
+          (entities.length ? "" : '<div class="empty">لا توجد جهات حكومية مسجلة.</div>') +
+          '<div id="entityCardModal" class="entity-modal" role="dialog" aria-modal="true"><div class="entity-modal-card"><div class="entity-modal-head"><h3 id="entityCardTitle">بطاقة الجهة</h3><button type="button" class="entity-modal-close" id="entityCardClose" aria-label="إغلاق">×</button></div><div id="entityCardContent"></div></div></div></div>';
+        const filter = document.getElementById("entityFilter");
+        filter.addEventListener("change", (e) =>
+          root
+            .querySelectorAll("[data-entity-row]")
+            .forEach(
+              (row) =>
+                (row.style.display =
+                  !e.target.value || row.dataset.entityRow === e.target.value ? "" : "none"),
+            ),
+        );
+        const closeCard = () => document.getElementById("entityCardModal")?.classList.remove("show");
+        document.getElementById("entityCardClose").addEventListener("click", closeCard);
+        document.getElementById("entityCardModal").addEventListener("click", (e) => {
+          if (e.target.id === "entityCardModal") closeCard();
+        });
+        root.querySelectorAll("[data-view-entity]").forEach((btn) =>
+          btn.addEventListener("click", () => {
+            const s = stats[Number(btn.dataset.viewEntity)];
+            if (!s) return;
+            document.getElementById("entityCardTitle").textContent = "بطاقة الجهة: " + s.entity.name;
+            const projectRows = s.projects
+              .map((p, i) => {
+                const rr = getProjectReports(p.id),
+                  last = rr[rr.length - 1];
+                return (
+                  "<tr><td>" +
+                  (i + 1) +
+                  '</td><td><a href="#" class="project-link entity-modal-project-link" data-project-id="' +
+                  esc(p.id) +
+                  '">' +
+                  esc(p.project_name) +
+                  "</a></td><td>" +
+                  esc(p.serial_no || p.tender_type || "—") +
+                  "</td><td>" +
+                  fmt(p.total_project_value) +
+                  "</td><td>" +
+                  esc(p.project_status || "—") +
+                  "</td><td>" +
+                  esc(last ? String(last.annual_period || "") + " / " + String(last.quarter || "") : "—") +
+                  "</td></tr>"
+                );
+              })
+              .join("");
+            document.getElementById("entityCardContent").innerHTML =
+              '<div class="entity-info-grid"><div class="entity-info-box"><label>عدد المشاريع</label><b>' +
+              s.projects.length +
+              '</b></div><div class="entity-info-box"><label>قيمة المشاريع</label><b>' +
+              fmt(s.totalValue) +
+              '</b></div><div class="entity-info-box"><label>الإنفاق</label><b>' +
+              fmt(s.totalSpend) +
+              '</b></div><div class="entity-info-box"><label>حالة البطاقة</label><b>معلومات الجهة</b></div></div><div class="entity-modal-projects"><h4>مشاريع الجهة</h4>' +
+              (projectRows
+                ? '<div class="table-wrap"><table><thead><tr><th>م</th><th>اسم المشروع</th><th>رقم المشروع/المناقصة</th><th>القيمة</th><th>الحالة</th><th>آخر تقرير</th></tr></thead><tbody>' +
+                  projectRows +
+                  "</tbody></table></div>"
+                : '<div class="entity-modal-empty">لا توجد مشاريع مرتبطة بهذه الجهة.</div>') +
+              "</div>";
+            document.getElementById("entityCardModal").classList.add("show");
+            document.querySelectorAll("#entityCardContent .entity-modal-project-link").forEach((a) =>
+              a.addEventListener("click", (e) => {
+                e.preventDefault();
+                closeCard();
+                if (window.openICVProject) window.openICVProject(a.dataset.projectId);
+              }),
+            );
+          }),
+        );
       }
-    }catch(e){sessionStorage.removeItem('icv-auth-session')}
-  }
-  if(s){
-    sessionStorage.setItem('icv-auth-session',JSON.stringify({access_token:s.access_token,refresh_token:s.refresh_token}));
-    await boot(s);
-  }else{
-    document.body.classList.remove('auth-pending');
-    document.getElementById('login').classList.remove('hidden');
-  }
-})();
-db.auth.onAuthStateChange((event,s)=>{
-  if(s){
-    try{sessionStorage.setItem('icv-auth-session',JSON.stringify({access_token:s.access_token,refresh_token:s.refresh_token}))}catch(e){}
-    if(!session)boot(s);
-  }else if(event==='SIGNED_OUT'){
-    sessionStorage.removeItem('icv-auth-session');
-  }
-})
-</script><script>(function(){const root=document.documentElement,panel=document.getElementById("themePanel"),trigger=document.querySelector("[data-theme-settings]");const themes={green:["#0f766e","#0b5f59","#eef7f5","#f5f7fb","#162033","#0e2f2c","#dce9e7","#b8ceca","#fff","rgba(255,255,255,.1)"],navy:["#315b91","#172f52","#edf2f8","#f4f6f9","#17263a","#172f52","#e7edf6","#b9c8dc","#fff","rgba(255,255,255,.09)"],sand:["#9a6b3f","#5f4329","#f7f0e5","#f7f4ef","#34281f","#5f4329","#f5eadb","#dcc8ae","#fff","rgba(255,255,255,.12)"],teal:["#0d8b87","#075f60","#e7f6f5","#f1f7f7","#153b3b","#075f60","#dff6f4","#b8dcda","#fff","rgba(255,255,255,.10)"],slate:["#566575","#303b48","#edf0f3","#f3f5f7","#222b34","#303b48","#e6ebef","#bdc7d0","#fff","rgba(255,255,255,.10)"]};let size=Number(localStorage.getItem("icv-font-size")||18);function applyTheme(k){const v=themes[k]||themes.green;["primary","primary2","soft","bg","ink","nav-bg","nav-ink","nav-muted","nav-mark-bg","nav-hover"].forEach((x,i)=>root.style.setProperty("--"+x,v[i]));document.querySelectorAll(".theme-option").forEach(x=>x.classList.toggle("active",x.dataset.theme===k));localStorage.setItem("icv-theme",k)}function scaleTableFonts(){const scale=size/16;document.querySelectorAll(".main table th,.main table td").forEach(el=>{if(!el.dataset.icvBaseTableFont){const cs=getComputedStyle(el);const px=parseFloat(cs.fontSize);if(Number.isFinite(px)&&px>0)el.dataset.icvBaseTableFont=String(px)}const base=parseFloat(el.dataset.icvBaseTableFont);if(Number.isFinite(base)&&base>0)el.style.fontSize=(base*scale)+"px"})}
-function applySize(){document.documentElement.style.setProperty("--icv-font-scale",(size/18).toFixed(3));document.documentElement.style.setProperty("--icv-page-font-size",size+"px");scaleTableFonts();localStorage.setItem("icv-font-size",size)}function applyFont(v){document.body.style.fontFamily=v;localStorage.setItem("icv-font",v)}function openPanel(){panel.classList.remove("hidden");trigger.classList.add("active")}function closePanel(){panel.classList.add("hidden");trigger.classList.remove("active")}trigger.addEventListener("click",e=>{e.stopPropagation();panel.classList.contains("hidden")?openPanel():closePanel()});panel.addEventListener("click",e=>e.stopPropagation());document.addEventListener("click",e=>{if(!panel.classList.contains("hidden")&&!panel.contains(e.target)&&!trigger.contains(e.target))closePanel()});document.querySelector("[data-theme-close]").onclick=closePanel;document.querySelectorAll(".theme-option").forEach(x=>x.onclick=()=>applyTheme(x.dataset.theme));document.querySelector("[data-font-minus]").onclick=()=>{size=Math.max(14,size-1);applySize()};document.querySelector("[data-font-plus]").onclick=()=>{size=Math.min(22,size+1);applySize()};document.querySelector("[data-font-reset]").onclick=()=>{size=18;applySize()};const fontSel=document.getElementById("themeFont");fontSel.onchange=e=>applyFont(e.target.value);applyTheme(localStorage.getItem("icv-theme")||"green");applySize();const fontObserver=new MutationObserver(()=>scaleTableFonts());fontObserver.observe(document.querySelector(".main"),{childList:true,subtree:true});const savedFont=localStorage.getItem("icv-font")||"Cairo,Arial,sans-serif";fontSel.value=savedFont;applyFont(savedFont);window.icvThemeSettings={applyTheme,applySize,applyFont,open:openPanel,close:closePanel};})();</script><script src="ptlc-access.js?v=20261013-viewer-profile-minimal-01"></script><script src="ptlc-project-pages.js?v=20261019-entity-search-01"></script><script src="icv-structure-v13.js?v=20261012-formulas-01"></script><script src="companies-page-final.js?v=20261019-company-contacts-03"></script><script src="settings-page.js?v=20261019-admin-project-management-01"></script><script id="icvSequentialNumberingPatch">
-(function(){
-  function renumberProjectRows(){
-    const table=document.querySelector('#pg .table-wrap tbody');
-    if(!table)return;
-    Array.from(table.querySelectorAll('tr')).forEach(function(row,i){
-      const cell=row.children[0];
-      if(cell)cell.textContent=String(i+1);
-    });
-  }
-  const install=function(){
-    if(typeof window.icvProjectApply!=='function'){setTimeout(install,100);return;}
-    if(window.__icvSequentialNumbering)return;
-    window.__icvSequentialNumbering=true;
-    const original=window.icvProjectApply;
-    window.icvProjectApply=function(){
-      const result=original.apply(this,arguments);
-      setTimeout(renumberProjectRows,0);
-      return result;
-    };
-    setTimeout(renumberProjectRows,0);
-  };
-  install();
-})();
-</script><script>
-(function(){
-  let routingReady=false;
-  let restoringRoute=false;
-
-  function currentRoute(){
-    const q=new URLSearchParams(location.search);
-    return {page:q.get('page'),project:q.get('project')};
-  }
-
-  function writeRoute(route,replace){
-    const q=new URLSearchParams();
-    if(route.project) q.set('project',route.project);
-    else q.set('page',route.page||'dashboard');
-    const url=location.pathname+'?'+q.toString()+(location.hash||'');
-    if(replace) history.replaceState({route:route},'',url);
-    else history.pushState({route:route},'',url);
-  }
-
-  function routeFromUrl(){
-    const route=currentRoute();
-    restoringRoute=true;
-    if(route.project && typeof window.viewProject==='function'){
-      Promise.resolve(window.viewProject(route.project)).finally(function(){setTimeout(function(){restoringRoute=false;},0);});
-      return;
-    }
-    const page=route.page||'dashboard';
-    if(typeof window.showPage==='function'){
-      const btn=document.querySelector('[data-page="'+page+'"]');
-      Promise.resolve(window.showPage(page,btn||null)).finally(function(){setTimeout(function(){restoringRoute=false;},0);});
-      return;
-    }
-    restoringRoute=false;
-  }
-
-  function installRouting(){
-    if(window.__icvUrlRoutingInstalled)return;
-    if(typeof window.showPage!=='function' || typeof window.viewProject!=='function')return;
-
-    window.__icvUrlRoutingInstalled=true;
-    const originalShowPage=window.showPage;
-    const originalViewProject=window.viewProject;
-    const originalBack=window.icvV2Back;
-
-    window.showPage=function(page,btn){
-      const result=originalShowPage.call(this,page,btn);
-      if(routingReady && !restoringRoute) writeRoute({page:page},false);
-      return result;
-    };
-
-    window.viewProject=async function(id){
-      const result=await originalViewProject.call(this,id);
-      if(routingReady && !restoringRoute) writeRoute({project:String(id)},false);
-      return result;
-    };
-
-    if(typeof originalBack==='function'){
-      window.icvV2Back=function(){
-        const result=originalBack.apply(this,arguments);
-        if(routingReady && !restoringRoute) writeRoute({page:'projects'},false);
-        return result;
-      };
-    }
-
-    window.addEventListener('popstate',function(){
-      if(window.__icvProfile) routeFromUrl();
-    });
-
-    routingReady=true;
-  }
-
-  function waitForApp(){
-    installRouting();
-    if(!window.__icvUrlRoutingInstalled){
-      setTimeout(waitForApp,150);
-      return;
-    }
-    if(!window.__icvProfile || !document.getElementById('app') || document.getElementById('app').classList.contains('hidden')){
-      setTimeout(waitForApp,150);
-      return;
-    }
-
-    const route=currentRoute();
-    if(route.project || route.page){
-      routeFromUrl();
-    }else{
-      restoringRoute=true;
-      Promise.resolve(window.showPage('dashboard',document.querySelector('[data-page="dashboard"]'))).finally(function(){
-        restoringRoute=false;
-        writeRoute({page:'dashboard'},true);
+      window.icvEntitiesPage = renderEntities;
+      function renderCompanies() {
+        if (typeof window.icvCompaniesPage === "function") {
+          return window.icvCompaniesPage();
+        }
+        const el = document.getElementById("page-companies");
+        if (el)
+          el.innerHTML =
+            '<div class="panel"><h2>الشركات</h2><p style="padding:20px;color:#b91c1c">جاري تحميل صفحة الشركات الجديدة...</p></div>';
+        setTimeout(function () {
+          if (typeof window.icvCompaniesPage === "function") window.icvCompaniesPage();
+        }, 300);
+      }
+      function renderReports() {
+        document.getElementById("page-reports").innerHTML =
+          '<div class="panel"><div class="toolbar"><h2>التقارير الربع سنوية</h2><button class="btn primary" onclick="openReport()">إضافة تقرير</button></div><div class="table-wrap"><table><thead><tr><th>المشروع</th><th>الربع</th><th>السنة</th><th>الحالة</th><th>تاريخ الاستلام</th></tr></thead><tbody>' +
+          reports
+            .map(
+              (r) =>
+                "<tr><td>" +
+                esc(r.projects?.project_name) +
+                "</td><td>" +
+                esc(r.quarter) +
+                "</td><td>" +
+                esc(r.annual_period) +
+                "</td><td>" +
+                esc(r.status) +
+                "</td><td>" +
+                esc(r.submitted_at) +
+                "</td></tr>",
+            )
+            .join("") +
+          "</tbody></table></div></div>";
+      }
+      function openReport() {
+        modal.innerHTML =
+          '<div class="modal-card"><div class="modal-head"><h2>إضافة تقرير ربع سنوي</h2><button class="close" onclick="closeModal()">×</button></div><div class="form-grid"><div class="field full"><label>المشروع</label><select id="r_project">' +
+          projects.map((p) => '<option value="' + p.id + '">' + esc(p.project_name) + "</option>").join("") +
+          '</select></div><div class="field"><label>الربع</label><input id="r_q" placeholder="Q1"></div><div class="field"><label>السنة</label><input id="r_y" placeholder="Year1"></div><div class="field"><label>تاريخ الاستلام</label><input id="r_date" type="date"></div><div class="field full"><label>ملاحظات</label><textarea id="r_notes"></textarea></div></div><button class="btn primary" onclick="saveReport()">حفظ</button></div>';
+        modal.classList.remove("hidden");
+      }
+      async function saveReport() {
+        const r = await db
+          .from("quarterly_reports")
+          .insert({
+            project_id: r_project.value,
+            quarter: r_q.value,
+            annual_period: r_y.value,
+            submitted_at: r_date.value || null,
+            notes: r_notes.value,
+            created_by: session.user.id,
+          })
+          .select()
+          .single();
+        if (r.error) return toast(r.error.message);
+        closeModal();
+        await loadAll();
+        toast("تم حفظ التقرير");
+      }
+      function renderPlans() {
+        document.getElementById("page-plans").innerHTML =
+          '<div class="panel"><div class="toolbar"><h2>خطط المحتوى المحلي</h2><button class="btn primary" onclick="openPlan()">إضافة خطة</button></div><div class="table-wrap"><table><thead><tr><th>المشروع</th><th>الإصدار</th><th>الحالة</th><th>المصدر</th></tr></thead><tbody>' +
+          plans
+            .map(
+              (r) =>
+                "<tr><td>" +
+                esc(r.projects?.project_name) +
+                "</td><td>" +
+                esc(r.version) +
+                "</td><td>" +
+                esc(r.status) +
+                "</td><td>" +
+                esc(r.source_file) +
+                "</td></tr>",
+            )
+            .join("") +
+          "</tbody></table></div></div>";
+      }
+      function openPlan() {
+        modal.innerHTML =
+          '<div class="modal-card"><div class="modal-head"><h2>إضافة خطة محتوى محلي</h2><button class="close" onclick="closeModal()">×</button></div><div class="form-grid"><div class="field full"><label>المشروع</label><select id="pl_project">' +
+          projects.map((p) => '<option value="' + p.id + '">' + esc(p.project_name) + "</option>").join("") +
+          '</select></div><div class="field"><label>الإصدار</label><input id="pl_ver"></div><div class="field"><label>المصدر</label><input id="pl_source"></div><div class="field"><label>الحالة</label><select id="pl_status"><option>received</option><option>reviewed</option><option>approved</option></select></div></div><button class="btn primary" onclick="savePlan()">حفظ</button></div>';
+        modal.classList.remove("hidden");
+      }
+      async function savePlan() {
+        const r = await db
+          .from("local_content_plans")
+          .insert({
+            project_id: pl_project.value,
+            version: pl_ver.value,
+            source_file: pl_source.value,
+            status: pl_status.value,
+            created_by: session.user.id,
+          });
+        if (r.error) return toast(r.error.message);
+        closeModal();
+        await loadAll();
+        toast("تم حفظ الخطة");
+      }
+      function renderFollowups() {
+        document.getElementById("page-followups").innerHTML =
+          '<div class="panel"><h2>متابعة الموظفين</h2><p class="muted">هذه الصفحة جاهزة لتسجيل المهام والتنبيهات المرتبطة بالمشاريع والتقارير.</p></div>';
+      }
+      async function renderAudit() {
+        const e = document.getElementById("page-audit");
+        if (profile?.role !== "admin") {
+          e.innerHTML =
+            '<div class="panel"><h2>سجل التدقيق</h2><p class="muted">هذه الصفحة متاحة لمسؤول النظام فقط.</p></div>';
+          return;
+        }
+        const r = await db.from("audit_log").select("*").order("changed_at", { ascending: false }).limit(100);
+        e.innerHTML =
+          '<div class="panel"><h2>سجل التدقيق</h2><div class="table-wrap"><table><thead><tr><th>العملية</th><th>الجدول</th><th>السجل</th><th>التاريخ</th></tr></thead><tbody>' +
+          (r.data || [])
+            .map(
+              (x) =>
+                "<tr><td>" +
+                esc(x.operation) +
+                "</td><td>" +
+                esc(x.table_name) +
+                "</td><td>" +
+                esc(x.record_id) +
+                "</td><td>" +
+                esc(x.changed_at) +
+                "</td></tr>",
+            )
+            .join("") +
+          "</tbody></table></div></div>";
+      }
+      function exportProjects() {
+        const rows = projects.map((p) => ({
+          م: p.serial_no,
+          "الجهة الحكومية": p.government_entities?.name,
+          "اسم المشروع": p.project_name,
+          "حالة المشروع": p.project_status,
+          "قيمة المشروع الاجمالي": p.total_project_value,
+          "نسبة الانجاز": p.progress_pct,
+          "إجمالي الصرف": p.total_spend,
+          "إجمالي المحتوى المحلي": p.total_local_content,
+          "نسبة المحتوى المحلي إلى إجمالي الصرف": p.local_content_spend_pct,
+          "نسبة المحتوى المحلي إلى قيمة المشروع": p.local_content_project_pct,
+          "نسبة SME": p.sme_pct,
+          الملاحظات: p.notes,
+        }));
+        const ws = XLSX.utils.json_to_sheet(rows),
+          wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "المشاريع");
+        XLSX.writeFile(wb, "ICV-New-Projects.xlsx");
+      }
+      function closeModal() {
+        modal.classList.add("hidden");
+        modal.innerHTML = "";
+      }
+      (async function () {
+        let s = (await db.auth.getSession()).data.session;
+        if (!s) {
+          try {
+            const raw = sessionStorage.getItem("icv-auth-session");
+            if (raw) {
+              const cached = JSON.parse(raw);
+              const restored = await db.auth.setSession({
+                access_token: cached.access_token,
+                refresh_token: cached.refresh_token,
+              });
+              s = restored.data?.session || null;
+            }
+          } catch (e) {
+            sessionStorage.removeItem("icv-auth-session");
+          }
+        }
+        if (s) {
+          sessionStorage.setItem(
+            "icv-auth-session",
+            JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token }),
+          );
+          await boot(s);
+        } else {
+          document.body.classList.remove("auth-pending");
+          document.getElementById("login").classList.remove("hidden");
+        }
+      })();
+      db.auth.onAuthStateChange((event, s) => {
+        if (s) {
+          try {
+            sessionStorage.setItem(
+              "icv-auth-session",
+              JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token }),
+            );
+          } catch (e) {}
+          if (!session) boot(s);
+        } else if (event === "SIGNED_OUT") {
+          sessionStorage.removeItem("icv-auth-session");
+        }
       });
-    }
-  }
+    </script>
+    <script>
+      (function () {
+        const root = document.documentElement,
+          panel = document.getElementById("themePanel"),
+          trigger = document.querySelector("[data-theme-settings]");
+        const themes = {
+          green: [
+            "#0f766e",
+            "#0b5f59",
+            "#eef7f5",
+            "#f5f7fb",
+            "#162033",
+            "#0e2f2c",
+            "#dce9e7",
+            "#b8ceca",
+            "#fff",
+            "rgba(255,255,255,.1)",
+          ],
+          navy: [
+            "#315b91",
+            "#172f52",
+            "#edf2f8",
+            "#f4f6f9",
+            "#17263a",
+            "#172f52",
+            "#e7edf6",
+            "#b9c8dc",
+            "#fff",
+            "rgba(255,255,255,.09)",
+          ],
+          sand: [
+            "#9a6b3f",
+            "#5f4329",
+            "#f7f0e5",
+            "#f7f4ef",
+            "#34281f",
+            "#5f4329",
+            "#f5eadb",
+            "#dcc8ae",
+            "#fff",
+            "rgba(255,255,255,.12)",
+          ],
+          teal: [
+            "#0d8b87",
+            "#075f60",
+            "#e7f6f5",
+            "#f1f7f7",
+            "#153b3b",
+            "#075f60",
+            "#dff6f4",
+            "#b8dcda",
+            "#fff",
+            "rgba(255,255,255,.10)",
+          ],
+          slate: [
+            "#566575",
+            "#303b48",
+            "#edf0f3",
+            "#f3f5f7",
+            "#222b34",
+            "#303b48",
+            "#e6ebef",
+            "#bdc7d0",
+            "#fff",
+            "rgba(255,255,255,.10)",
+          ],
+        };
+        let size = Number(localStorage.getItem("icv-font-size") || 18);
+        function applyTheme(k) {
+          const v = themes[k] || themes.green;
+          [
+            "primary",
+            "primary2",
+            "soft",
+            "bg",
+            "ink",
+            "nav-bg",
+            "nav-ink",
+            "nav-muted",
+            "nav-mark-bg",
+            "nav-hover",
+          ].forEach((x, i) => root.style.setProperty("--" + x, v[i]));
+          document
+            .querySelectorAll(".theme-option")
+            .forEach((x) => x.classList.toggle("active", x.dataset.theme === k));
+          localStorage.setItem("icv-theme", k);
+        }
+        function scaleTableFonts() {
+          const scale = size / 16;
+          document.querySelectorAll(".main table th,.main table td").forEach((el) => {
+            if (!el.dataset.icvBaseTableFont) {
+              const cs = getComputedStyle(el);
+              const px = parseFloat(cs.fontSize);
+              if (Number.isFinite(px) && px > 0) el.dataset.icvBaseTableFont = String(px);
+            }
+            const base = parseFloat(el.dataset.icvBaseTableFont);
+            if (Number.isFinite(base) && base > 0) el.style.fontSize = base * scale + "px";
+          });
+        }
+        function applySize() {
+          document.documentElement.style.setProperty("--icv-font-scale", (size / 18).toFixed(3));
+          document.documentElement.style.setProperty("--icv-page-font-size", size + "px");
+          scaleTableFonts();
+          localStorage.setItem("icv-font-size", size);
+        }
+        function applyFont(v) {
+          document.body.style.fontFamily = v;
+          localStorage.setItem("icv-font", v);
+        }
+        function openPanel() {
+          panel.classList.remove("hidden");
+          trigger.classList.add("active");
+        }
+        function closePanel() {
+          panel.classList.add("hidden");
+          trigger.classList.remove("active");
+        }
+        trigger.addEventListener("click", (e) => {
+          e.stopPropagation();
+          panel.classList.contains("hidden") ? openPanel() : closePanel();
+        });
+        panel.addEventListener("click", (e) => e.stopPropagation());
+        document.addEventListener("click", (e) => {
+          if (!panel.classList.contains("hidden") && !panel.contains(e.target) && !trigger.contains(e.target))
+            closePanel();
+        });
+        document.querySelector("[data-theme-close]").onclick = closePanel;
+        document
+          .querySelectorAll(".theme-option")
+          .forEach((x) => (x.onclick = () => applyTheme(x.dataset.theme)));
+        document.querySelector("[data-font-minus]").onclick = () => {
+          size = Math.max(14, size - 1);
+          applySize();
+        };
+        document.querySelector("[data-font-plus]").onclick = () => {
+          size = Math.min(22, size + 1);
+          applySize();
+        };
+        document.querySelector("[data-font-reset]").onclick = () => {
+          size = 18;
+          applySize();
+        };
+        const fontSel = document.getElementById("themeFont");
+        fontSel.onchange = (e) => applyFont(e.target.value);
+        applyTheme(localStorage.getItem("icv-theme") || "green");
+        applySize();
+        const fontObserver = new MutationObserver(() => scaleTableFonts());
+        fontObserver.observe(document.querySelector(".main"), { childList: true, subtree: true });
+        const savedFont = localStorage.getItem("icv-font") || "Cairo,Arial,sans-serif";
+        fontSel.value = savedFont;
+        applyFont(savedFont);
+        window.icvThemeSettings = { applyTheme, applySize, applyFont, open: openPanel, close: closePanel };
+      })();
+    </script>
+    <script src="ptlc-access.js?v=20261013-viewer-profile-minimal-01"></script>
+    <script src="ptlc-project-pages.js?v=20261019-entity-search-01"></script>
+    <script src="icv-structure-v13.js?v=20261012-formulas-01"></script>
+    <script src="companies-page-final.js?v=20261019-company-contacts-03"></script>
+    <script src="settings-page.js?v=20261019-admin-project-management-01"></script>
+    <script id="icvSequentialNumberingPatch">
+      (function () {
+        function renumberProjectRows() {
+          const table = document.querySelector("#pg .table-wrap tbody");
+          if (!table) return;
+          Array.from(table.querySelectorAll("tr")).forEach(function (row, i) {
+            const cell = row.children[0];
+            if (cell) cell.textContent = String(i + 1);
+          });
+        }
+        const install = function () {
+          if (typeof window.icvProjectApply !== "function") {
+            setTimeout(install, 100);
+            return;
+          }
+          if (window.__icvSequentialNumbering) return;
+          window.__icvSequentialNumbering = true;
+          const original = window.icvProjectApply;
+          window.icvProjectApply = function () {
+            const result = original.apply(this, arguments);
+            setTimeout(renumberProjectRows, 0);
+            return result;
+          };
+          setTimeout(renumberProjectRows, 0);
+        };
+        install();
+      })();
+    </script>
+    <script>
+      (function () {
+        let routingReady = false;
+        let restoringRoute = false;
 
-  waitForApp();
-})();
-</script><script>
-<!-- ICV FINAL NAV ROUTER -->
-(function(){
-  function hideAll(){
-    document.querySelectorAll('[id^="page-"]').forEach(function(el){el.classList.add('hidden');});
-  }
-  function activate(btn,name){
-    document.querySelectorAll('.nav button').forEach(function(el){el.classList.remove('active');});
-    if(btn) btn.classList.add('active');
-    var title=document.getElementById('pageTitle');
-    var titles={
-      dashboard:'الصفحة الرئيسية',
-      projects:'المشاريع',
-      entities:'الجهات الحكومية',
-      companies:'الشركات',
-      reports:'التقارير الربع سنوية',
-      plans:'خطط المحتوى المحلي',
-      followups:'متابعة الموظفين',
-      audit:'سجل التدقيق',
-      profile:'ملفي الشخصي',
-      users:'إدارة المستخدمين',
-      'local-content':'المحتوى المحلي',
-      settings:'الإعدادات',
-      'entity-profiles':'ملفات الجهات الحكومية'
-    };
-    if(title) title.textContent=titles[name]||name;
-  }
-  function routeUrl(name){
-    try{
-      var q=new URLSearchParams();
-      if(name==='project'){
-        var projectId=new URLSearchParams(location.search).get('project');
-        if(projectId) q.set('project',projectId);
-        else q.set('page','projects');
-      }else{
-        q.set('page',name||'dashboard');
-      }
-      history.pushState({route:name},'',location.pathname+'?'+q.toString()+(location.hash||''));
-    }catch(e){}
-  }
-  window.showPage=function(name,btn){
-    name=name||'dashboard';
-    if(name==='project'){
-      var projectId=new URLSearchParams(location.search).get('project');
-      if(projectId && typeof window.viewProject==='function'){
-        return Promise.resolve(window.viewProject(projectId));
-      }
-      name='projects';
-    }
-    if(name==='profile'){
-      hideAll();
-      document.getElementById('page-profile')?.classList.remove('hidden');
-      activate(btn,name);
-      if(typeof window.loadProfilePage==='function') return Promise.resolve(window.loadProfilePage());
-      return;
-    }
-    if(name==='users'){
-      if(window.__icvProfile?.role!=='admin') return;
-      hideAll();
-      document.getElementById('page-users')?.classList.remove('hidden');
-      activate(btn,name);
-      if(typeof window.loadUsersAdmin==='function') return Promise.resolve(window.loadUsersAdmin());
-      return;
-    }
+        function currentRoute() {
+          const q = new URLSearchParams(location.search);
+          return { page: q.get("page"), project: q.get("project") };
+        }
 
-    hideAll();
-    var target=document.getElementById('page-'+name);
-    if(target) target.classList.remove('hidden');
-    activate(btn,name);
+        function writeRoute(route, replace) {
+          const q = new URLSearchParams();
+          if (route.project) q.set("project", route.project);
+          else q.set("page", route.page || "dashboard");
+          const url = location.pathname + "?" + q.toString() + (location.hash || "");
+          if (replace) history.replaceState({ route: route }, "", url);
+          else history.pushState({ route: route }, "", url);
+        }
 
-    if(name==='dashboard' && typeof window.icvStructure?.renderDashboard==='function')
-      return Promise.resolve(window.icvStructure.renderDashboard());
-    if(name==='projects' && typeof window.icvStructure?.renderProjects==='function')
-      return Promise.resolve(window.icvStructure.renderProjects());
-    if(name==='local-content' && typeof window.icvStructure?.renderLocalContent==='function')
-      return Promise.resolve(window.icvStructure.renderLocalContent());
-    if(name==='settings'){
-      if(typeof window.icvSettingsPage==='function') return Promise.resolve(window.icvSettingsPage());
-      if(typeof window.icvStructure?.renderSettings==='function') return Promise.resolve(window.icvStructure.renderSettings());
-    }
-    if(name==='entities' && typeof window.icvEntitiesPage==='function')
-      return Promise.resolve(window.icvEntitiesPage());
-    if(name==='companies' && typeof window.icvCompaniesPage==='function')
-      return Promise.resolve(window.icvCompaniesPage());
-    if(name==='entity-profiles' && typeof window.renderEntityProfiles==='function')
-      return Promise.resolve(window.renderEntityProfiles());
-  };
+        function routeFromUrl() {
+          const route = currentRoute();
+          restoringRoute = true;
+          if (route.project && typeof window.viewProject === "function") {
+            Promise.resolve(window.viewProject(route.project)).finally(function () {
+              setTimeout(function () {
+                restoringRoute = false;
+              }, 0);
+            });
+            return;
+          }
+          const page = route.page || "dashboard";
+          if (typeof window.showPage === "function") {
+            const btn = document.querySelector('[data-page="' + page + '"]');
+            Promise.resolve(window.showPage(page, btn || null)).finally(function () {
+              setTimeout(function () {
+                restoringRoute = false;
+              }, 0);
+            });
+            return;
+          }
+          restoringRoute = false;
+        }
 
-  window.addEventListener('popstate',function(){
-    if(!window.__icvProfile) return;
-    var q=new URLSearchParams(location.search);
-    if(q.get('project') && typeof window.viewProject==='function'){
-      Promise.resolve(window.viewProject(q.get('project'))).catch(function(){});
-      return;
-    }
-    var page=q.get('page')||'dashboard';
-    var btn=document.querySelector('[data-page="'+page+'"]');
-    Promise.resolve(window.showPage(page,btn)).catch(function(){});
-  });
+        function installRouting() {
+          if (window.__icvUrlRoutingInstalled) return;
+          if (typeof window.showPage !== "function" || typeof window.viewProject !== "function") return;
 
-  window.__icvFinalNavReady=true;
-})();
-</script></body></html>
+          window.__icvUrlRoutingInstalled = true;
+          const originalShowPage = window.showPage;
+          const originalViewProject = window.viewProject;
+          const originalBack = window.icvV2Back;
+
+          window.showPage = function (page, btn) {
+            const result = originalShowPage.call(this, page, btn);
+            if (routingReady && !restoringRoute) writeRoute({ page: page }, false);
+            return result;
+          };
+
+          window.viewProject = async function (id) {
+            const result = await originalViewProject.call(this, id);
+            if (routingReady && !restoringRoute) writeRoute({ project: String(id) }, false);
+            return result;
+          };
+
+          if (typeof originalBack === "function") {
+            window.icvV2Back = function () {
+              const result = originalBack.apply(this, arguments);
+              if (routingReady && !restoringRoute) writeRoute({ page: "projects" }, false);
+              return result;
+            };
+          }
+
+          window.addEventListener("popstate", function () {
+            if (window.__icvProfile) routeFromUrl();
+          });
+
+          routingReady = true;
+        }
+
+        function waitForApp() {
+          installRouting();
+          if (!window.__icvUrlRoutingInstalled) {
+            setTimeout(waitForApp, 150);
+            return;
+          }
+          if (
+            !window.__icvProfile ||
+            !document.getElementById("app") ||
+            document.getElementById("app").classList.contains("hidden")
+          ) {
+            setTimeout(waitForApp, 150);
+            return;
+          }
+
+          const route = currentRoute();
+          if (route.project || route.page) {
+            routeFromUrl();
+          } else {
+            restoringRoute = true;
+            Promise.resolve(
+              window.showPage("dashboard", document.querySelector('[data-page="dashboard"]')),
+            ).finally(function () {
+              restoringRoute = false;
+              writeRoute({ page: "dashboard" }, true);
+            });
+          }
+        }
+
+        waitForApp();
+      })();
+    </script>
+    <script>
+      <!-- ICV FINAL NAV ROUTER -->
+      (function () {
+        function hideAll() {
+          document.querySelectorAll('[id^="page-"]').forEach(function (el) {
+            el.classList.add("hidden");
+          });
+        }
+        function activate(btn, name) {
+          document.querySelectorAll(".nav button").forEach(function (el) {
+            el.classList.remove("active");
+          });
+          if (btn) btn.classList.add("active");
+          var title = document.getElementById("pageTitle");
+          var titles = {
+            dashboard: "الصفحة الرئيسية",
+            projects: "المشاريع",
+            entities: "الجهات الحكومية",
+            companies: "الشركات",
+            reports: "التقارير الربع سنوية",
+            plans: "خطط المحتوى المحلي",
+            followups: "متابعة الموظفين",
+            audit: "سجل التدقيق",
+            profile: "ملفي الشخصي",
+            users: "إدارة المستخدمين",
+            "local-content": "المحتوى المحلي",
+            settings: "الإعدادات",
+            "entity-profiles": "ملفات الجهات الحكومية",
+          };
+          if (title) title.textContent = titles[name] || name;
+        }
+        function routeUrl(name) {
+          try {
+            var q = new URLSearchParams();
+            if (name === "project") {
+              var projectId = new URLSearchParams(location.search).get("project");
+              if (projectId) q.set("project", projectId);
+              else q.set("page", "projects");
+            } else {
+              q.set("page", name || "dashboard");
+            }
+            history.pushState(
+              { route: name },
+              "",
+              location.pathname + "?" + q.toString() + (location.hash || ""),
+            );
+          } catch (e) {}
+        }
+        window.showPage = function (name, btn) {
+          name = name || "dashboard";
+          if (name === "project") {
+            var projectId = new URLSearchParams(location.search).get("project");
+            if (projectId && typeof window.viewProject === "function") {
+              return Promise.resolve(window.viewProject(projectId));
+            }
+            name = "projects";
+          }
+          if (name === "profile") {
+            hideAll();
+            document.getElementById("page-profile")?.classList.remove("hidden");
+            activate(btn, name);
+            if (typeof window.loadProfilePage === "function")
+              return Promise.resolve(window.loadProfilePage());
+            return;
+          }
+          if (name === "users") {
+            if (window.__icvProfile?.role !== "admin") return;
+            hideAll();
+            document.getElementById("page-users")?.classList.remove("hidden");
+            activate(btn, name);
+            if (typeof window.loadUsersAdmin === "function") return Promise.resolve(window.loadUsersAdmin());
+            return;
+          }
+
+          hideAll();
+          var target = document.getElementById("page-" + name);
+          if (target) target.classList.remove("hidden");
+          activate(btn, name);
+
+          if (name === "dashboard" && typeof window.icvStructure?.renderDashboard === "function")
+            return Promise.resolve(window.icvStructure.renderDashboard());
+          if (name === "projects" && typeof window.icvStructure?.renderProjects === "function")
+            return Promise.resolve(window.icvStructure.renderProjects());
+          if (name === "local-content" && typeof window.icvStructure?.renderLocalContent === "function")
+            return Promise.resolve(window.icvStructure.renderLocalContent());
+          if (name === "settings") {
+            if (typeof window.icvSettingsPage === "function")
+              return Promise.resolve(window.icvSettingsPage());
+            if (typeof window.icvStructure?.renderSettings === "function")
+              return Promise.resolve(window.icvStructure.renderSettings());
+          }
+          if (name === "entities" && typeof window.icvEntitiesPage === "function")
+            return Promise.resolve(window.icvEntitiesPage());
+          if (name === "companies" && typeof window.icvCompaniesPage === "function")
+            return Promise.resolve(window.icvCompaniesPage());
+          if (name === "entity-profiles" && typeof window.renderEntityProfiles === "function")
+            return Promise.resolve(window.renderEntityProfiles());
+        };
+
+        window.addEventListener("popstate", function () {
+          if (!window.__icvProfile) return;
+          var q = new URLSearchParams(location.search);
+          if (q.get("project") && typeof window.viewProject === "function") {
+            Promise.resolve(window.viewProject(q.get("project"))).catch(function () {});
+            return;
+          }
+          var page = q.get("page") || "dashboard";
+          var btn = document.querySelector('[data-page="' + page + '"]');
+          Promise.resolve(window.showPage(page, btn)).catch(function () {});
+        });
+
+        window.__icvFinalNavReady = true;
+      })();
+    </script>
+  </body>
+</html>

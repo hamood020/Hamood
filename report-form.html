@@ -1,112 +1,1120 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>إدخال تقرير ربع سنوي — ICV New</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
-:root{--bg:#f5f7fb;--card:#fff;--ink:#162033;--muted:#64748b;--line:#e6ebf2;--primary:#0f766e;--primary2:#0b5f59;--soft:#eef7f5;--nav-bg:#0c1b31;--nav-ink:#fff;--nav-muted:#9fb2cc;--nav-hover:#203a5c;--shadow:0 8px 24px rgba(15,23,42,.06);--radius:18px;--page-font-size:18px}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:Cairo,Arial,sans-serif}button,input,select,textarea{font:inherit}.hidden{display:none!important}.auth-pending #login{display:none!important}.auth-pending #app{display:none!important}
-.app{display:flex;min-height:100vh}.side{width:250px;background:var(--nav-bg);color:var(--nav-ink);position:fixed;right:0;top:0;bottom:0;padding:22px 14px;z-index:10}.brand{display:flex;align-items:center;gap:10px;padding:8px 10px 24px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:16px}.brand-mark{width:40px;height:40px;border-radius:12px;background:#fff;color:var(--primary);display:grid;place-items:center;font-weight:800}.brand b{font-size:15px;line-height:1.5}.brand small{display:block;color:var(--nav-muted);font-size:10px}.nav{display:grid;gap:6px}.nav button{width:100%;border:0;background:transparent;color:var(--nav-ink);padding:12px 14px;border-radius:12px;font-size:13px;display:flex;align-items:center;gap:10px;text-align:right}.nav button:hover,.nav button.active{background:var(--nav-hover)}.nav .ico{width:24px;text-align:center}.logout{position:absolute;bottom:22px;right:14px;left:14px}
-.main{margin-right:250px;width:calc(100% - 250px);padding:28px 32px 60px}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}.top h1{margin:0;font-size:28px}.muted,.desc{color:var(--muted);font-size:14px}.pill{display:inline-flex;align-items:center;background:var(--soft);color:var(--primary2);padding:6px 10px;border-radius:999px;font-size:14px;font-weight:700;margin-right:5px}.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;padding:10px 15px;cursor:pointer;font-weight:700;font-size:16px}.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}.btn.danger{background:#feecec;color:#b91c1c}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:18px}.card h2{margin:0 0 6px;font-size:20px}.desc{margin-bottom:16px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.field{margin-bottom:4px}.field label{display:block;font-weight:700;font-size:16px;margin-bottom:7px}.field input,.field select,.field textarea{width:100%;height:46px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:0 12px;outline:none;font-size:16px}.field textarea{height:120px;padding:10px}.field input:focus,.field select:focus,.field textarea:focus{border-color:#8dc7c1}.full{grid-column:1/-1}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}.table{width:100%;border-collapse:collapse;min-width:760px}.table th{background:#f8fafc;color:#475569;font-size:16px;font-weight:800;padding:14px;text-align:right;border-bottom:1px solid var(--line)}.table td{padding:12px 14px;font-size:16px;border-bottom:1px solid #eef1f5}.table input{width:100%;height:42px;border:1px solid var(--line);border-radius:9px;padding:0 10px;font-size:16px}.table tr:last-child td{border-bottom:0}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:15px}.summary-box{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:13px}.summary-box span{display:block;color:var(--muted);font-size:13px}.summary-box b{display:block;font-size:20px;margin-top:3px}.actions{display:flex;justify-content:flex-start;gap:10px}.status{padding:12px 15px;border-radius:11px;background:#eef7f5;color:#0b5f59;font-weight:700;margin-bottom:15px}.error{padding:12px 15px;border-radius:11px;background:#fff1f2;color:#b91c1c;font-weight:700;margin-bottom:15px}
-@media(max-width:900px){.side{position:static;width:100%;height:auto}.app{display:block}.main{margin:0;width:100%;padding:18px}.logout{position:static;margin-top:10px}.grid2,.summary{grid-template-columns:1fr}.top{flex-direction:column;align-items:flex-start;gap:12px}}
-</style>
-<style id="icv-top-save-message">
-#msg{position:fixed!important;top:0!important;left:0!important;right:0!important;width:100%!important;z-index:99999!important;margin:0!important;padding:13px 20px!important;text-align:center!important;box-sizing:border-box!important;pointer-events:none!important}
-#msg:empty{display:none!important}
-#msg .status{margin:0!important;background:#eaf8ef!important;color:#087443!important;border:0!important;border-bottom:2px solid #12a150!important;border-radius:0!important;padding:11px 20px!important;font-weight:800!important}
-#msg .error{margin:0!important;background:#fff1f1!important;color:#b42318!important;border:0!important;border-bottom:2px solid #dc2626!important;border-radius:0!important;padding:11px 20px!important;font-weight:800!important}
-</style><style id="icv-top-save-message-v2">#icvTopSaveMessage{position:fixed;top:0;left:0;right:0;width:100%;z-index:2147483647;background:#eaf8ef;color:#087443;border-bottom:3px solid #12a150;padding:14px 20px;box-sizing:border-box;text-align:center;font-weight:800;font-size:14px;direction:rtl;display:none}</style><script>function showTopSaveMessage(message){let e=document.getElementById('icvTopSaveMessage');if(!e){e=document.createElement('div');e.id='icvTopSaveMessage';document.body.appendChild(e)}e.textContent='✓ '+message;e.style.display='block';clearTimeout(window.__topSaveTimer);window.__topSaveTimer=setTimeout(()=>e.style.display='none',3000)}</script></head>
-<body class="auth-pending">
-<div id="login" class="hidden"></div>
-<div id="app" class="app">
-<aside class="side">
-<div class="brand"><div class="brand-mark">م</div><div><b>ICV New</b><small>متابعة المشاريع والمحتوى المحلي</small></div></div>
-<div class="nav">
-<button type="button" onclick="goPlatform('dashboard')"><span class="ico">⌂</span><span>لوحة المؤشرات</span></button>
-<button type="button" class="active" onclick="goPlatform('projects')"><span class="ico">▦</span><span>المشاريع</span></button>
-<button type="button" onclick="goPlatform('entities')"><span class="ico">🏛</span><span>الجهات الحكومية</span></button>
-<button type="button" onclick="goPlatform('companies')"><span class="ico">▣</span><span>الشركات</span></button>
-<button type="button" onclick="goPlatform('profile')"><span class="ico">◉</span><span>ملفي الشخصي</span></button>
-<button type="button" id="usersNav" onclick="goPlatform('users')"><span class="ico">⚙</span><span>إدارة المستخدمين</span></button>
-</div>
-<button class="btn logout" type="button" onclick="logout()">تسجيل الخروج</button>
-</aside>
-<main class="main">
-<div class="top"><div><h1>إدخال تقرير ربع سنوي</h1><div class="muted">إدخال التقرير على مراحل واضحة وفق النموذج المعتمد للتقارير.</div></div><div class="top-actions"><button class="btn" id="backBtn">العودة للمشروع</button><span id="userName" class="pill"></span><span id="userRole" class="pill"></span></div></div>
-<div id="loading" class="card">جارٍ تحميل بيانات المشروع...</div>
-<form id="reportForm" class="hidden">
-<div class="card"><h2>بيانات التقرير</h2><div class="desc">حدد المشروع والربع ونوع التقرير قبل إدخال البيانات.</div>
-<div class="grid2">
-<div class="field"><label>المشروع</label><input id="rProject" readonly></div>
-<div class="field"><label>السنة</label><input id="rYear" value="2026"></div>
-<div class="field"><label>الربع</label><select id="rQuarter"><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option></select></div>
-<div class="field"><label>نوع التقرير الأساسي</label><select id="rType"><option>ربعي منفصل</option><option>تراكمي</option></select></div>
-<div class="field"><label>تاريخ الاستلام</label><input id="rReceived" type="date"></div>
-<div class="field"><label>حالة التقرير</label><select id="rStatus"><option>مسودة</option><option>مستلم</option><option>قيد المراجعة</option><option>معتمد</option><option>مرفوض</option></select></div>
-<div class="field"><label>تاريخ التقرير</label><input id="rDate" type="date"></div>
-<div class="field"><label>مرفق التقرير</label><input id="rFile" type="file" accept=".xlsx,.xls,.pdf,.doc,.docx"></div>
-<div class="field full"><div id="fileName" class="muted">لم يتم اختيار ملف</div></div>
-</div></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>إدخال تقرير ربع سنوي — ICV New</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap");
+      :root {
+        --bg: #f5f7fb;
+        --card: #fff;
+        --ink: #162033;
+        --muted: #64748b;
+        --line: #e6ebf2;
+        --primary: #0f766e;
+        --primary2: #0b5f59;
+        --soft: #eef7f5;
+        --nav-bg: #0c1b31;
+        --nav-ink: #fff;
+        --nav-muted: #9fb2cc;
+        --nav-hover: #203a5c;
+        --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        --radius: 18px;
+        --page-font-size: 18px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Cairo, Arial, sans-serif;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .auth-pending #login {
+        display: none !important;
+      }
+      .auth-pending #app {
+        display: none !important;
+      }
+      .app {
+        display: flex;
+        min-height: 100vh;
+      }
+      .side {
+        width: 250px;
+        background: var(--nav-bg);
+        color: var(--nav-ink);
+        position: fixed;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        padding: 22px 14px;
+        z-index: 10;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 16px;
+      }
+      .brand-mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: #fff;
+        color: var(--primary);
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+      }
+      .brand b {
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      .brand small {
+        display: block;
+        color: var(--nav-muted);
+        font-size: 10px;
+      }
+      .nav {
+        display: grid;
+        gap: 6px;
+      }
+      .nav button {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: var(--nav-ink);
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-align: right;
+      }
+      .nav button:hover,
+      .nav button.active {
+        background: var(--nav-hover);
+      }
+      .nav .ico {
+        width: 24px;
+        text-align: center;
+      }
+      .logout {
+        position: absolute;
+        bottom: 22px;
+        right: 14px;
+        left: 14px;
+      }
+      .main {
+        margin-right: 250px;
+        width: calc(100% - 250px);
+        padding: 28px 32px 60px;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 22px;
+      }
+      .top h1 {
+        margin: 0;
+        font-size: 28px;
+      }
+      .muted,
+      .desc {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        background: var(--soft);
+        color: var(--primary2);
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 700;
+        margin-right: 5px;
+      }
+      .top-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .btn {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+        border-radius: 11px;
+        padding: 10px 15px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 16px;
+      }
+      .btn.primary {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
+      }
+      .btn.danger {
+        background: #feecec;
+        color: #b91c1c;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 20px;
+        box-shadow: var(--shadow);
+        margin-bottom: 18px;
+      }
+      .card h2 {
+        margin: 0 0 6px;
+        font-size: 20px;
+      }
+      .desc {
+        margin-bottom: 16px;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+      }
+      .field {
+        margin-bottom: 4px;
+      }
+      .field label {
+        display: block;
+        font-weight: 700;
+        font-size: 16px;
+        margin-bottom: 7px;
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        width: 100%;
+        height: 46px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        padding: 0 12px;
+        outline: none;
+        font-size: 16px;
+      }
+      .field textarea {
+        height: 120px;
+        padding: 10px;
+      }
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        border-color: #8dc7c1;
+      }
+      .full {
+        grid-column: 1/-1;
+      }
+      .table-wrap {
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+      }
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+      }
+      .table th {
+        background: #f8fafc;
+        color: #475569;
+        font-size: 16px;
+        font-weight: 800;
+        padding: 14px;
+        text-align: right;
+        border-bottom: 1px solid var(--line);
+      }
+      .table td {
+        padding: 12px 14px;
+        font-size: 16px;
+        border-bottom: 1px solid #eef1f5;
+      }
+      .table input {
+        width: 100%;
+        height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 0 10px;
+        font-size: 16px;
+      }
+      .table tr:last-child td {
+        border-bottom: 0;
+      }
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 15px;
+      }
+      .summary-box {
+        background: #f8fafc;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 13px;
+      }
+      .summary-box span {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .summary-box b {
+        display: block;
+        font-size: 20px;
+        margin-top: 3px;
+      }
+      .actions {
+        display: flex;
+        justify-content: flex-start;
+        gap: 10px;
+      }
+      .status {
+        padding: 12px 15px;
+        border-radius: 11px;
+        background: #eef7f5;
+        color: #0b5f59;
+        font-weight: 700;
+        margin-bottom: 15px;
+      }
+      .error {
+        padding: 12px 15px;
+        border-radius: 11px;
+        background: #fff1f2;
+        color: #b91c1c;
+        font-weight: 700;
+        margin-bottom: 15px;
+      }
+      @media (max-width: 900px) {
+        .side {
+          position: static;
+          width: 100%;
+          height: auto;
+        }
+        .app {
+          display: block;
+        }
+        .main {
+          margin: 0;
+          width: 100%;
+          padding: 18px;
+        }
+        .logout {
+          position: static;
+          margin-top: 10px;
+        }
+        .grid2,
+        .summary {
+          grid-template-columns: 1fr;
+        }
+        .top {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 12px;
+        }
+      }
+    </style>
+    <style id="icv-top-save-message">
+      #msg {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        z-index: 99999 !important;
+        margin: 0 !important;
+        padding: 13px 20px !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
+        pointer-events: none !important;
+      }
+      #msg:empty {
+        display: none !important;
+      }
+      #msg .status {
+        margin: 0 !important;
+        background: #eaf8ef !important;
+        color: #087443 !important;
+        border: 0 !important;
+        border-bottom: 2px solid #12a150 !important;
+        border-radius: 0 !important;
+        padding: 11px 20px !important;
+        font-weight: 800 !important;
+      }
+      #msg .error {
+        margin: 0 !important;
+        background: #fff1f1 !important;
+        color: #b42318 !important;
+        border: 0 !important;
+        border-bottom: 2px solid #dc2626 !important;
+        border-radius: 0 !important;
+        padding: 11px 20px !important;
+        font-weight: 800 !important;
+      }
+    </style>
+    <style id="icv-top-save-message-v2">
+      #icvTopSaveMessage {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        z-index: 2147483647;
+        background: #eaf8ef;
+        color: #087443;
+        border-bottom: 3px solid #12a150;
+        padding: 14px 20px;
+        box-sizing: border-box;
+        text-align: center;
+        font-weight: 800;
+        font-size: 14px;
+        direction: rtl;
+        display: none;
+      }
+    </style>
+    <script>
+      function showTopSaveMessage(message) {
+        let e = document.getElementById("icvTopSaveMessage");
+        if (!e) {
+          e = document.createElement("div");
+          e.id = "icvTopSaveMessage";
+          document.body.appendChild(e);
+        }
+        e.textContent = "✓ " + message;
+        e.style.display = "block";
+        clearTimeout(window.__topSaveTimer);
+        window.__topSaveTimer = setTimeout(() => (e.style.display = "none"), 3000);
+      }
+    </script>
+  </head>
+  <body class="auth-pending">
+    <div id="login" class="hidden"></div>
+    <div id="app" class="app">
+      <aside class="side">
+        <div class="brand">
+          <div class="brand-mark">م</div>
+          <div><b>ICV New</b><small>متابعة المشاريع والمحتوى المحلي</small></div>
+        </div>
+        <div class="nav">
+          <button type="button" onclick="goPlatform('dashboard')">
+            <span class="ico">⌂</span><span>لوحة المؤشرات</span>
+          </button>
+          <button type="button" class="active" onclick="goPlatform('projects')">
+            <span class="ico">▦</span><span>المشاريع</span>
+          </button>
+          <button type="button" onclick="goPlatform('entities')">
+            <span class="ico">🏛</span><span>الجهات الحكومية</span>
+          </button>
+          <button type="button" onclick="goPlatform('companies')">
+            <span class="ico">▣</span><span>الشركات</span>
+          </button>
+          <button type="button" onclick="goPlatform('profile')">
+            <span class="ico">◉</span><span>ملفي الشخصي</span>
+          </button>
+          <button type="button" id="usersNav" onclick="goPlatform('users')">
+            <span class="ico">⚙</span><span>إدارة المستخدمين</span>
+          </button>
+        </div>
+        <button class="btn logout" type="button" onclick="logout()">تسجيل الخروج</button>
+      </aside>
+      <main class="main">
+        <div class="top">
+          <div>
+            <h1>إدخال تقرير ربع سنوي</h1>
+            <div class="muted">إدخال التقرير على مراحل واضحة وفق النموذج المعتمد للتقارير.</div>
+          </div>
+          <div class="top-actions">
+            <button class="btn" id="backBtn">العودة للمشروع</button><span id="userName" class="pill"></span
+            ><span id="userRole" class="pill"></span>
+          </div>
+        </div>
+        <div id="loading" class="card">جارٍ تحميل بيانات المشروع...</div>
+        <form id="reportForm" class="hidden">
+          <div class="card">
+            <h2>بيانات التقرير</h2>
+            <div class="desc">حدد المشروع والربع ونوع التقرير قبل إدخال البيانات.</div>
+            <div class="grid2">
+              <div class="field"><label>المشروع</label><input id="rProject" readonly /></div>
+              <div class="field"><label>السنة</label><input id="rYear" value="2026" /></div>
+              <div class="field">
+                <label>الربع</label
+                ><select id="rQuarter">
+                  <option>Q1</option>
+                  <option>Q2</option>
+                  <option>Q3</option>
+                  <option>Q4</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>نوع التقرير الأساسي</label
+                ><select id="rType">
+                  <option>ربعي منفصل</option>
+                  <option>تراكمي</option>
+                </select>
+              </div>
+              <div class="field"><label>تاريخ الاستلام</label><input id="rReceived" type="date" /></div>
+              <div class="field">
+                <label>حالة التقرير</label
+                ><select id="rStatus">
+                  <option>مسودة</option>
+                  <option>مستلم</option>
+                  <option>قيد المراجعة</option>
+                  <option>معتمد</option>
+                  <option>مرفوض</option>
+                </select>
+              </div>
+              <div class="field"><label>تاريخ التقرير</label><input id="rDate" type="date" /></div>
+              <div class="field">
+                <label>مرفق التقرير</label
+                ><input id="rFile" type="file" accept=".xlsx,.xls,.pdf,.doc,.docx" />
+              </div>
+              <div class="field full"><div id="fileName" class="muted">لم يتم اختيار ملف</div></div>
+            </div>
+          </div>
 
-<div class="card"><h2>العمالة حسب فئة الوظيفة</h2><div class="desc">أدخل عدد العمانيين والأجانب لكل فئة. إجمالي العمانيين والأجانب وإجمالي العمالة يحسب تلقائيًا.</div>
-<div class="table-wrap"><table class="table"><thead><tr><th>الفئة</th><th>العمانيون</th><th>الأجانب</th><th>الإجمالي</th></tr></thead><tbody>
-<tr><td>الفئة الأولى</td><td><input id="om1" type="number" min="0" value="0"></td><td><input id="fo1" type="number" min="0" value="0"></td><td><input id="tt1" readonly></td></tr>
-<tr><td>الفئة الثانية</td><td><input id="om2" type="number" min="0" value="0"></td><td><input id="fo2" type="number" min="0" value="0"></td><td><input id="tt2" readonly></td></tr>
-<tr><td>الفئة الثالثة</td><td><input id="om3" type="number" min="0" value="0"></td><td><input id="fo3" type="number" min="0" value="0"></td><td><input id="tt3" readonly></td></tr>
-<tr><td><b>الإجمالي المحسوب</b></td><td><input id="totOm" readonly></td><td><input id="totFo" readonly></td><td><input id="totEmp" readonly></td></tr>
-</tbody></table></div></div>
+          <div class="card">
+            <h2>العمالة حسب فئة الوظيفة</h2>
+            <div class="desc">
+              أدخل عدد العمانيين والأجانب لكل فئة. إجمالي العمانيين والأجانب وإجمالي العمالة يحسب تلقائيًا.
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>الفئة</th>
+                    <th>العمانيون</th>
+                    <th>الأجانب</th>
+                    <th>الإجمالي</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>الفئة الأولى</td>
+                    <td><input id="om1" type="number" min="0" value="0" /></td>
+                    <td><input id="fo1" type="number" min="0" value="0" /></td>
+                    <td><input id="tt1" readonly /></td>
+                  </tr>
+                  <tr>
+                    <td>الفئة الثانية</td>
+                    <td><input id="om2" type="number" min="0" value="0" /></td>
+                    <td><input id="fo2" type="number" min="0" value="0" /></td>
+                    <td><input id="tt2" readonly /></td>
+                  </tr>
+                  <tr>
+                    <td>الفئة الثالثة</td>
+                    <td><input id="om3" type="number" min="0" value="0" /></td>
+                    <td><input id="fo3" type="number" min="0" value="0" /></td>
+                    <td><input id="tt3" readonly /></td>
+                  </tr>
+                  <tr>
+                    <td><b>الإجمالي المحسوب</b></td>
+                    <td><input id="totOm" readonly /></td>
+                    <td><input id="totFo" readonly /></td>
+                    <td><input id="totEmp" readonly /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-<div class="card"><h2>الرواتب</h2><div class="desc">هذا الخيار مستقل عن نوع التقرير الأساسي، ويمكن أن تكون الرواتب ربع فقط أو تراكمية.</div>
-<div class="grid2"><div class="field"><label>طريقة إدخال الرواتب</label><select id="salaryType"><option>رواتب الربع</option><option>رواتب تراكمية</option></select></div><div></div>
-<div class="field"><label>رواتب العمانيين</label><input id="omSalary" type="number" min="0" value="0"></div><div class="field"><label>رواتب الأجانب</label><input id="foSalary" type="number" min="0" value="0"></div></div></div>
+          <div class="card">
+            <h2>الرواتب</h2>
+            <div class="desc">
+              هذا الخيار مستقل عن نوع التقرير الأساسي، ويمكن أن تكون الرواتب ربع فقط أو تراكمية.
+            </div>
+            <div class="grid2">
+              <div class="field">
+                <label>طريقة إدخال الرواتب</label
+                ><select id="salaryType">
+                  <option>رواتب الربع</option>
+                  <option>رواتب تراكمية</option>
+                </select>
+              </div>
+              <div></div>
+              <div class="field">
+                <label>رواتب العمانيين</label><input id="omSalary" type="number" min="0" value="0" />
+              </div>
+              <div class="field">
+                <label>رواتب الأجانب</label><input id="foSalary" type="number" min="0" value="0" />
+              </div>
+            </div>
+          </div>
 
-<div class="card"><h2>المشتريات</h2><div class="desc">أدخل قيمة المشتريات حسب الفئة. لا يوجد خيار فترة مستقل؛ تتبع نوع التقرير الأساسي.</div>
-<div class="table-wrap"><table class="table"><thead><tr><th>الفئة</th><th>القيمة</th></tr></thead><tbody>
-<tr><td>صنع في عمان</td><td><input id="buyMade" type="number" min="0" value="0"></td></tr><tr><td>مورد محلي</td><td><input id="buyLocal" type="number" min="0" value="0"></td></tr><tr><td>استيراد مباشر</td><td><input id="buyImport" type="number" min="0" value="0"></td></tr><tr><td>مورد المؤسسات الصغيرة والمتوسطة</td><td><input id="buySme" type="number" min="0" value="0"></td></tr>
-</tbody></table></div></div>
+          <div class="card">
+            <h2>المشتريات</h2>
+            <div class="desc">
+              أدخل قيمة المشتريات حسب الفئة. لا يوجد خيار فترة مستقل؛ تتبع نوع التقرير الأساسي.
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>الفئة</th>
+                    <th>القيمة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>صنع في عمان</td>
+                    <td><input id="buyMade" type="number" min="0" value="0" /></td>
+                  </tr>
+                  <tr>
+                    <td>مورد محلي</td>
+                    <td><input id="buyLocal" type="number" min="0" value="0" /></td>
+                  </tr>
+                  <tr>
+                    <td>استيراد مباشر</td>
+                    <td><input id="buyImport" type="number" min="0" value="0" /></td>
+                  </tr>
+                  <tr>
+                    <td>مورد المؤسسات الصغيرة والمتوسطة</td>
+                    <td><input id="buySme" type="number" min="0" value="0" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-<div class="card"><h2>الخدمات</h2><div class="desc">الخدمات مستقلة عن عقود الباطن، وتخضع لنوع التقرير الأساسي.</div>
-<div class="table-wrap"><table class="table"><thead><tr><th>نوع المورد</th><th>القيمة الفعلية</th></tr></thead><tbody>
-<tr><td>مزود محلي</td><td><input id="srvLocal" type="number" min="0" value="0"></td></tr><tr><td>مزود أجنبي</td><td><input id="srvForeign" type="number" min="0" value="0"></td></tr><tr><td>مؤسسة صغيرة ومتوسطة (SME)</td><td><input id="srvSme" type="number" min="0" value="0"></td></tr>
-</tbody></table></div></div>
+          <div class="card">
+            <h2>الخدمات</h2>
+            <div class="desc">الخدمات مستقلة عن عقود الباطن، وتخضع لنوع التقرير الأساسي.</div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>نوع المورد</th>
+                    <th>القيمة الفعلية</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>مزود محلي</td>
+                    <td><input id="srvLocal" type="number" min="0" value="0" /></td>
+                  </tr>
+                  <tr>
+                    <td>مزود أجنبي</td>
+                    <td><input id="srvForeign" type="number" min="0" value="0" /></td>
+                  </tr>
+                  <tr>
+                    <td>مؤسسة صغيرة ومتوسطة (SME)</td>
+                    <td><input id="srvSme" type="number" min="0" value="0" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-<div class="card"><h2>عقود الباطن</h2><div class="desc">بيانات عقود الباطن تدخل في قسم مستقل، مع إظهار نوع الشركة.</div>
-<div class="table-wrap"><table class="table"><thead><tr><th>نوع الشركة</th><th>القيمة الفعلية</th></tr></thead><tbody>
-<tr><td>شركة محلية</td><td><input id="subLocal" type="number" min="0" value="0"></td></tr><tr><td>شركة أجنبية</td><td><input id="subForeign" type="number" min="0" value="0"></td></tr><tr><td>مؤسسة صغيرة ومتوسطة (SME)</td><td><input id="subSme" type="number" min="0" value="0"></td></tr>
-</tbody></table></div></div>
+          <div class="card">
+            <h2>عقود الباطن</h2>
+            <div class="desc">بيانات عقود الباطن تدخل في قسم مستقل، مع إظهار نوع الشركة.</div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>نوع الشركة</th>
+                    <th>القيمة الفعلية</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>شركة محلية</td>
+                    <td><input id="subLocal" type="number" min="0" value="0" /></td>
+                  </tr>
+                  <tr>
+                    <td>شركة أجنبية</td>
+                    <td><input id="subForeign" type="number" min="0" value="0" /></td>
+                  </tr>
+                  <tr>
+                    <td>مؤسسة صغيرة ومتوسطة (SME)</td>
+                    <td><input id="subSme" type="number" min="0" value="0" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-<div class="card"><h2>ملاحظات التقرير</h2><div class="field"><label>الملاحظات</label><textarea id="notes" placeholder="أدخل أي ملاحظات أو توضيحات مرتبطة بالتقرير..."></textarea></div></div>
-<div id="msg"></div><div class="card actions"><button type="button" class="btn" id="draftBtn">حفظ كمسودة</button><button type="button" class="btn primary" id="saveBtn">حفظ التقرير</button></div>
-</form>
-</main></div>
-<script>
-const SUPABASE_URL='https://bmwtrnosqosbkezdswcx.supabase.co',SUPABASE_KEY='sb_publishable_Ge88ZuNnqW89l0SMfw_mvQ_nY2BzpPr';
-const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-let session=null,profile=null,project=null,current=null;
-let icvCalcSettings={thresholds:{omanization:30,sme:10},coefficients:{omaniSalary:.8,foreignSalary:.2,madeInOman:.7,localSupplier:.18,directImport:.06,smePurchase:.18,localService:1,foreignService:.1,smeService:.7,smeSubcontract:.7}};
-async function loadCalcSettings(){try{const {data,error}=await db.from('platform_settings').select('settings').eq('id','global').maybeSingle();if(error)throw error;const L=data?.settings?.local||{};icvCalcSettings={thresholds:{omanization:Number(L.omanization??30),sme:Number(L.sme??10)},coefficients:{omaniSalary:Number(L.omaniSalary??80)/100,foreignSalary:Number(L.foreignSalary??20)/100,madeInOman:Number(L.madeInOman??70)/100,localSupplier:Number(L.localSupplier??18)/100,directImport:Number(L.directImport??6)/100,smePurchase:Number(L.smePurchase??18)/100,localService:Number(L.localService??100)/100,foreignService:Number(L.foreignService??10)/100,smeService:Number(L.smeService??70)/100,smeSubcontract:Number(L.smeSubcontract??70)/100}};window.__icvCalculationSettings=icvCalcSettings}catch(e){console.warn('تعذر تحميل معاملات المحتوى المحلي؛ سيتم استخدام المعاملات الافتراضية',e.message)}return icvCalcSettings}
+          <div class="card">
+            <h2>ملاحظات التقرير</h2>
+            <div class="field">
+              <label>الملاحظات</label
+              ><textarea id="notes" placeholder="أدخل أي ملاحظات أو توضيحات مرتبطة بالتقرير..."></textarea>
+            </div>
+          </div>
+          <div id="msg"></div>
+          <div class="card actions">
+            <button type="button" class="btn" id="draftBtn">حفظ كمسودة</button
+            ><button type="button" class="btn primary" id="saveBtn">حفظ التقرير</button>
+          </div>
+        </form>
+      </main>
+    </div>
+    <script>
+      const SUPABASE_URL = "https://bmwtrnosqosbkezdswcx.supabase.co",
+        SUPABASE_KEY = "sb_publishable_Ge88ZuNnqW89l0SMfw_mvQ_nY2BzpPr";
+      const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      let session = null,
+        profile = null,
+        project = null,
+        current = null;
+      let icvCalcSettings = {
+        thresholds: { omanization: 30, sme: 10 },
+        coefficients: {
+          omaniSalary: 0.8,
+          foreignSalary: 0.2,
+          madeInOman: 0.7,
+          localSupplier: 0.18,
+          directImport: 0.06,
+          smePurchase: 0.18,
+          localService: 1,
+          foreignService: 0.1,
+          smeService: 0.7,
+          smeSubcontract: 0.7,
+        },
+      };
+      async function loadCalcSettings() {
+        try {
+          const { data, error } = await db
+            .from("platform_settings")
+            .select("settings")
+            .eq("id", "global")
+            .maybeSingle();
+          if (error) throw error;
+          const L = data?.settings?.local || {};
+          icvCalcSettings = {
+            thresholds: { omanization: Number(L.omanization ?? 30), sme: Number(L.sme ?? 10) },
+            coefficients: {
+              omaniSalary: Number(L.omaniSalary ?? 80) / 100,
+              foreignSalary: Number(L.foreignSalary ?? 20) / 100,
+              madeInOman: Number(L.madeInOman ?? 70) / 100,
+              localSupplier: Number(L.localSupplier ?? 18) / 100,
+              directImport: Number(L.directImport ?? 6) / 100,
+              smePurchase: Number(L.smePurchase ?? 18) / 100,
+              localService: Number(L.localService ?? 100) / 100,
+              foreignService: Number(L.foreignService ?? 10) / 100,
+              smeService: Number(L.smeService ?? 70) / 100,
+              smeSubcontract: Number(L.smeSubcontract ?? 70) / 100,
+            },
+          };
+          window.__icvCalculationSettings = icvCalcSettings;
+        } catch (e) {
+          console.warn("تعذر تحميل معاملات المحتوى المحلي؛ سيتم استخدام المعاملات الافتراضية", e.message);
+        }
+        return icvCalcSettings;
+      }
 
-const qs=new URLSearchParams(location.search),pid=qs.get('id'),rid=qs.get('report');
-const $=id=>document.getElementById(id),n=v=>Number(v||0);
-function goPlatform(page){let u=page==='project'&&pid?'index.html?project='+encodeURIComponent(pid):'index.html?page='+encodeURIComponent(page);location.href=u}
-async function logout(){await db.auth.signOut();sessionStorage.removeItem('icv-auth-session');location.href='index.html'}
-function calc(){for(let i=1;i<=3;i++)$('tt'+i).value=n($('om'+i).value)+n($('fo'+i).value);const om=[1,2,3].reduce((a,i)=>a+n($('om'+i).value),0),fo=[1,2,3].reduce((a,i)=>a+n($('fo'+i).value),0);$('totOm').value=om;$('totFo').value=fo;$('totEmp').value=om+fo}
-[1,2,3].forEach(i=>[$('om'+i),$('fo'+i)].forEach(x=>x.addEventListener('input',calc)));
-$('rFile').addEventListener('change',()=>{$('fileName').textContent=$('rFile').files[0]?'تم اختيار الملف: '+$('rFile').files[0].name:'لم يتم اختيار ملف'});
-async function boot(s){session=s;if(!s)return;await loadCalcSettings();const pr=await db.from('user_profiles').select('*').eq('id',s.user.id).single();profile=pr.data||{};$('userName').textContent=profile.full_name||s.user.email;$('userRole').textContent=profile.role||'viewer';if(profile.role!=='admin')$('usersNav').classList.add('hidden');const p=await db.from('projects').select('*').eq('id',pid).single();if(p.error)throw p.error;project=p.data;$('rProject').value=project.project_name||'';$('backBtn').onclick=()=>goPlatform('project');const now=new Date().toISOString().slice(0,10);$('rReceived').value=now;$('rDate').value=now;
-if(rid){const rr=await db.from('quarterly_reports').select('*').eq('id',rid).single();if(rr.error)throw rr.error;current=rr.data;loadReport(current)}else{$('rYear').value=new Date().getFullYear();$('rQuarter').value='Q1'}
-$('loading').classList.add('hidden');$('reportForm').classList.remove('hidden');calc()}
-function renderSavedAttachment(path,name){const el=$('fileName');el.replaceChildren();if(!path||!name){el.textContent='لا يوجد مرفق محفوظ';return}el.appendChild(document.createTextNode('المرفق المحفوظ: '));const link=document.createElement('a');link.href='#';link.textContent=String(name);link.addEventListener('click',event=>{event.preventDefault();void openSavedAttachment(path)});el.appendChild(link)}
-function showReportError(message){const el=$('msg');const box=document.createElement('div');box.className='error';box.textContent=String(message??'حدث خطأ غير متوقع.');el.replaceChildren(box)}
-function loadReport(r){const d=r.report_data||{};if(d.attachment_name){renderSavedAttachment(String(d.attachment_path||''),d.attachment_name)}else{$('fileName').textContent='لا يوجد مرفق محفوظ'}$('rYear').value=r.annual_period||'';$('rQuarter').value=r.quarter||'Q1';$('rStatus').value=r.status||'مسودة';$('rReceived').value=r.submitted_at||'';$('rDate').value=d.report_date||r.submitted_at||'';$('rType').value=d.report_type||'ربعي منفصل';$('salaryType').value=d.salary_input_type||'رواتب الربع';$('notes').value=r.notes||d.notes||'';const w=d.workforce_categories||[];w.slice(0,3).forEach((x,i)=>{$('om'+(i+1)).value=n(x.omani);$('fo'+(i+1)).value=n(x.foreign)});$('omSalary').value=n(d.omani_salary);$('foSalary').value=n(d.foreign_salary);$('buyMade').value=n(d.purchases?.made_in_oman);$('buyLocal').value=n(d.purchases?.local_supplier);$('buyImport').value=n(d.purchases?.direct_import);$('buySme').value=n(d.purchases?.sme_purchase);$('srvLocal').value=n(d.services?.local_service);$('srvForeign').value=n(d.services?.foreign_service);$('srvSme').value=n(d.services?.sme_service);$('subLocal').value=n(d.subcontracts?.local);$('subForeign').value=n(d.subcontracts?.foreign);$('subSme').value=n(d.subcontracts?.sme)}
-async function openSavedAttachment(path){if(!path)return false;const {data,error}=await db.storage.from('project-report-documents').createSignedUrl(path,300);if(error){showReportError('تعذر فتح المرفق: '+String(error.message||error));return false}window.open(data.signedUrl,'_blank','noopener');return false}
-async function refreshProjectMetrics(){const rr=await db.from('quarterly_reports').select('report_data,annual_period,quarter,created_at').eq('project_id',pid);if(rr.error)throw rr.error;const rows=(rr.data||[]).sort((a,b)=>{const qa=Number(String(a.quarter||'').replace(/\D/g,''))||0,qb=Number(String(b.quarter||'').replace(/\D/g,''))||0;return Number(a.annual_period||0)*10+qa-(Number(b.annual_period||0)*10+qb)});let om=0,fo=0;const fin={purchases:{made_in_oman:0,local_supplier:0,direct_import:0,sme_purchase:0},services:{local_service:0,foreign_service:0,sme_service:0},subcontracts:{local:0,foreign:0,sme:0}};for(const r of rows){const d=r.report_data||{},cumulative=String(d.report_type||'ربعي منفصل').includes('تراكمي'),salaryCumulative=String(d.salary_input_type||'رواتب الربع').includes('تراكمية');const a=n(d.omani_salary),b=n(d.foreign_salary);if(salaryCumulative){om=a;fo=b}else{om+=a;fo+=b}for(const [group,keys] of Object.entries({purchases:['made_in_oman','local_supplier','direct_import','sme_purchase'],services:['local_service','foreign_service','sme_service'],subcontracts:['local','foreign','sme']})){const source=d[group]||{};for(const key of keys){const value=n(source[key]);fin[group][key]=cumulative?value:fin[group][key]+value}}}const k=icvCalcSettings.coefficients,spend=om+fo+Object.values(fin.purchases).reduce((a,v)=>a+v,0)+Object.values(fin.services).reduce((a,v)=>a+v,0)+Object.values(fin.subcontracts).reduce((a,v)=>a+v,0),lc=om*k.omaniSalary+fo*k.foreignSalary+fin.purchases.made_in_oman*k.madeInOman+fin.purchases.local_supplier*k.localSupplier+fin.purchases.direct_import*k.directImport+fin.purchases.sme_purchase*k.smePurchase+fin.services.local_service*k.localService+fin.services.foreign_service*k.foreignService+fin.services.sme_service*k.smeService+Object.values(fin.subcontracts).reduce((a,v)=>a+v,0)*k.smeSubcontract,smeActual=fin.services.sme_service+Object.values(fin.subcontracts).reduce((a,v)=>a+v,0),projectValue=n(project?.total_project_value),smePct=projectValue?smeActual/projectValue*100:0,planMade=n(project?.plan_made_in_oman),madeStatus=planMade?(fin.purchases.made_in_oman>=planMade?'مستوفي':'غير مستوفي'):'غير منطبق',smeStatus=projectValue?(smePct>=icvCalcSettings.thresholds.sme?'مستوفي':'غير مستوفي'):'غير منطبق';const payload={actual_omani_salary:om,local_content_omani:om*k.omaniSalary,actual_non_omani_salary:fo,local_content_non_omani:fo*k.foreignSalary,actual_made_in_oman:fin.purchases.made_in_oman,local_content_made_in_oman:fin.purchases.made_in_oman*k.madeInOman,actual_local_supplier:fin.purchases.local_supplier,local_content_local_supplier:fin.purchases.local_supplier*k.localSupplier,actual_direct_import:fin.purchases.direct_import,local_content_direct_import:fin.purchases.direct_import*k.directImport,actual_sme_supplier:fin.purchases.sme_purchase,local_content_sme_supplier:fin.purchases.sme_purchase*k.smePurchase,actual_local_service:fin.services.local_service,local_content_local_service:fin.services.local_service*k.localService,actual_foreign_service:fin.services.foreign_service,local_content_foreign_service:fin.services.foreign_service*k.foreignService,actual_sme_service:fin.services.sme_service,local_content_sme_service:fin.services.sme_service*k.smeService,total_spend:spend,total_local_content:lc,local_content_spend_pct:spend?lc/spend*100:0,local_content_project_pct:projectValue?lc/projectValue*100:0,sme_pct:smePct,made_in_oman_status:madeStatus,sme_10_status:smeStatus};const {error}=await db.from('projects').update(payload).eq('id',pid);if(error)throw error;project={...project,...payload};}
-function collect(){const cats=[1,2,3].map(i=>({category:'الفئة '+['الأولى','الثانية','الثالثة'][i-1],omani:n($('om'+i).value),foreign:n($('fo'+i).value)}));const om=n($('totOm').value),fo=n($('totFo').value),total=om+fo;const purchases={made_in_oman:n($('buyMade').value),local_supplier:n($('buyLocal').value),direct_import:n($('buyImport').value),sme_purchase:n($('buySme').value)},services={local_service:n($('srvLocal').value),foreign_service:n($('srvForeign').value),sme_service:n($('srvSme').value)},subcontracts={local:n($('subLocal').value),foreign:n($('subForeign').value),sme:n($('subSme').value)};const k=icvCalcSettings.coefficients;const localContent=n($('omSalary').value)*k.omaniSalary+n($('foSalary').value)*k.foreignSalary+purchases.made_in_oman*k.madeInOman+purchases.local_supplier*k.localSupplier+purchases.direct_import*k.directImport+purchases.sme_purchase*k.smePurchase+services.local_service*k.localService+services.foreign_service*k.foreignService+services.sme_service*k.smeService+(subcontracts.local+subcontracts.foreign+subcontracts.sme)*k.smeSubcontract;return{report_type:$('rType').value,salary_input_type:$('salaryType').value,report_date:$('rDate').value,notes:$('notes').value||null,workforce_categories:cats,omani_total:om,foreign_total:fo,workforce_total:total,omanization_percent:total?om/total*100:0,omani_salary:n($('omSalary').value),foreign_salary:n($('foSalary').value),purchases,services,subcontracts,total_local_content:localContent}}
-async function save(mode){try{const d=collect();d.last_modified_at=new Date().toISOString();const pay={project_id:pid,quarter:$('rQuarter').value,annual_period:String($('rYear').value),status:mode==='مسودة'?'مسودة':$('rStatus').value,submitted_at:$('rReceived').value||null,notes:$('notes').value||null,created_by:profile.id,report_data:d};let r=current?await db.from('quarterly_reports').update(pay).eq('id',current.id).select('*').single():await db.from('quarterly_reports').insert(pay).select('*').single();if(r.error)throw r.error;current=r.data;await refreshProjectMetrics();const file=$('rFile').files[0];if(file){const path=pid+'/'+r.data.id+'/'+crypto.randomUUID()+'-'+file.name.replace(/[^a-zA-Z0-9._-]+/g,'_');const up=await db.storage.from('project-report-documents').upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type||'application/octet-stream'});if(up.error)throw new Error('تم حفظ بيانات التقرير لكن تعذر حفظ المرفق: '+up.error.message);const updatedData={...d,attachment_name:file.name,attachment_path:path};const saved=await db.from('quarterly_reports').update({report_data:updatedData}).eq('id',r.data.id).select('*').single();if(saved.error)throw new Error('تم رفع الملف لكن تعذر ربطه بالتقرير: '+saved.error.message);current=saved.data;renderSavedAttachment(path,file.name);}showTopSaveMessage(file?'تم حفظ التقرير والمرفق بنجاح.':'تم حفظ التقرير بنجاح.');$('msg').replaceChildren();}catch(e){showReportError(e.message||e)}}
-$('saveBtn').onclick=()=>save($('rStatus').value);$('draftBtn').onclick=()=>{ $('rStatus').value='مسودة';save('مسودة')};
-(async function(){let s=(await db.auth.getSession()).data.session;if(!s){try{const raw=sessionStorage.getItem('icv-auth-session');if(raw){const x=JSON.parse(raw),z=await db.auth.setSession({access_token:x.access_token,refresh_token:x.refresh_token});s=z.data?.session||null}}catch(e){sessionStorage.removeItem('icv-auth-session')}}if(s){session=s;sessionStorage.setItem('icv-auth-session',JSON.stringify({access_token:s.access_token,refresh_token:s.refresh_token}));await boot(s);document.body.classList.remove('auth-pending')}else{document.body.classList.remove('auth-pending');location.href='index.html'}})();
-db.auth.onAuthStateChange((event,s)=>{if(s){sessionStorage.setItem('icv-auth-session',JSON.stringify({access_token:s.access_token,refresh_token:s.refresh_token}));if(!session)boot(s)}else if(event==='SIGNED_OUT')sessionStorage.removeItem('icv-auth-session')});
-</script>
-</body></html>
+      const qs = new URLSearchParams(location.search),
+        pid = qs.get("id"),
+        rid = qs.get("report");
+      const $ = (id) => document.getElementById(id),
+        n = (v) => Number(v || 0);
+      function goPlatform(page) {
+        let u =
+          page === "project" && pid
+            ? "index.html?project=" + encodeURIComponent(pid)
+            : "index.html?page=" + encodeURIComponent(page);
+        location.href = u;
+      }
+      async function logout() {
+        await db.auth.signOut();
+        sessionStorage.removeItem("icv-auth-session");
+        location.href = "index.html";
+      }
+      function calc() {
+        for (let i = 1; i <= 3; i++) $("tt" + i).value = n($("om" + i).value) + n($("fo" + i).value);
+        const om = [1, 2, 3].reduce((a, i) => a + n($("om" + i).value), 0),
+          fo = [1, 2, 3].reduce((a, i) => a + n($("fo" + i).value), 0);
+        $("totOm").value = om;
+        $("totFo").value = fo;
+        $("totEmp").value = om + fo;
+      }
+      [1, 2, 3].forEach((i) => [$("om" + i), $("fo" + i)].forEach((x) => x.addEventListener("input", calc)));
+      $("rFile").addEventListener("change", () => {
+        $("fileName").textContent = $("rFile").files[0]
+          ? "تم اختيار الملف: " + $("rFile").files[0].name
+          : "لم يتم اختيار ملف";
+      });
+      async function boot(s) {
+        session = s;
+        if (!s) return;
+        await loadCalcSettings();
+        const pr = await db.from("user_profiles").select("*").eq("id", s.user.id).single();
+        profile = pr.data || {};
+        $("userName").textContent = profile.full_name || s.user.email;
+        $("userRole").textContent = profile.role || "viewer";
+        if (profile.role !== "admin") $("usersNav").classList.add("hidden");
+        const p = await db.from("projects").select("*").eq("id", pid).single();
+        if (p.error) throw p.error;
+        project = p.data;
+        $("rProject").value = project.project_name || "";
+        $("backBtn").onclick = () => goPlatform("project");
+        const now = new Date().toISOString().slice(0, 10);
+        $("rReceived").value = now;
+        $("rDate").value = now;
+        if (rid) {
+          const rr = await db.from("quarterly_reports").select("*").eq("id", rid).single();
+          if (rr.error) throw rr.error;
+          current = rr.data;
+          loadReport(current);
+        } else {
+          $("rYear").value = new Date().getFullYear();
+          $("rQuarter").value = "Q1";
+        }
+        $("loading").classList.add("hidden");
+        $("reportForm").classList.remove("hidden");
+        calc();
+      }
+      function renderSavedAttachment(path, name) {
+        const el = $("fileName");
+        el.replaceChildren();
+        if (!path || !name) {
+          el.textContent = "لا يوجد مرفق محفوظ";
+          return;
+        }
+        el.appendChild(document.createTextNode("المرفق المحفوظ: "));
+        const link = document.createElement("a");
+        link.href = "#";
+        link.textContent = String(name);
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          void openSavedAttachment(path);
+        });
+        el.appendChild(link);
+      }
+      function showReportError(message) {
+        const el = $("msg");
+        const box = document.createElement("div");
+        box.className = "error";
+        box.textContent = String(message ?? "حدث خطأ غير متوقع.");
+        el.replaceChildren(box);
+      }
+      function loadReport(r) {
+        const d = r.report_data || {};
+        if (d.attachment_name) {
+          renderSavedAttachment(String(d.attachment_path || ""), d.attachment_name);
+        } else {
+          $("fileName").textContent = "لا يوجد مرفق محفوظ";
+        }
+        $("rYear").value = r.annual_period || "";
+        $("rQuarter").value = r.quarter || "Q1";
+        $("rStatus").value = r.status || "مسودة";
+        $("rReceived").value = r.submitted_at || "";
+        $("rDate").value = d.report_date || r.submitted_at || "";
+        $("rType").value = d.report_type || "ربعي منفصل";
+        $("salaryType").value = d.salary_input_type || "رواتب الربع";
+        $("notes").value = r.notes || d.notes || "";
+        const w = d.workforce_categories || [];
+        w.slice(0, 3).forEach((x, i) => {
+          $("om" + (i + 1)).value = n(x.omani);
+          $("fo" + (i + 1)).value = n(x.foreign);
+        });
+        $("omSalary").value = n(d.omani_salary);
+        $("foSalary").value = n(d.foreign_salary);
+        $("buyMade").value = n(d.purchases?.made_in_oman);
+        $("buyLocal").value = n(d.purchases?.local_supplier);
+        $("buyImport").value = n(d.purchases?.direct_import);
+        $("buySme").value = n(d.purchases?.sme_purchase);
+        $("srvLocal").value = n(d.services?.local_service);
+        $("srvForeign").value = n(d.services?.foreign_service);
+        $("srvSme").value = n(d.services?.sme_service);
+        $("subLocal").value = n(d.subcontracts?.local);
+        $("subForeign").value = n(d.subcontracts?.foreign);
+        $("subSme").value = n(d.subcontracts?.sme);
+      }
+      async function openSavedAttachment(path) {
+        if (!path) return false;
+        const { data, error } = await db.storage.from("project-report-documents").createSignedUrl(path, 300);
+        if (error) {
+          showReportError("تعذر فتح المرفق: " + String(error.message || error));
+          return false;
+        }
+        window.open(data.signedUrl, "_blank", "noopener");
+        return false;
+      }
+      async function refreshProjectMetrics() {
+        const rr = await db
+          .from("quarterly_reports")
+          .select("report_data,annual_period,quarter,created_at")
+          .eq("project_id", pid);
+        if (rr.error) throw rr.error;
+        const rows = (rr.data || []).sort((a, b) => {
+          const qa = Number(String(a.quarter || "").replace(/\D/g, "")) || 0,
+            qb = Number(String(b.quarter || "").replace(/\D/g, "")) || 0;
+          return Number(a.annual_period || 0) * 10 + qa - (Number(b.annual_period || 0) * 10 + qb);
+        });
+        let om = 0,
+          fo = 0;
+        const fin = {
+          purchases: { made_in_oman: 0, local_supplier: 0, direct_import: 0, sme_purchase: 0 },
+          services: { local_service: 0, foreign_service: 0, sme_service: 0 },
+          subcontracts: { local: 0, foreign: 0, sme: 0 },
+        };
+        for (const r of rows) {
+          const d = r.report_data || {},
+            cumulative = String(d.report_type || "ربعي منفصل").includes("تراكمي"),
+            salaryCumulative = String(d.salary_input_type || "رواتب الربع").includes("تراكمية");
+          const a = n(d.omani_salary),
+            b = n(d.foreign_salary);
+          if (salaryCumulative) {
+            om = a;
+            fo = b;
+          } else {
+            om += a;
+            fo += b;
+          }
+          for (const [group, keys] of Object.entries({
+            purchases: ["made_in_oman", "local_supplier", "direct_import", "sme_purchase"],
+            services: ["local_service", "foreign_service", "sme_service"],
+            subcontracts: ["local", "foreign", "sme"],
+          })) {
+            const source = d[group] || {};
+            for (const key of keys) {
+              const value = n(source[key]);
+              fin[group][key] = cumulative ? value : fin[group][key] + value;
+            }
+          }
+        }
+        const k = icvCalcSettings.coefficients,
+          spend =
+            om +
+            fo +
+            Object.values(fin.purchases).reduce((a, v) => a + v, 0) +
+            Object.values(fin.services).reduce((a, v) => a + v, 0) +
+            Object.values(fin.subcontracts).reduce((a, v) => a + v, 0),
+          lc =
+            om * k.omaniSalary +
+            fo * k.foreignSalary +
+            fin.purchases.made_in_oman * k.madeInOman +
+            fin.purchases.local_supplier * k.localSupplier +
+            fin.purchases.direct_import * k.directImport +
+            fin.purchases.sme_purchase * k.smePurchase +
+            fin.services.local_service * k.localService +
+            fin.services.foreign_service * k.foreignService +
+            fin.services.sme_service * k.smeService +
+            Object.values(fin.subcontracts).reduce((a, v) => a + v, 0) * k.smeSubcontract,
+          smeActual = fin.services.sme_service + Object.values(fin.subcontracts).reduce((a, v) => a + v, 0),
+          projectValue = n(project?.total_project_value),
+          smePct = projectValue ? (smeActual / projectValue) * 100 : 0,
+          planMade = n(project?.plan_made_in_oman),
+          madeStatus = planMade
+            ? fin.purchases.made_in_oman >= planMade
+              ? "مستوفي"
+              : "غير مستوفي"
+            : "غير منطبق",
+          smeStatus = projectValue
+            ? smePct >= icvCalcSettings.thresholds.sme
+              ? "مستوفي"
+              : "غير مستوفي"
+            : "غير منطبق";
+        const payload = {
+          actual_omani_salary: om,
+          local_content_omani: om * k.omaniSalary,
+          actual_non_omani_salary: fo,
+          local_content_non_omani: fo * k.foreignSalary,
+          actual_made_in_oman: fin.purchases.made_in_oman,
+          local_content_made_in_oman: fin.purchases.made_in_oman * k.madeInOman,
+          actual_local_supplier: fin.purchases.local_supplier,
+          local_content_local_supplier: fin.purchases.local_supplier * k.localSupplier,
+          actual_direct_import: fin.purchases.direct_import,
+          local_content_direct_import: fin.purchases.direct_import * k.directImport,
+          actual_sme_supplier: fin.purchases.sme_purchase,
+          local_content_sme_supplier: fin.purchases.sme_purchase * k.smePurchase,
+          actual_local_service: fin.services.local_service,
+          local_content_local_service: fin.services.local_service * k.localService,
+          actual_foreign_service: fin.services.foreign_service,
+          local_content_foreign_service: fin.services.foreign_service * k.foreignService,
+          actual_sme_service: fin.services.sme_service,
+          local_content_sme_service: fin.services.sme_service * k.smeService,
+          total_spend: spend,
+          total_local_content: lc,
+          local_content_spend_pct: spend ? (lc / spend) * 100 : 0,
+          local_content_project_pct: projectValue ? (lc / projectValue) * 100 : 0,
+          sme_pct: smePct,
+          made_in_oman_status: madeStatus,
+          sme_10_status: smeStatus,
+        };
+        const { error } = await db.from("projects").update(payload).eq("id", pid);
+        if (error) throw error;
+        project = { ...project, ...payload };
+      }
+      function collect() {
+        const cats = [1, 2, 3].map((i) => ({
+          category: "الفئة " + ["الأولى", "الثانية", "الثالثة"][i - 1],
+          omani: n($("om" + i).value),
+          foreign: n($("fo" + i).value),
+        }));
+        const om = n($("totOm").value),
+          fo = n($("totFo").value),
+          total = om + fo;
+        const purchases = {
+            made_in_oman: n($("buyMade").value),
+            local_supplier: n($("buyLocal").value),
+            direct_import: n($("buyImport").value),
+            sme_purchase: n($("buySme").value),
+          },
+          services = {
+            local_service: n($("srvLocal").value),
+            foreign_service: n($("srvForeign").value),
+            sme_service: n($("srvSme").value),
+          },
+          subcontracts = {
+            local: n($("subLocal").value),
+            foreign: n($("subForeign").value),
+            sme: n($("subSme").value),
+          };
+        const k = icvCalcSettings.coefficients;
+        const localContent =
+          n($("omSalary").value) * k.omaniSalary +
+          n($("foSalary").value) * k.foreignSalary +
+          purchases.made_in_oman * k.madeInOman +
+          purchases.local_supplier * k.localSupplier +
+          purchases.direct_import * k.directImport +
+          purchases.sme_purchase * k.smePurchase +
+          services.local_service * k.localService +
+          services.foreign_service * k.foreignService +
+          services.sme_service * k.smeService +
+          (subcontracts.local + subcontracts.foreign + subcontracts.sme) * k.smeSubcontract;
+        return {
+          report_type: $("rType").value,
+          salary_input_type: $("salaryType").value,
+          report_date: $("rDate").value,
+          notes: $("notes").value || null,
+          workforce_categories: cats,
+          omani_total: om,
+          foreign_total: fo,
+          workforce_total: total,
+          omanization_percent: total ? (om / total) * 100 : 0,
+          omani_salary: n($("omSalary").value),
+          foreign_salary: n($("foSalary").value),
+          purchases,
+          services,
+          subcontracts,
+          total_local_content: localContent,
+        };
+      }
+      async function save(mode) {
+        try {
+          const d = collect();
+          d.last_modified_at = new Date().toISOString();
+          const pay = {
+            project_id: pid,
+            quarter: $("rQuarter").value,
+            annual_period: String($("rYear").value),
+            status: mode === "مسودة" ? "مسودة" : $("rStatus").value,
+            submitted_at: $("rReceived").value || null,
+            notes: $("notes").value || null,
+            created_by: profile.id,
+            report_data: d,
+          };
+          let r = current
+            ? await db.from("quarterly_reports").update(pay).eq("id", current.id).select("*").single()
+            : await db.from("quarterly_reports").insert(pay).select("*").single();
+          if (r.error) throw r.error;
+          current = r.data;
+          await refreshProjectMetrics();
+          const file = $("rFile").files[0];
+          if (file) {
+            const path =
+              pid +
+              "/" +
+              r.data.id +
+              "/" +
+              crypto.randomUUID() +
+              "-" +
+              file.name.replace(/[^a-zA-Z0-9._-]+/g, "_");
+            const up = await db.storage
+              .from("project-report-documents")
+              .upload(path, file, {
+                cacheControl: "3600",
+                upsert: false,
+                contentType: file.type || "application/octet-stream",
+              });
+            if (up.error) throw new Error("تم حفظ بيانات التقرير لكن تعذر حفظ المرفق: " + up.error.message);
+            const updatedData = { ...d, attachment_name: file.name, attachment_path: path };
+            const saved = await db
+              .from("quarterly_reports")
+              .update({ report_data: updatedData })
+              .eq("id", r.data.id)
+              .select("*")
+              .single();
+            if (saved.error) throw new Error("تم رفع الملف لكن تعذر ربطه بالتقرير: " + saved.error.message);
+            current = saved.data;
+            renderSavedAttachment(path, file.name);
+          }
+          showTopSaveMessage(file ? "تم حفظ التقرير والمرفق بنجاح." : "تم حفظ التقرير بنجاح.");
+          $("msg").replaceChildren();
+        } catch (e) {
+          showReportError(e.message || e);
+        }
+      }
+      $("saveBtn").onclick = () => save($("rStatus").value);
+      $("draftBtn").onclick = () => {
+        $("rStatus").value = "مسودة";
+        save("مسودة");
+      };
+      (async function () {
+        let s = (await db.auth.getSession()).data.session;
+        if (!s) {
+          try {
+            const raw = sessionStorage.getItem("icv-auth-session");
+            if (raw) {
+              const x = JSON.parse(raw),
+                z = await db.auth.setSession({
+                  access_token: x.access_token,
+                  refresh_token: x.refresh_token,
+                });
+              s = z.data?.session || null;
+            }
+          } catch (e) {
+            sessionStorage.removeItem("icv-auth-session");
+          }
+        }
+        if (s) {
+          session = s;
+          sessionStorage.setItem(
+            "icv-auth-session",
+            JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token }),
+          );
+          await boot(s);
+          document.body.classList.remove("auth-pending");
+        } else {
+          document.body.classList.remove("auth-pending");
+          location.href = "index.html";
+        }
+      })();
+      db.auth.onAuthStateChange((event, s) => {
+        if (s) {
+          sessionStorage.setItem(
+            "icv-auth-session",
+            JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token }),
+          );
+          if (!session) boot(s);
+        } else if (event === "SIGNED_OUT") sessionStorage.removeItem("icv-auth-session");
+      });
+    </script>
+  </body>
+</html>
