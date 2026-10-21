@@ -132,8 +132,9 @@
       .login-showcase-footer b { color:#f4e9c7; font-size:13px; }
       .login-panel { min-height:100vh; padding:clamp(24px,4vw,60px); display:flex; flex-direction:column; justify-content:center; align-items:center; position:relative; background:radial-gradient(ellipse at 50% 35%,#12453e 0%,#092f2b 58%,#062622 100%); }
       .login-language { align-self:flex-end; display:flex; gap:4px; padding:4px; border:1px solid rgba(255,255,255,.18); border-radius:999px; margin-bottom:24px; }
-      .login-language span { padding:7px 14px; color:#d8e6e0; font-size:12px; }
-      .login-language span:first-child { background:#fff; color:#0b4b43; border-radius:999px; font-weight:800; }
+      .login-language .icv-language-choice { min-width:0; padding:7px 14px; border:1px solid transparent; border-radius:999px; background:transparent; color:#d8e6e0; font:700 12px/1.2 Arial,sans-serif; cursor:pointer; }
+      .login-language .icv-language-choice.active { background:#fff; color:#0b4b43; border-color:#fff; box-shadow:0 2px 7px #0002; }
+      .login-language .icv-language-choice:focus-visible { outline:2px solid #d9a441; outline-offset:2px; }
       .login-card { width:min(460px,100%); background:linear-gradient(145deg,#fffefb,#f6f4ed); border:1px solid rgba(255,255,255,.85); border-radius:24px; padding:clamp(24px,3vw,42px); box-shadow:0 28px 90px rgba(0,0,0,.26); color:#162033; }
       .login-card-head { text-align:center; margin-bottom:30px; }
       .login-card-mark { display:none; }
@@ -1180,8 +1181,9 @@
         </div>
       </div>
       <div class="login-panel">
-        <div class="login-language" aria-label="Language">
-          <span>AR</span><span>EN</span>
+        <div class="login-language" role="group" aria-label="Language">
+          <button type="button" class="icv-language-choice" data-lang="en" aria-label="English" onclick="window.ICVLanguage && window.ICVLanguage.set('en')">EN</button>
+          <button type="button" class="icv-language-choice" data-lang="ar" aria-label="العربية" onclick="window.ICVLanguage && window.ICVLanguage.set('ar')">AR</button>
         </div>
         <div class="login-card">
           <div class="login-card-head">
