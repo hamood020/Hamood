@@ -179,6 +179,60 @@
         .login-card .field { margin-bottom:15px; }
         .login-card .field input { height:48px; }
       }
+      /* Keep the desktop login screen within one viewport at 100% zoom. */
+      @media (min-width: 701px) {
+        .login {
+          height: 100vh;
+          height: 100dvh;
+          min-height: 0;
+        }
+        .login-showcase,
+        .login-panel {
+          height: 100vh;
+          height: 100dvh;
+          min-height: 0;
+        }
+        .login-showcase { padding: clamp(18px, 2.2vw, 34px); }
+        .login-authority { padding-bottom: 12px; }
+        .login-authority-logo-only img { width: min(100%, 420px); max-height: 100px; }
+        .login-showcase-content { padding: 14px 0; }
+        .login-showcase-content h1 { font-size: clamp(26px, 3vw, 40px); margin-bottom: 10px; }
+        .login-showcase-content .login-intro { font-size: clamp(13px, 1.2vw, 16px); line-height: 1.7; }
+        .login-kicker { margin-bottom: 8px; }
+        .login-benefits { gap: 14px 18px; margin-top: 22px; }
+        .login-benefit-icon { width: 38px; height: 38px; flex-basis: 38px; font-size: 17px; }
+        .login-benefit b { font-size: 12px; margin-bottom: 2px; }
+        .login-benefit span { font-size: 10px; line-height: 1.6; }
+        .login-showcase-footer { padding-top: 12px; font-size: 10px; }
+        .login-showcase-footer b { font-size: 12px; }
+        .login-panel { padding: clamp(16px, 2.2vw, 32px); }
+        .login-language { margin-bottom: 14px; }
+        .login-card { padding: clamp(20px, 2.2vw, 30px); }
+        .login-card-head { margin-bottom: 20px; }
+        .login-card h1 { font-size: clamp(25px, 2.3vw, 31px); }
+        .login-card .field { margin-bottom: 14px; }
+        .login-card .field input { height: 46px; }
+        .login-help { margin-top: 12px; padding: 10px 13px; }
+        .login-card-foot { margin-top: 14px; }
+      }
+      @media (min-width: 701px) and (max-height: 760px) {
+        .login-showcase { padding: 16px 24px; }
+        .login-authority-logo-only img { max-height: 76px; }
+        .login-showcase-content { padding: 8px 0; }
+        .login-showcase-content h1 { font-size: 27px; margin-bottom: 6px; }
+        .login-showcase-content .login-intro { font-size: 12px; line-height: 1.55; }
+        .login-benefits { gap: 10px 14px; margin-top: 14px; }
+        .login-benefit-icon { width: 32px; height: 32px; flex-basis: 32px; }
+        .login-showcase-footer { padding-top: 8px; }
+        .login-panel { padding: 12px 20px; }
+        .login-language { margin-bottom: 8px; }
+        .login-card { padding: 18px 24px; }
+        .login-card-head { margin-bottom: 14px; }
+        .login-card .field { margin-bottom: 10px; }
+        .login-card .field input { height: 42px; }
+        .login-help { margin-top: 8px; padding: 8px 12px; line-height: 1.55; }
+        .login-card-foot { margin-top: 8px; }
+      }
       .muted {
         color: var(--muted);
         font-size: 12px;
