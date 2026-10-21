@@ -96,7 +96,7 @@
         overflow: hidden;
         background:
           linear-gradient(125deg,rgba(5,42,37,.98) 0%,rgba(6,49,43,.92) 46%,rgba(7,46,41,.48) 100%),
-          url("https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1800&q=85") center/cover;
+          url("https://images.unsplash.com/photo-1549474873-365833f871bc?auto=format&fit=crop&fm=jpg&q=85&w=1800") center/cover;
         border-right: 1px solid rgba(199,180,119,.45);
       }
       .login-showcase::before {
@@ -113,6 +113,12 @@
       .login-authority img { width:92px; height:92px; object-fit:contain; filter:brightness(0) invert(1); flex:0 0 auto; }
       .login-authority h2 { margin:0 0 6px; font-size:clamp(18px,2vw,25px); line-height:1.5; }
       .login-authority p { margin:0; color:#d6e2dc; font-size:12px; line-height:1.6; }
+      .login-authority-logo-only { justify-content:flex-end; }
+      .login-authority-logo-only img { width:min(100%,520px); height:auto; max-height:155px; object-fit:contain; }
+      @media(max-width:700px) {
+        .login-authority-logo-only { justify-content:center; }
+        .login-authority-logo-only img { width:min(100%,360px); max-height:110px; }
+      }
       .login-showcase-content { max-width:680px; margin:auto 0; padding:42px 0; }
       .login-kicker { color:#d4c28a; font-size:12px; font-weight:800; letter-spacing:.12em; margin-bottom:14px; }
       .login-showcase-content h1 { font-size:clamp(30px,4vw,52px); line-height:1.3; margin:0 0 16px; color:#fff9e9; }
@@ -1100,12 +1106,8 @@
   <body class="auth-pending">
     <section id="login" class="login">
       <div class="login-showcase">
-        <div class="login-authority">
+        <div class="login-authority login-authority-logo-only">
           <img src="https://www.ptlc.gov.om/ar/assets/Logo_color%20-%20Copy.png" alt="شعار هيئة المشاريع والمناقصات والمحتوى المحلي" />
-          <div>
-            <h2>هيئة المشاريع والمناقصات والمحتوى المحلي</h2>
-            <p>Projects, Tenders and Local Content Authority</p>
-          </div>
         </div>
         <div class="login-showcase-content">
           <div class="login-kicker">منصة داخلية لإدارة المشاريع</div>
