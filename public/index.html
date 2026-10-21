@@ -1208,8 +1208,9 @@
         }
         profile = r.data;
         document.getElementById("login").classList.add("hidden");
-        document.getElementById("app").classList.remove("hidden");
-        document.body.classList.remove("auth-pending");
+        // The app stays hidden (auth-pending) until the requested page has been drawn by the
+        // current page modules, so the old built-in layout never flashes on screen.
+        try {
         userName.textContent = profile.full_name || session.user.email;
         userRole.textContent = ICV.roleLabel(profile.role);
         window.__icvProfile = profile;
@@ -1229,14 +1230,20 @@
         const routeButtons = [...document.querySelectorAll("[data-page]")];
         const pageButton = routeButtons.find((el) => el.dataset.page === requestedPage);
         if (requestedPage === "project" && requestedProject && typeof showPage === "function") {
-          showPage("project", null);
+          await Promise.resolve(showPage("project", null));
         } else if (pageButton && typeof showPage === "function") {
-          showPage(requestedPage, pageButton);
+          await Promise.resolve(showPage(requestedPage, pageButton));
         } else if (requestedProject && typeof window.viewProject === "function") {
-          window.viewProject(requestedProject);
+          await Promise.resolve(window.viewProject(requestedProject));
         } else {
           const dashboardButton = routeButtons.find((el) => el.dataset.page === "dashboard");
-          showPage("dashboard", dashboardButton);
+          await Promise.resolve(showPage("dashboard", dashboardButton));
+        }
+        } catch (e) {
+          console.error(e);
+        } finally {
+          document.getElementById("app").classList.remove("hidden");
+          document.body.classList.remove("auth-pending");
         }
       }
       async function loadAll() {
@@ -1257,8 +1264,9 @@
         window.projects = projects;
         window.reports = reports;
         window.plans = plans;
-        renderDashboard();
-        renderProjects();
+        // Draw with the current page modules when they are loaded (the built-in ones are the old layout).
+        (window.icvStructure?.renderDashboard || renderDashboard)();
+        (window.icvStructure?.renderProjects || renderProjects)();
         renderCompanies();
         renderReports();
         renderPlans();
@@ -2094,6 +2102,9 @@
         modal.innerHTML = "";
       }
       (async function () {
+        // Start only after every page script below has loaded, so the current pages and router are in place.
+        if (document.readyState === "loading")
+          await new Promise((resolve) => document.addEventListener("DOMContentLoaded", resolve, { once: true }));
         const s = (await db.auth.getSession()).data.session;
         if (s) {
           await boot(s);
