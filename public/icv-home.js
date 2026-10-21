@@ -487,7 +487,6 @@
     );
 
     html +=
-      '<div class="hm-grid">' +
       section(
         3,
         T("مسار المشاريع", "Project pipeline"),
@@ -497,8 +496,7 @@
           "عدد المشاريع وقيمتها في كل حالة، والشريط يوضح حصة الحالة من القيمة الكلية. المتعثر منفصل لأنه قد يحدث في أي مرحلة. اضغط أي حالة لعرض مشاريعها.",
           "Number and value of projects in each status; the bar shows the status share of total value. Stalled is separate because it can happen at any stage. Click a status to list its projects.",
         ),
-      ) +
-      "</div>";
+      );
 
     const g = ganttHtml(list, today);
     html += section(
