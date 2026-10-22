@@ -85,6 +85,9 @@ CREATE INDEX IF NOT EXISTS contract_participations_company_idx ON public.contrac
 CREATE TABLE IF NOT EXISTS public.contract_reports (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   contract_id uuid NOT NULL REFERENCES public.contracts(id) ON DELETE CASCADE,
+  -- Framework agreement reports are scoped to the participating government entity/supplier row.
+  -- Non-framework service/project/supply reports remain scoped to the contract itself.
+  participation_id uuid REFERENCES public.contract_participations(id) ON DELETE CASCADE,
   report_year integer NOT NULL CHECK (report_year BETWEEN 2000 AND 2200),
   report_quarter text NOT NULL CHECK (report_quarter IN ('Q1','Q2','Q3','Q4','ANNUAL')),
   report_status text NOT NULL DEFAULT 'draft' CHECK (report_status IN ('draft','submitted','under_review','approved','rejected')),
@@ -100,6 +103,11 @@ CREATE TABLE IF NOT EXISTS public.contract_reports (
 );
 CREATE INDEX IF NOT EXISTS contract_reports_period_idx ON public.contract_reports(report_year,report_quarter,report_status);
 CREATE INDEX IF NOT EXISTS contract_reports_contract_idx ON public.contract_reports(contract_id,report_year DESC,created_at DESC);
+CREATE INDEX IF NOT EXISTS contract_reports_participation_idx ON public.contract_reports(participation_id,report_year DESC,created_at DESC) WHERE participation_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS contract_reports_contract_period_unique
+  ON public.contract_reports(contract_id,report_year,report_quarter) WHERE participation_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS contract_reports_participation_period_unique
+  ON public.contract_reports(participation_id,report_year,report_quarter) WHERE participation_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS public.contract_report_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -259,7 +267,7 @@ CREATE POLICY "contract report items admin delete" ON public.contract_report_ite
 
 COMMENT ON TABLE public.contracts IS 'Independent contract register; does not replace or alter public.projects.';
 COMMENT ON TABLE public.contract_participations IS 'One row per government entity and supplier usage of a framework agreement.';
-COMMENT ON TABLE public.contract_reports IS 'Type-specific report payload; official indicators must use approved reports only.';
+COMMENT ON TABLE public.contract_reports IS 'Type-specific report payload; framework reports are scoped to one contract participation; official indicators use approved reports only.';
 COMMENT ON TABLE public.contract_report_items IS 'Normalized financial lines; a null content coefficient means not yet confirmed.';
 COMMENT ON TABLE public.contract_indicator_definitions IS 'Workbook KPI catalog; workbook_actual is a historic reference, not a live dashboard value.';
 
@@ -526,6 +534,47 @@ REVOKE ALL ON FUNCTION private.guard_contract_report_approval() FROM PUBLIC, ano
 CREATE TRIGGER contract_reports_guard_approval
   BEFORE INSERT OR UPDATE ON public.contract_reports
   FOR EACH ROW EXECUTE FUNCTION private.guard_contract_report_approval();
+
+CREATE OR REPLACE FUNCTION private.guard_contract_report_scope()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_family text;
+  v_part_contract_id uuid;
+BEGIN
+  SELECT t.family INTO v_family
+  FROM public.contracts c JOIN public.contract_types t ON t.code=c.contract_type_code
+  WHERE c.id=NEW.contract_id;
+
+  IF v_family IS NULL THEN
+    RAISE EXCEPTION USING ERRCODE = '23503', MESSAGE = 'CONTRACT_NOT_FOUND';
+  END IF;
+
+  IF v_family='framework' THEN
+    IF NEW.participation_id IS NULL THEN
+      RAISE EXCEPTION USING ERRCODE = '23514', MESSAGE = 'FRAMEWORK_REPORT_REQUIRES_PARTICIPATION';
+    END IF;
+    SELECT p.contract_id INTO v_part_contract_id
+    FROM public.contract_participations p
+    WHERE p.id=NEW.participation_id;
+    IF v_part_contract_id IS DISTINCT FROM NEW.contract_id THEN
+      RAISE EXCEPTION USING ERRCODE = '23514', MESSAGE = 'PARTICIPATION_CONTRACT_MISMATCH';
+    END IF;
+  ELSIF NEW.participation_id IS NOT NULL THEN
+    RAISE EXCEPTION USING ERRCODE = '23514', MESSAGE = 'NON_FRAMEWORK_REPORT_CANNOT_HAVE_PARTICIPATION';
+  END IF;
+
+  RETURN NEW;
+END;
+$function$;
+REVOKE ALL ON FUNCTION private.guard_contract_report_scope() FROM PUBLIC, anon, authenticated;
+CREATE TRIGGER contract_reports_guard_scope
+  BEFORE INSERT OR UPDATE OF contract_id,participation_id
+  ON public.contract_reports
+  FOR EACH ROW EXECUTE FUNCTION private.guard_contract_report_scope();
 
 -- Reuse the platform's existing protected audit writer on records with UUID primary keys.
 DROP TRIGGER IF EXISTS contracts_write_audit ON public.contracts;
