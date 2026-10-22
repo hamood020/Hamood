@@ -531,7 +531,7 @@
     const startIdx=importHeaderIndex(headers,["تاريخ البدء","تاريخ البداية"],false);
     const endIdx=importHeaderIndex(headers,["تاريخ الانتهاء","تاريخ الانتهاء"],false);
     const valueIdx=importHeaderIndex(headers,["قيمة المشروع الاجمالي","قيمة العقد","القيمة التعاقدية"],true);
-    const spendIdx=importHeaderIndex(headers,["اجمالي التكلفة في العقد","اجمالي التكلفة في المشروع","اجمالي الصرف الفعلي"],true);
+    const spendIdx=importHeaderIndex(headers,["اجمالي التكلفة في العقد","اجمالي التكلفة في المشروع","اجمالي الصرف الفعلي","اجمالي الصرف في المشروع"],true);
     const planIdx=importHeaderIndex(headers,["خطة المحتوى المحلي"],false);
     const consultantIdx=importHeaderIndex(headers,["الاستشاري"],false);
     const sectorIdx=importHeaderIndex(headers,["قطاع العمل","المجال"],false);
@@ -585,10 +585,11 @@
   function importNonBlank(row) {
     return Array.isArray(row)&&row.some(v=>v!==null&&v!==undefined&&String(v).trim()!=="");
   }
-  function importWideSupplierIndices(headers) {
-    const endDateIdx=importHeaderIndex(headers,["تاريخ الانتهاء"],false);
-    const fieldIdx=importHeaderIndex(headers,["المجال"],false);
-    const start=Math.max(0,(endDateIdx>=0?endDateIdx:fieldIdx)+1);
+  function importWideSupplierIndices(headers, typeCode) {
+    // These three sheets have different fixed metadata columns; infering start from a
+    // date or "المجال" fails for vehicles/trucks and may treat entity/title cells as suppliers.
+    const fixedStart = typeCode==="framework_it" ? 8 : 4; // zero-based: IT vendor columns start at I; vehicles/trucks at E
+    const start=Math.min(fixedStart,headers.length);
     let end=headers.length;
     for(let i=start;i<headers.length;i++) {
       const h=importNormalize(headers[i]);
@@ -632,7 +633,7 @@
 
       const groups=new Map();
       if(rule.mode==="wide") {
-        const supplierInfo=importWideSupplierIndices(headers);
+        const supplierInfo=importWideSupplierIndices(headers,rule.typeCode);
         const entityIdx=importHeaderIndex(headers,["الجهة الحكومية","الجهة"],false);
         const tenderIdx=importHeaderIndex(headers,["رقم نوع المناقصة","رقم المناقصة"],false);
         const titleIdx=importHeaderIndex(headers,["اسم العقد"],false);
