@@ -620,4 +620,126 @@ DROP TRIGGER IF EXISTS contract_report_items_write_audit ON public.contract_repo
 CREATE TRIGGER contract_report_items_write_audit AFTER INSERT OR UPDATE OR DELETE ON public.contract_report_items
   FOR EACH ROW EXECUTE FUNCTION private.write_audit();
 
+
+
+-- Create a report and its line items atomically. This avoids a report row being left behind
+-- if line-item validation, RLS-independent authorization or foreign-key checks fail.
+CREATE OR REPLACE FUNCTION public.create_contract_report_with_items(
+  p_report jsonb,
+  p_items jsonb DEFAULT '[]'::jsonb
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_user uuid := (SELECT auth.uid());
+  v_contract_id uuid;
+  v_participation_id uuid;
+  v_year integer;
+  v_quarter text;
+  v_status text;
+  v_data jsonb;
+  v_item jsonb;
+  v_report_id uuid;
+  v_items_count integer := 0;
+  v_amount numeric;
+  v_coefficient numeric;
+  v_local_content numeric;
+  v_company_id uuid;
+  v_is_sme boolean;
+  v_is_omani boolean;
+  v_route text;
+BEGIN
+  IF NOT private.user_access_valid(v_user)
+     OR NOT private.has_valid_role(ARRAY['admin','section_head','editor']::text[]) THEN
+    RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
+  END IF;
+  IF p_report IS NULL OR jsonb_typeof(p_report) <> 'object' THEN
+    RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'REPORT_OBJECT_REQUIRED';
+  END IF;
+  IF p_items IS NULL OR jsonb_typeof(p_items) <> 'array'
+     OR jsonb_array_length(p_items) > 500 THEN
+    RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'REPORT_ITEMS_ARRAY_INVALID';
+  END IF;
+
+  v_contract_id := nullif(p_report->>'contract_id','')::uuid;
+  v_participation_id := nullif(p_report->>'participation_id','')::uuid;
+  v_year := nullif(p_report->>'report_year','')::integer;
+  v_quarter := coalesce(nullif(btrim(p_report->>'report_quarter'),''),'Q1');
+  v_status := coalesce(nullif(btrim(p_report->>'report_status'),''),'draft');
+  v_data := coalesce(p_report->'report_data','{}'::jsonb);
+
+  IF v_contract_id IS NULL OR v_year IS NULL OR v_year < 2000 OR v_year > 2200 THEN
+    RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'REPORT_CONTRACT_AND_YEAR_REQUIRED';
+  END IF;
+  IF v_quarter NOT IN ('Q1','Q2','Q3','Q4','ANNUAL') THEN
+    RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'REPORT_PERIOD_INVALID';
+  END IF;
+  IF v_status NOT IN ('draft','submitted','under_review','approved','rejected') THEN
+    RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'REPORT_STATUS_INVALID';
+  END IF;
+  IF jsonb_typeof(v_data) <> 'object' THEN
+    RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'REPORT_DATA_MUST_BE_OBJECT';
+  END IF;
+
+  INSERT INTO public.contract_reports (
+    contract_id,participation_id,report_year,report_quarter,report_status,report_data,
+    submitted_at,approved_at,approved_by,created_by,updated_by
+  ) VALUES (
+    v_contract_id,v_participation_id,v_year,v_quarter,v_status,v_data,
+    CASE WHEN v_status = 'draft' THEN NULL ELSE now() END,
+    CASE WHEN v_status = 'approved' THEN now() ELSE NULL END,
+    CASE WHEN v_status = 'approved' THEN v_user ELSE NULL END,
+    v_user,v_user
+  ) RETURNING id INTO v_report_id;
+
+  FOR v_item IN SELECT value FROM jsonb_array_elements(p_items) LOOP
+    IF jsonb_typeof(v_item) <> 'object' THEN
+      RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'REPORT_ITEM_MUST_BE_OBJECT';
+    END IF;
+    v_route := coalesce(nullif(btrim(v_item->>'procurement_route'),''),'not_applicable');
+    IF v_route NOT IN ('not_applicable','direct','subcontract') THEN
+      RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'REPORT_ITEM_ROUTE_INVALID';
+    END IF;
+    v_amount := nullif(v_item->>'amount','')::numeric;
+    v_coefficient := nullif(v_item->>'content_coefficient','')::numeric;
+    v_local_content := nullif(v_item->>'local_content_amount','')::numeric;
+    v_company_id := nullif(v_item->>'company_id','')::uuid;
+    v_is_sme := CASE WHEN v_item->>'is_sme' IS NULL OR v_item->>'is_sme' = '' THEN NULL ELSE (v_item->>'is_sme')::boolean END;
+    v_is_omani := CASE WHEN v_item->>'is_omani_product' IS NULL OR v_item->>'is_omani_product' = '' THEN NULL ELSE (v_item->>'is_omani_product')::boolean END;
+
+    IF nullif(btrim(v_item->>'category_code'),'') IS NULL OR v_amount IS NULL OR v_amount < 0 THEN
+      RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'REPORT_ITEM_CATEGORY_AND_AMOUNT_REQUIRED';
+    END IF;
+    IF v_coefficient IS NOT NULL AND (v_coefficient < 0 OR v_coefficient > 1) THEN
+      RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'REPORT_ITEM_COEFFICIENT_OUT_OF_RANGE';
+    END IF;
+    IF v_local_content IS NOT NULL AND (v_local_content < 0 OR v_local_content > v_amount) THEN
+      RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'REPORT_ITEM_LOCAL_CONTENT_OUT_OF_RANGE';
+    END IF;
+    IF v_local_content IS NULL AND v_coefficient IS NOT NULL THEN
+      v_local_content := v_amount * v_coefficient;
+    END IF;
+
+    INSERT INTO public.contract_report_items (
+      report_id,category_code,procurement_route,company_id,amount,
+      content_coefficient,local_content_amount,is_sme,is_omani_product,notes,created_by
+    ) VALUES (
+      v_report_id,btrim(v_item->>'category_code'),v_route,v_company_id,v_amount,
+      v_coefficient,v_local_content,v_is_sme,v_is_omani,
+      nullif(btrim(v_item->>'notes'),''),v_user
+    );
+    v_items_count := v_items_count + 1;
+  END LOOP;
+
+  RETURN jsonb_build_object('report_id',v_report_id,'items_saved',v_items_count);
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.create_contract_report_with_items(jsonb,jsonb) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.create_contract_report_with_items(jsonb,jsonb) TO authenticated;
+COMMENT ON FUNCTION public.create_contract_report_with_items(jsonb,jsonb) IS
+  'Atomically creates a draft/submitted/authorized contract report and its detailed cost lines. The report trigger enforces report scope and status transitions.';
+
 COMMIT;
