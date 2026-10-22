@@ -616,7 +616,7 @@
         && importHeaderIndex(headers,["الشركة المنفذة","الشركة"],false)>=0
         && importHeaderIndex(headers,["رقم المناقصة","رقم نوع المناقصة"],false)>=0;
       if(!hasTitleHeader&&!validSupplyShape) {
-        addWarning("missing_title_header","",sh.actualName,1); skippedInvalid+=Math.max(0,allRows.length-1-dataRows.length);continue;
+        addWarning("missing_title_header","",sh.actualName,1); skippedInvalid+=Math.max(0,allRows.length-1);continue;
       }
       const dataRows=allRows.slice(1).map((row,i)=>({row:row||[],sourceRow:i+2})).filter(x=>importNonBlank(x.row));
       rowsRead+=dataRows.length;
