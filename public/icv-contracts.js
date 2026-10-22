@@ -440,6 +440,15 @@
       const idx=normalized.findIndex(v=>exact?v===wanted:v.includes(wanted));
       if(idx>=0) return idx;
     }
+    // For known total/value fields, tolerate minor workbook header wording differences
+    // only after an exact match has been attempted for every candidate term.
+    if(exact) {
+      for(const term of terms) {
+        const wanted=importNormalize(term);
+        const idx=normalized.findIndex(v=>v.includes(wanted));
+        if(idx>=0) return idx;
+      }
+    }
     return -1;
   }
   function importCell(row, index) { return index>=0?row[index]:null; }
@@ -594,7 +603,7 @@
       if(rule.mode==="wide") {
         const supplierInfo=importWideSupplierIndices(headers);
         const entityIdx=importHeaderIndex(headers,["الجهة الحكومية","الجهة"],false);
-        const tenderIdx=importHeaderIndex(headers,["رقم المناقصة"],false);
+        const tenderIdx=importHeaderIndex(headers,["رقم نوع المناقصة","رقم المناقصة"],false);
         const titleIdx=importHeaderIndex(headers,["اسم العقد"],false);
         const statusIdx=importHeaderIndex(headers,["حالة العقد"],false);
         const startIdx=importHeaderIndex(headers,["تاريخ البدء"],false);
