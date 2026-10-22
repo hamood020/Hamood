@@ -237,7 +237,8 @@
     const contract=byId(state.records,id)||{};
     const family=typeOf(contract.contract_type_code).family;
     const needsWorkforce=family==="project_like"||family==="service";
-    const statuses=[["draft","مسودة"],["submitted","مقدم"],["under_review","تحت المراجعة"]];
+    const statuses=[["draft","مسودة"],["submitted","مقدم"]];
+    if(["admin","section_head"].includes(profile().role)) statuses.push(["under_review","تحت المراجعة"]);
     if(isAdmin()) statuses.push(["approved","معتمد"]);
     const workforceSection=needsWorkforce
       ? '<div class="ct-form-divider ct-wide"><b>'+T("العمالة والرواتب","Workforce and wages")+'</b><p class="muted">'+T("يظهر هذا القسم للمشاريع وعقود الخدمات مثل الصيانة والتغذية.","This section is shown for project-like records and service contracts such as maintenance and catering.")+'</p></div>'+
