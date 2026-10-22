@@ -103,6 +103,14 @@ CREATE TABLE IF NOT EXISTS public.contract_reports (
 );
 CREATE INDEX IF NOT EXISTS contract_reports_period_idx ON public.contract_reports(report_year,report_quarter,report_status);
 CREATE INDEX IF NOT EXISTS contract_reports_contract_idx ON public.contract_reports(contract_id,report_year DESC,created_at DESC);
+-- A contract or a framework participation can have one report per period; this avoids ambiguous KPI snapshots.
+CREATE UNIQUE INDEX IF NOT EXISTS contract_reports_scope_period_unique_idx
+  ON public.contract_reports (
+    contract_id,
+    (coalesce(participation_id, '00000000-0000-0000-0000-000000000000'::uuid)),
+    report_year,
+    report_quarter
+  );
 CREATE INDEX IF NOT EXISTS contract_reports_participation_idx ON public.contract_reports(participation_id,report_year DESC,created_at DESC) WHERE participation_id IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS contract_reports_contract_period_unique
   ON public.contract_reports(contract_id,report_year,report_quarter) WHERE participation_id IS NULL;
@@ -155,9 +163,9 @@ INSERT INTO public.contract_indicator_definitions
   target_period,target_annual,workbook_actual,workbook_numerator,workbook_denominator,workbook_source_status,sort_order)
 VALUES
  ('local_content_ratio',NULL,'value','نسبة المحتوى المحلي من إجمالي قيمة العقود الحكومية','Local content as a share of total government contract value',
-  'مجموع المحتوى المحلي المحقق ÷ إجمالي قيمة العقود الداخلة في نطاق القياس × 100',
-  'Total achieved local content / total value of in-scope government contracts × 100',
-  'الصيغ الأصلية في Excel مكسورة (#REF!). لا توجد قيمة فعلية موثوقة في الملف؛ تُحسب بعد استكمال بيانات العقود والتقارير المعتمدة.',
+  'إجمالي المحتوى المحلي المحقق ÷ إجمالي الصرف/التكلفة الفعلية في نطاق القياس × 100',
+  'Total achieved local content / total actual spend in the covered scope × 100',
+  'الصيغ الأصلية في Excel مكسورة (#REF!). كما أن عنوان المؤشر يشير إلى قيمة العقود بينما مقام الصيغة يجمع الصرف/التكلفة الفعلية من الأوراق. لا توجد قيمة فعلية موثوقة؛ يلزم اعتماد المقام قبل إظهاره كمؤشر رسمي.',
   0.17,0.25,NULL,NULL,NULL,'missing_formula',10),
  ('omanization_compliance',NULL,'compliance','نسبة العقود المستوفية لمتطلبات التعمين','Contracts meeting Omanization requirements',
   'عدد العقود المؤهلة المستوفية للتعمين ÷ عدد العقود المؤهلة قيد التنفيذ والمنتهية في 2026 × 100',
@@ -468,7 +476,29 @@ AS $function$
 DECLARE
   v_admin boolean := private.has_valid_role(ARRAY['admin']::text[]);
   v_section_head boolean := private.has_valid_role(ARRAY['section_head']::text[]);
+  v_family text;
 BEGIN
+  SELECT t.family INTO v_family
+  FROM public.contracts c
+  JOIN public.contract_types t ON t.code = c.contract_type_code
+  WHERE c.id = NEW.contract_id;
+  IF v_family IS NULL THEN
+    RAISE EXCEPTION USING ERRCODE = '23514', MESSAGE = 'CONTRACT_REPORT_TYPE_NOT_FOUND';
+  END IF;
+  IF v_family = 'framework' THEN
+    IF NEW.participation_id IS NULL THEN
+      RAISE EXCEPTION USING ERRCODE = '23514', MESSAGE = 'CONTRACT_REPORT_PARTICIPATION_REQUIRED';
+    END IF;
+    IF NOT EXISTS (
+      SELECT 1 FROM public.contract_participations p
+      WHERE p.id = NEW.participation_id AND p.contract_id = NEW.contract_id
+    ) THEN
+      RAISE EXCEPTION USING ERRCODE = '23514', MESSAGE = 'CONTRACT_REPORT_PARTICIPATION_MISMATCH';
+    END IF;
+  ELSIF NEW.participation_id IS NOT NULL THEN
+    RAISE EXCEPTION USING ERRCODE = '23514', MESSAGE = 'CONTRACT_REPORT_PARTICIPATION_NOT_ALLOWED';
+  END IF;
+
   IF NOT v_admin THEN
     IF TG_OP = 'INSERT' THEN
       IF NEW.report_status = 'approved' THEN
