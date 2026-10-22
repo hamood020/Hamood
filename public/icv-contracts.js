@@ -46,6 +46,16 @@
   const byId = (arr,id) => arr.find(x=>x.id===id);
   const typeOf = (code) => state.types.find(x=>x.code===code) || TYPES_FALLBACK.find(x=>x.code===code) || {code:code,name_ar:code,name_en:code,family:"supply"};
   const typeLabel = (code) => { const t=typeOf(code); return T(t.name_ar,t.name_en); };
+  const categoryLabel = (code) => ({
+    made_in_oman:T("منتج صنع في عُمان","Made-in-Oman product"),
+    local_supplier:T("مورد محلي","Local supplier"),
+    direct_import:T("استيراد مباشر","Direct import"),
+    local_service:T("خدمة محلية","Local service"),
+    foreign_service:T("خدمة أجنبية","Foreign service"),
+    omani_wages:T("رواتب العمانيين","Omani wages"),
+    non_omani_wages:T("رواتب غير العمانيين","Non-Omani wages"),
+    other:T("بند آخر","Other item")
+  })[code]||code;
   const entityLabel = (id) => { const e=byId(state.entities,id); return e ? e.name : "—"; };
   const companyLabel = (id) => { const c=byId(state.companies,id); return c ? c.name : "—"; };
   const message = (txt, kind) => { if (window.ICV && window.ICV.showMessage) window.ICV.showMessage(txt,kind||"success"); else alert(txt); };
@@ -87,7 +97,7 @@
       return '<tr><td><b>'+esc(c.title)+'</b><small class="ct-cell-sub">'+esc(c.tender_number||"—")+'</small></td>'+
         '<td>'+esc(T(t.name_ar,t.name_en))+'</td><td>'+esc(entityLabel(c.government_entity_id))+'</td>'+
         '<td>'+esc(companyLabel(c.implementing_company_id))+'</td><td><span class="ct-status">'+esc(statusLabel(c.contract_status))+'</span></td>'+
-        '<td class="ct-num">'+money(c.contract_value)+'</td><td>'+esc(dateOnly(c.end_date))+'</td>'+
+        '<td class="ct-num">'+money(c.contract_value)+(c.value_basis==="framework_ceiling"?'<small class="ct-cell-sub">'+T("سقف اتفاقية","Framework ceiling")+'</small>':c.value_basis==="not_provided"?'<small class="ct-cell-sub">'+T("قيمة غير محددة","Value not specified")+'</small>':"")+'</td><td>'+esc(dateOnly(c.end_date))+'</td>'+
         '<td><div class="ct-row-actions"><button class="btn ct-small" data-ct-action="details" data-id="'+esc(c.id)+'">'+T("تفاصيل","Details")+'</button>'+
         (canEdit()?'<button class="btn ct-small" data-ct-action="edit" data-id="'+esc(c.id)+'">'+T("تعديل","Edit")+'</button>':'')+
         (isAdmin()?'<button class="btn ct-small danger" data-ct-action="delete" data-id="'+esc(c.id)+'">'+T("حذف","Delete")+'</button>':'')+
@@ -174,7 +184,7 @@
       const d=r.report_data||{};
       const lines=state.items.filter(item=>item.report_id===r.id);
       return '<div class="ct-report-row"><div><b>'+esc(r.report_quarter+" "+r.report_year)+'</b><small>'+T("القيمة المحلية","Local content")+': '+money(d.local_content_achieved)+' '+T("ر.ع","OMR")+'</small></div><span class="ct-report-state '+(r.report_status==="approved"?"approved":"")+'">'+esc(({draft:"مسودة",submitted:"مقدم",under_review:"تحت المراجعة",approved:"معتمد",rejected:"مرفوض"}[r.report_status])||r.report_status)+'</span></div>'+
-        (lines.length?'<div class="ct-saved-lines">'+lines.map(item=>'<span>'+esc(item.category_code)+' · '+money(item.amount)+' '+T("ر.ع","OMR")+(item.company_id?' · '+esc(companyLabel(item.company_id)):"")+'</span>').join("")+'</div>':"");
+        (lines.length?'<div class="ct-saved-lines">'+lines.map(item=>'<span>'+esc(categoryLabel(item.category_code))+' · '+money(item.amount)+' '+T("ر.ع","OMR")+(item.company_id?' · '+esc(companyLabel(item.company_id)):"")+'</span>').join("")+'</div>':"");
     }).join("")||'<div class="ct-empty">'+T("لا توجد تقارير مسجلة.","No reports recorded.")+'</div>')+'</div>';
     if(state.showReportForm && state.reportContractId===id) h+=renderReportForm(id);
     h+='</section>';
@@ -354,7 +364,9 @@
         const target=row.target_annual!=null?row.target_annual:row.target_period;
         const actual=live?live.actual:null;
         const hasReference=row.workbook_actual!=null;
-        html+='<article class="ct-indicator-card"><div class="ct-indicator-top"><span class="ct-indicator-kind">'+(row.group_code==="compliance"?T("امتثال","Compliance"):T("قيمة مالية","Financial value"))+'</span><span class="ct-indicator-status '+(actual!=null&&target!=null?(actual>=target?"met":"under"):"pending")+'">'+(actual!=null&&target!=null?(actual>=target?T("حقق الهدف","Target met"):T("دون الهدف","Below target")):T("بانتظار بيانات","Awaiting data"))+'</span></div>'+
+        const badgeClass=actual==null||target==null?"pending":(actual>=target?"met":"under");
+        const badgeText=actual==null?T("بانتظار بيانات","Awaiting data"):target==null?T("لا يوجد مستهدف معتمد","No approved target"):actual>=target?T("حقق الهدف","Target met"):T("دون الهدف","Below target");
+        html+='<article class="ct-indicator-card"><div class="ct-indicator-top"><span class="ct-indicator-kind">'+(row.group_code==="compliance"?T("امتثال","Compliance"):T("قيمة مالية","Financial value"))+'</span><span class="ct-indicator-status '+badgeClass+'">'+badgeText+'</span></div>'+
           '<h4>'+esc(T(row.title_ar,row.title_en||row.title_ar))+'</h4>'+
           '<div class="ct-main-actual"><span>'+T("نتيجة المنصة الحالية","Current live result")+'</span><b>'+(actual!=null?pct(actual):"—")+'</b></div>'+
           '<div class="ct-metric-facts"><div><span>'+T("المستهدف المرحلي","Period target")+'</span><b>'+pct(row.target_period)+'</b></div><div><span>'+T("المستهدف السنوي 2026","2026 annual target")+'</span><b>'+pct(row.target_annual)+'</b></div><div><span>'+T("مرجع Excel","Excel reference")+'</span><b>'+(hasReference?pct(row.workbook_actual):T("غير متوفر","Unavailable"))+'</b></div></div>'+
@@ -489,7 +501,7 @@
         content_coefficient:coefficient,
         local_content_amount:local,
         is_sme:val("is_sme")===""?null:val("is_sme")==="true",
-        is_omani_product:val("is_omani_product")===""?null:val("is_omani_product")==="true",
+        is_omani_product:val("is_omani_product")===""?(val("category_code")==="made_in_oman"?true:null):val("is_omani_product")==="true",
         notes:null
       };
     }).filter(x=>x.category_code&&x.amount!==null&&Number.isFinite(x.amount));
