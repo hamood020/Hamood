@@ -1,0 +1,500 @@
+/* Contracts and indicator workspace. Additive UI; project pages and calculations remain untouched. */
+(() => {
+  "use strict";
+  const PAGE_ID = "page-contracts";
+  const TYPES_FALLBACK = [
+    {code:"future_cities",name_ar:"المدن المستقبلية",name_en:"Future cities",family:"project_like",sort_order:10},
+    {code:"framework_it",name_ar:"العقد الإطاري لتقنية المعلومات",name_en:"IT framework agreement",family:"framework",sort_order:20},
+    {code:"framework_vehicles",name_ar:"العقد الإطاري للمركبات",name_en:"Vehicles framework agreement",family:"framework",sort_order:30},
+    {code:"framework_trucks_equipment",name_ar:"العقد الإطاري للشاحنات والمعدات",name_en:"Trucks and equipment framework agreement",family:"framework",sort_order:40},
+    {code:"framework_student_desks",name_ar:"العقد الإطاري للأدراج الطلابية",name_en:"Student desks framework agreement",family:"framework",sort_order:50},
+    {code:"framework_school_books",name_ar:"العقد الإطاري للكتب المدرسية",name_en:"School books framework agreement",family:"framework",sort_order:60},
+    {code:"maintenance",name_ar:"عقود الصيانة",name_en:"Maintenance contracts",family:"service",sort_order:70},
+    {code:"catering",name_ar:"عقود التغذية",name_en:"Catering contracts",family:"service",sort_order:80},
+    {code:"supplies",name_ar:"التوريدات",name_en:"Supplies",family:"supply",sort_order:90}
+  ];
+  const METRIC_FALLBACK = [
+    {code:"local_content_ratio",group_code:"value",title_ar:"نسبة المحتوى المحلي من إجمالي قيمة العقود الحكومية",formula_ar:"مجموع المحتوى المحلي المحقق ÷ إجمالي قيمة العقود الداخلة في نطاق القياس × 100",scope_note_ar:"الصيغ الأصلية في Excel مكسورة (#REF!).",target_period:.17,target_annual:.25,workbook_actual:null,workbook_source_status:"missing_formula",sort_order:10},
+    {code:"omanization_compliance",group_code:"compliance",title_ar:"نسبة العقود المستوفية لمتطلبات التعمين",formula_ar:"عدد العقود المؤهلة المستوفية للتعمين ÷ عدد العقود المؤهلة قيد التنفيذ والمنتهية في 2026 × 100",scope_note_ar:"مرجع Excel: 22 من 34 عقدًا؛ القيمة مرجعية وليست نتيجة حية.",target_period:.53,target_annual:.8,workbook_actual:22/34,workbook_numerator:22,workbook_denominator:34,workbook_source_status:"available",sort_order:20},
+    {code:"sme_compliance",group_code:"compliance",title_ar:"نسبة العقود المستوفية لمتطلبات المؤسسات الصغيرة والمتوسطة",formula_ar:"عدد العقود المؤهلة المستوفية لحد الإسناد للمؤسسات الصغيرة والمتوسطة ÷ عدد العقود المؤهلة × 100",scope_note_ar:"مرجع Excel: 19 من 34 عقدًا؛ القيمة مرجعية وليست نتيجة حية.",target_period:.47,target_annual:.7,workbook_actual:19/34,workbook_numerator:19,workbook_denominator:34,workbook_source_status:"available",sort_order:30},
+    {code:"made_in_oman_compliance",group_code:"compliance",title_ar:"نسبة العقود الملتزمة بشراء المنتجات العمانية",formula_ar:"عدد المشاريع المؤهلة المستوفية لخطة المنتجات العمانية ÷ عدد المشاريع المؤهلة × 100",scope_note_ar:"مرجع Excel: 17 من 34 عقدًا؛ يجب مراجعة نطاق المقام قبل اعتماد النتيجة الحية.",target_period:.47,target_annual:.7,workbook_actual:.5,workbook_numerator:17,workbook_denominator:34,workbook_source_status:"available",sort_order:40},
+    {code:"sme_award_value",group_code:"value",title_ar:"نسبة قيمة العقود المسندة للمؤسسات الصغيرة والمتوسطة",formula_ar:"قيمة الإسناد للمؤسسات الصغيرة والمتوسطة (مباشر + من الباطن) ÷ إجمالي قيمة المشتريات والمناقصات المشمولة × 100",scope_note_ar:"لا توجد نتيجة أو مستهدفات إجمالية صالحة في Excel.",target_period:null,target_annual:null,workbook_actual:null,workbook_source_status:"missing_formula",sort_order:50},
+    {code:"sme_award_direct",parent_code:"sme_award_value",group_code:"value",title_ar:"أ) نسبة قيمة الإسناد للمؤسسات الصغيرة والمتوسطة (مباشر)",formula_ar:"قيمة الإسناد المباشر للمؤسسات الصغيرة والمتوسطة ÷ إجمالي المشتريات المباشرة المشمولة × 100",scope_note_ar:"لا توجد نتيجة أو مستهدفات لهذا الفرع في Excel.",target_period:null,target_annual:null,workbook_actual:null,workbook_source_status:"missing_formula",sort_order:51},
+    {code:"sme_award_subcontract",parent_code:"sme_award_value",group_code:"value",title_ar:"ب) نسبة قيمة الإسناد للمؤسسات الصغيرة والمتوسطة (من الباطن)",formula_ar:"قيمة عقود الباطن المسندة للمؤسسات الصغيرة والمتوسطة ÷ إجمالي قيمة عقود الباطن المشمولة × 100",scope_note_ar:"المستهدف المرحلي الظاهر في Excel هو 13% فقط.",target_period:.13,target_annual:null,workbook_actual:null,workbook_source_status:"missing_formula",sort_order:52},
+    {code:"local_product_purchase_share",group_code:"value",title_ar:"نسبة مشتريات المنتج المحلي من إجمالي المشتريات الحكومية",formula_ar:"قيمة مشتريات المنتجات المحلية ÷ إجمالي المشتريات الحكومية أو المشتريات ذات الصلة بالعقود × 100",scope_note_ar:"الصيغ الأصلية في Excel مكسورة (#REF!).",target_period:.07,target_annual:.1,workbook_actual:null,workbook_source_status:"missing_formula",sort_order:60}
+  ];
+
+  const state = {
+    tab:"registry", loaded:false, loading:false, error:"", editing:null, selectedId:null,
+    search:"", typeFilter:"", statusFilter:"", types:TYPES_FALLBACK, records:[],
+    participants:[], reports:[], items:[], indicators:METRIC_FALLBACK, entities:[], companies:[],
+    showForm:false, showReportForm:false, reportContractId:null
+  };
+  const root = () => document.getElementById(PAGE_ID);
+  const client = () => window.__icvAccessClient;
+  const profile = () => window.__icvProfile || {};
+  const canEdit = () => !!(window.ICV && window.ICV.canEdit && window.ICV.canEdit(profile()));
+  const isAdmin = () => profile().role === "admin";
+  const en = () => (window.ICVLanguage && window.ICVLanguage.get ? window.ICVLanguage.get()==="en" : localStorage.getItem("icv-ui-language")==="en");
+  const T = (ar, english) => en() ? (english || ar) : ar;
+  const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const n = (v) => { const z = Number(v); return Number.isFinite(z) ? z : 0; };
+  const present = (v) => v !== null && v !== undefined && v !== "" && Number.isFinite(Number(v));
+  const money = (v) => present(v) ? n(v).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:3}) : "—";
+  const pct = (v) => v === null || v === undefined || !Number.isFinite(Number(v)) ? "—" : (n(v)*100).toLocaleString("en-US",{maximumFractionDigits:1})+"%";
+  const dateOnly = (v) => v ? String(v).slice(0,10) : "—";
+  const byId = (arr,id) => arr.find(x=>x.id===id);
+  const typeOf = (code) => state.types.find(x=>x.code===code) || TYPES_FALLBACK.find(x=>x.code===code) || {code:code,name_ar:code,name_en:code,family:"supply"};
+  const typeLabel = (code) => { const t=typeOf(code); return T(t.name_ar,t.name_en); };
+  const entityLabel = (id) => { const e=byId(state.entities,id); return e ? e.name : "—"; };
+  const companyLabel = (id) => { const c=byId(state.companies,id); return c ? c.name : "—"; };
+  const message = (txt, kind) => { if (window.ICV && window.ICV.showMessage) window.ICV.showMessage(txt,kind||"success"); else alert(txt); };
+  const statusLabel = (s) => ({ "مسند":T("مسند","Assigned"),"قيد التنفيذ":T("قيد التنفيذ","In progress"),"منتهي":T("منتهي","Completed"),"متعثر":T("متعثر","Stalled"),"مسودة":T("مسودة","Draft") })[s] || s || "—";
+
+  function render() {
+    const el=root(); if(!el) return;
+    if(state.loading) { el.innerHTML='<div class="panel"><div class="muted">'+T("جارٍ تحميل بيانات العقود والمؤشرات...","Loading contracts and indicators...")+'</div></div>'; return; }
+    if(state.error) {
+      el.innerHTML='<section class="panel ct-error"><div class="ct-error-icon">!</div><h2>'+T("قسم العقود غير جاهز بعد","Contracts module is not ready")+'</h2><p>'+esc(state.error)+'</p><p class="muted">'+T("هذه الرسالة تعني أن ترحيل قاعدة البيانات الإضافي غير مطبق بعد. لم يتم تغيير جداول المشاريع الحالية.","This means the additive database migration has not been applied yet. Existing project tables remain untouched.")+'</p><button class="btn" data-ct-action="retry">'+T("إعادة المحاولة","Retry")+'</button></section>';
+      addStyle(); return;
+    }
+    const count=state.records.length;
+    const total=state.records.reduce((a,c)=>a+n(c.contract_value),0);
+    const active=state.records.filter(c=>c.contract_status==="قيد التنفيذ").length;
+    const near=state.records.filter(c=>c.end_date && new Date(c.end_date+"T00:00:00")>=new Date() && new Date(c.end_date+"T00:00:00")<=new Date(Date.now()+30*86400000)).length;
+    el.innerHTML =
+      '<div class="ct-shell">'+
+        '<div class="ct-hero"><div><div class="ct-eyebrow">'+T("توسعة مستقلة عن المشاريع الإنمائية","An isolated extension to development projects")+'</div><h1>'+T("المشاريع والعقود","Projects & Contracts")+'</h1><p>'+T("سجل مستقل لأنواع العقود المختلفة، مع الاحتفاظ بنماذج المشاريع الإنمائية والتقارير الحالية كما هي.","Separate register for different contract types while leaving the existing development-project workflow intact.")+'</p></div><div class="ct-hero-actions"><button class="btn ct-secondary" data-ct-action="refresh">↻ '+T("تحديث البيانات","Refresh data")+'</button>'+(canEdit()?'<button class="btn primary" data-ct-action="add">＋ '+T("إضافة سجل","Add record")+'</button>':'')+'</div></div>'+
+        '<div class="ct-safeguard"><strong>ⓘ '+T("حدود التغيير","Change boundary")+'</strong><span>'+T("هذه الصفحة تستخدم جداول العقود الجديدة فقط. لا تعدّل جدول projects ولا تقرأ تقارير المشاريع بغرض الكتابة عليها.","This page only writes to the new contract tables. It does not modify the projects table or existing project reports.")+'</span></div>'+
+        '<div class="ct-kpis">'+
+          '<div class="ct-kpi"><span>'+T("سجلات العقود","Contract records")+'</span><b>'+count.toLocaleString("en-US")+'</b><small>'+T("لا تشمل العقود الإطارية المكررة حسب الجهة","Frameworks are counted once")+'</small></div>'+
+          '<div class="ct-kpi"><span>'+T("قيمة العقود المسجلة","Registered contract value")+'</span><b>'+money(total)+' <small>'+T("ر.ع","OMR")+'</small></b><small>'+T("القيم غير المدخلة لا تدخل الإجمالي","Missing values are excluded")+'</small></div>'+
+          '<div class="ct-kpi"><span>'+T("قيد التنفيذ","In progress")+'</span><b>'+active.toLocaleString("en-US")+'</b><small>'+T("حسب حالة سجل العقد","By contract status")+'</small></div>'+
+          '<div class="ct-kpi"><span>'+T("تنتهي خلال 30 يومًا","Ending in 30 days")+'</span><b>'+near.toLocaleString("en-US")+'</b><small>'+T("من السجلات ذات تاريخ انتهاء معروف","Known end dates only")+'</small></div>'+
+        '</div>'+
+        '<div class="ct-tabs"><button class="'+(state.tab==="registry"?"active":"")+'" data-ct-tab="registry">'+T("سجل العقود","Contract register")+'</button><button class="'+(state.tab==="indicators"?"active":"")+'" data-ct-tab="indicators">'+T("مؤشرات Excel","Workbook indicators")+'</button></div>'+
+        (state.tab==="registry" ? renderRegistry() : renderIndicators())+
+      '</div>';
+    addStyle();
+  }
+
+  function renderRegistry() {
+    const filtered=filteredRecords();
+    const listRows=filtered.map(c=>{
+      const t=typeOf(c.contract_type_code);
+      return '<tr><td><b>'+esc(c.title)+'</b><small class="ct-cell-sub">'+esc(c.tender_number||"—")+'</small></td>'+
+        '<td>'+esc(T(t.name_ar,t.name_en))+'</td><td>'+esc(entityLabel(c.government_entity_id))+'</td>'+
+        '<td>'+esc(companyLabel(c.implementing_company_id))+'</td><td><span class="ct-status">'+esc(statusLabel(c.contract_status))+'</span></td>'+
+        '<td class="ct-num">'+money(c.contract_value)+'</td><td>'+esc(dateOnly(c.end_date))+'</td>'+
+        '<td><div class="ct-row-actions"><button class="btn ct-small" data-ct-action="details" data-id="'+esc(c.id)+'">'+T("تفاصيل","Details")+'</button>'+
+        (canEdit()?'<button class="btn ct-small" data-ct-action="edit" data-id="'+esc(c.id)+'">'+T("تعديل","Edit")+'</button>':'')+
+        (isAdmin()?'<button class="btn ct-small danger" data-ct-action="delete" data-id="'+esc(c.id)+'">'+T("حذف","Delete")+'</button>':'')+
+        '</div></td></tr>';
+    }).join("");
+    const options=state.types.map(t=>'<option value="'+esc(t.code)+'" '+(state.typeFilter===t.code?"selected":"")+'>'+esc(T(t.name_ar,t.name_en))+'</option>').join("");
+    let html='<section class="panel ct-panel"><div class="ct-panel-head"><div><h2>'+T("سجل المشاريع والعقود الأخرى","Other projects and contracts")+'</h2><p class="muted">'+T("العقد الإطاري يظهر مرة واحدة؛ الجهات والموردون المسجلون تحته في شاشة التفاصيل.","A framework agreement appears once; its beneficiary entities and suppliers are managed in Details.")+'</p></div><span class="ct-count">'+filtered.length+' / '+state.records.length+'</span></div>'+
+      '<div class="ct-filters"><input id="ct-search" class="search" placeholder="'+T("بحث بالاسم أو رقم المناقصة أو الجهة","Search title, tender or entity")+'" value="'+esc(state.search)+'"/>'+
+      '<select id="ct-type-filter" class="ct-select"><option value="">'+T("كل أنواع العقود","All contract types")+'</option>'+options+'</select>'+
+      '<select id="ct-status-filter" class="ct-select"><option value="">'+T("كل الحالات","All statuses")+'</option>'+["مسند","قيد التنفيذ","منتهي","متعثر","مسودة"].map(s=>'<option '+(state.statusFilter===s?"selected":"")+'>'+s+'</option>').join("")+'</select>'+
+      '<button class="btn" data-ct-action="clear-filter">'+T("مسح الفلاتر","Clear filters")+'</button></div>'+
+      '<div class="table-wrap"><table class="ct-table"><thead><tr><th>'+T("العقد / رقم المناقصة","Contract / Tender")+'</th><th>'+T("النوع","Type")+'</th><th>'+T("الجهة","Entity")+'</th><th>'+T("الشركة / المورد","Company / Supplier")+'</th><th>'+T("الحالة","Status")+'</th><th>'+T("القيمة (ر.ع)","Value (OMR)")+'</th><th>'+T("الانتهاء","End date")+'</th><th>'+T("الإجراءات","Actions")+'</th></tr></thead><tbody id="ct-results-body">'+(listRows||'<tr><td colspan="8" class="ct-empty">'+T("لا توجد سجلات مطابقة. أضف سجلًا جديدًا أو غيّر عوامل التصفية.","No matching records. Add a record or adjust filters.")+'</td></tr>')+'</tbody></table></div></section>';
+    if(state.showForm) html+=renderContractForm();
+    if(state.selectedId) html+=renderDetails(state.selectedId);
+    return html;
+  }
+
+  function filteredRecords() {
+    let rows=state.records.slice();
+    if(state.typeFilter) rows=rows.filter(x=>x.contract_type_code===state.typeFilter);
+    if(state.statusFilter) rows=rows.filter(x=>x.contract_status===state.statusFilter);
+    const q=state.search.trim().toLowerCase();
+    if(q) rows=rows.filter(c=>[c.title,c.tender_number,entityLabel(c.government_entity_id),companyLabel(c.implementing_company_id),typeLabel(c.contract_type_code)].some(v=>String(v||"").toLowerCase().includes(q)));
+    return rows.sort((a,b)=>String(a.title).localeCompare(String(b.title),"ar"));
+  }
+
+  function optionList(items, selected, includeBlank, blankLabel) {
+    return (includeBlank?'<option value="">'+esc(blankLabel||"—")+'</option>':"")+items.map(x=>'<option value="'+esc(x.id)+'" '+(x.id===selected?"selected":"")+'>'+esc(x.name)+'</option>').join("");
+  }
+  function detailFields(code, details) {
+    details=details||{};
+    const add=(key,label,value,help)=>'<label class="ct-field"><span>'+label+'</span><input name="detail_'+key+'" value="'+esc(value||"")+'" />'+(help?'<small>'+help+'</small>':"")+'</label>';
+    if(code==="future_cities") return add("scope","نطاق / مرحلة المشروع",details.scope,"يخص هذا النوع ولا يغيّر نموذج المشاريع الإنمائية الحالي.")+add("location","الموقع أو المدينة",details.location,"");
+    if(code.indexOf("framework_")===0) return add("framework_period","مدة / فترة الاتفاقية",details.framework_period,"")+add("goods_scope","فئة التوريد",details.goods_scope,"");
+    if(code==="maintenance"||code==="catering") return add("service_scope","نطاق الخدمة",details.service_scope,"")+add("workforce_notes","ملاحظات القوى العاملة",details.workforce_notes,"");
+    if(code==="supplies") return add("items_description","وصف التوريدات",details.items_description,"")+add("origin_requirement","متطلب المنشأ المحلي",details.origin_requirement,"")+add("company_type","نوع الشركة",details.company_type,"");
+    return add("item_description","وصف المجال / البند",details.item_description,"");
+  }
+
+  function renderContractForm() {
+    const c=state.editing||{};
+    const code=c.contract_type_code||state.types[0]?.code||"supplies";
+    const d=c.details||{};
+    return '<section class="panel ct-form-panel"><div class="ct-panel-head"><div><h2>'+(c.id?T("تعديل سجل العقد","Edit contract"):T("إضافة عقد أو مشروع آخر","Add contract or other project"))+'</h2><p class="muted">'+T("يُحفظ السجل في جداول العقود الجديدة فقط. الحقول الإضافية تتغير حسب النوع.","This record is saved only in the new contracts tables. Extra fields depend on the selected type.")+'</p></div><button class="btn" data-ct-action="cancel-form">× '+T("إلغاء","Cancel")+'</button></div>'+
+    '<form id="ct-contract-form"><div class="ct-form-grid">'+
+      '<label class="ct-field"><span>'+T("نوع السجل","Record type")+' *</span><select name="contract_type_code" id="ct-form-type" required>'+state.types.map(t=>'<option value="'+esc(t.code)+'" '+(code===t.code?"selected":"")+'>'+esc(T(t.name_ar,t.name_en))+'</option>').join("")+'</select></label>'+
+      '<label class="ct-field ct-wide"><span>'+T("اسم العقد / المشروع","Contract / project title")+' *</span><input name="title" required value="'+esc(c.title||"")+'" maxlength="400"/></label>'+
+      '<label class="ct-field"><span>'+T("رقم المناقصة","Tender number")+'</span><input name="tender_number" value="'+esc(c.tender_number||"")+'"/></label>'+
+      '<label class="ct-field"><span>'+T("الجهة الحكومية","Government entity")+'</span><select name="government_entity_id">'+optionList(state.entities,c.government_entity_id,true,T("عقد متعدد الجهات / غير محدد","Multi-entity / not specified"))+'</select></label>'+
+      '<label class="ct-field"><span>'+T("الشركة المنفذة / المورد الرئيسي","Implementer / main supplier")+'</span><select name="implementing_company_id">'+optionList(state.companies,c.implementing_company_id,true,T("عدة موردين / غير محدد","Multiple suppliers / not specified"))+'</select></label>'+
+      '<label class="ct-field"><span>'+T("الاستشاري","Consultant")+'</span><input name="consultant" value="'+esc(c.consultant||"")+'"/></label>'+
+      '<label class="ct-field"><span>'+T("قطاع العمل / المجال","Sector / field")+'</span><input name="sector" value="'+esc(c.sector||"")+'"/></label>'+
+      '<label class="ct-field"><span>'+T("حالة العقد","Contract status")+'</span><select name="contract_status">'+["مسند","قيد التنفيذ","منتهي","متعثر","مسودة"].map(s=>'<option '+((c.contract_status||"مسند")===s?"selected":"")+'>'+s+'</option>').join("")+'</select></label>'+
+      '<label class="ct-field"><span>'+T("قيمة العقد (ر.ع)","Contract value (OMR)")+'</span><input name="contract_value" type="number" min="0" step="0.001" value="'+esc(c.contract_value??"")+'"/></label>'+
+      '<label class="ct-field"><span>'+T("طبيعة القيمة","Value basis")+'</span><select name="value_basis">'+[['contract_value','قيمة العقد'],['framework_ceiling','سقف اتفاقية إطارية'],['not_provided','غير متوفرة']].map(a=>'<option value="'+a[0]+'" '+((c.value_basis||"contract_value")===a[0]?"selected":"")+'>'+T(a[1],({"contract_value":"Contract value","framework_ceiling":"Framework ceiling","not_provided":"Not provided"}[a[0]]))+'</option>').join("")+'</select></label>'+
+      '<label class="ct-field"><span>'+T("الصرف الفعلي حتى الآن (ر.ع)","Spend to date (OMR)")+'</span><input name="current_spend" type="number" min="0" step="0.001" value="'+esc(c.current_spend??"")+'"/></label>'+
+      '<label class="ct-field"><span>'+T("تاريخ البدء","Start date")+'</span><input name="start_date" type="date" value="'+esc(c.start_date||"")+'"/></label>'+
+      '<label class="ct-field"><span>'+T("تاريخ الانتهاء الحالي","Current end date")+'</span><input name="end_date" type="date" value="'+esc(c.end_date||"")+'"/></label>'+
+      '<label class="ct-field"><span>'+T("تاريخ الانتهاء الأصلي","Original end date")+'</span><input name="original_end_date" type="date" value="'+esc(c.original_end_date||c.end_date||"")+'"/></label>'+
+      '<label class="ct-field"><span>'+T("خطة المحتوى المحلي","Local content plan")+'</span><select name="has_local_content_plan"><option value="">'+T("غير محدد","Not specified")+'</option><option value="true" '+(c.has_local_content_plan===true?"selected":"")+'>'+T("نعم","Yes")+'</option><option value="false" '+(c.has_local_content_plan===false?"selected":"")+'>'+T("لا","No")+'</option></select></label>'+
+      '<label class="ct-field"><span>'+T("نوع الشركة (للتوريدات)","Company type (supplies)")+'</span><input name="company_type" value="'+esc(c.company_type||"")+'"/></label>'+
+      '<label class="ct-field"><span>'+T("نوع المناقصة","Tender type")+'</span><input name="tender_type" value="'+esc(c.tender_type||"")+'"/></label>'+
+      '<div class="ct-form-divider ct-wide"><b>'+T("حقول خاصة بنوع السجل","Type-specific fields")+'</b><p class="muted">'+T("لا تؤثر هذه الحقول في الجداول أو الحسابات الخاصة بالمشاريع الإنمائية.","These fields do not affect development project tables or calculations.")+'</p></div>'+
+      detailFields(code,d)+
+      '<label class="ct-field ct-wide"><span>'+T("ملاحظات","Notes")+'</span><textarea name="notes" rows="3">'+esc((d.notes)||"")+'</textarea></label>'+
+    '</div><div class="ct-form-actions"><button class="btn primary" type="submit">'+T("حفظ السجل","Save record")+'</button><button class="btn" type="button" data-ct-action="cancel-form">'+T("إلغاء","Cancel")+'</button></div></form></section>';
+  }
+
+  function renderDetails(id) {
+    const c=byId(state.records,id); if(!c) return "";
+    const ps=state.participants.filter(p=>p.contract_id===id);
+    const rs=state.reports.filter(r=>r.contract_id===id).sort((a,b)=>String(b.report_year).localeCompare(String(a.report_year))||String(b.report_quarter).localeCompare(String(a.report_quarter))||String(b.created_at).localeCompare(String(a.created_at)));
+    const framework=typeOf(c.contract_type_code).family==="framework";
+    let h='<section class="panel ct-detail-panel"><div class="ct-panel-head"><div><h2>'+esc(c.title)+'</h2><p class="muted">'+esc(typeLabel(c.contract_type_code))+' · '+esc(c.tender_number||"—")+'</p></div><button class="btn" data-ct-action="close-details">× '+T("إغلاق التفاصيل","Close details")+'</button></div>'+
+      '<div class="ct-detail-grid"><div><span>'+T("الجهة","Entity")+'</span><b>'+esc(entityLabel(c.government_entity_id))+'</b></div><div><span>'+T("الشركة","Company")+'</span><b>'+esc(companyLabel(c.implementing_company_id))+'</b></div><div><span>'+T("قيمة العقد","Contract value")+'</span><b>'+money(c.contract_value)+' '+T("ر.ع","OMR")+'</b></div><div><span>'+T("الصرف","Spend")+'</span><b>'+money(c.current_spend)+' '+T("ر.ع","OMR")+'</b></div></div>';
+    if(framework) {
+      h+='<div class="ct-subhead"><div><h3>'+T("الجهات المستفيدة والموردون","Beneficiaries and suppliers")+'</h3><p class="muted">'+T("يُسجّل العقد الإطاري مرة واحدة، ثم صف لكل جهة مستفيدة ومورد ومبلغها.","Store the framework once, then a row for each beneficiary, supplier and value.")+'</p></div></div>';
+      h+='<div class="table-wrap"><table class="ct-table"><thead><tr><th>'+T("الجهة","Entity")+'</th><th>'+T("المورد","Supplier")+'</th><th>'+T("القيمة المسندة","Awarded value")+'</th><th>'+T("الصرف","Spend")+'</th><th>'+T("الحالة","Status")+'</th>'+(isAdmin()?'<th></th>':"")+'</tr></thead><tbody>'+
+      (ps.map(p=>'<tr><td>'+esc(entityLabel(p.government_entity_id))+'</td><td>'+esc(companyLabel(p.company_id))+'</td><td class="ct-num">'+money(p.assigned_value)+'</td><td class="ct-num">'+money(p.spend_amount)+'</td><td>'+esc(p.status||"—")+'</td>'+(isAdmin()?'<td><button class="btn ct-small danger" data-ct-action="delete-participation" data-id="'+esc(p.id)+'">'+T("حذف","Delete")+'</button></td>':"")+'</tr>').join("")||'<tr><td colspan="6" class="ct-empty">'+T("لم تتم إضافة جهات أو موردين بعد.","No beneficiary entities or suppliers have been added yet.")+'</td></tr>')+'</tbody></table></div>';
+      if(canEdit()) h+='<form id="ct-participation-form" class="ct-inline-form"><input type="hidden" name="contract_id" value="'+esc(id)+'"/><label class="ct-field"><span>'+T("الجهة المستفيدة","Beneficiary entity")+'</span><select name="government_entity_id" required>'+optionList(state.entities,"",false)+'</select></label><label class="ct-field"><span>'+T("المورد","Supplier")+'</span><select name="company_id">'+optionList(state.companies,"",true,T("غير محدد","Not specified"))+'</select></label><label class="ct-field"><span>'+T("القيمة المسندة","Awarded value")+'</span><input name="assigned_value" type="number" min="0" step=".001"/></label><label class="ct-field"><span>'+T("الصرف","Spend")+'</span><input name="spend_amount" type="number" min="0" step=".001"/></label><button class="btn primary" type="submit">'+T("إضافة الجهة / المورد","Add entity / supplier")+'</button></form>';
+    }
+    h+='<div class="ct-subhead"><div><h3>'+T("التقارير والبيانات المعتمدة","Reports and approved data")+'</h3><p class="muted">'+T("المؤشرات الرسمية تعتمد فقط على التقارير المعتمدة. البيانات غير المعتمدة لا تُحسب كإنجاز رسمي.","Official indicators use approved reports only. Unapproved reports are not counted as achieved performance.")+'</p></div>'+(canEdit()?'<button class="btn primary" data-ct-action="add-report" data-id="'+esc(id)+'">＋ '+T("إضافة تقرير","Add report")+'</button>':"")+'</div>';
+    h+='<div class="ct-report-list">'+(rs.map(r=>{
+      const d=r.report_data||{};
+      return '<div class="ct-report-row"><div><b>'+esc(r.report_quarter+" "+r.report_year)+'</b><small>'+T("القيمة المحلية","Local content")+': '+money(d.local_content_achieved)+' '+T("ر.ع","OMR")+'</small></div><span class="ct-report-state '+(r.report_status==="approved"?"approved":"")+'">'+esc(({draft:"مسودة",submitted:"مقدم",under_review:"تحت المراجعة",approved:"معتمد",rejected:"مرفوض"}[r.report_status])||r.report_status)+'</span></div>';
+    }).join("")||'<div class="ct-empty">'+T("لا توجد تقارير مسجلة.","No reports recorded.")+'</div>')+'</div>';
+    if(state.showReportForm && state.reportContractId===id) h+=renderReportForm(id);
+    h+='</section>';
+    return h;
+  }
+
+  function renderReportForm(id) {
+    const input=(name,label,type,value,step)=>'<label class="ct-field"><span>'+label+'</span><input name="'+name+'" type="'+type+'" '+(step?'step="'+step+'"':"")+' '+(type==="number"?'min="0"':"")+' value="'+esc(value??"")+'"/></label>';
+    const flag=(name,label)=>'<label class="ct-field"><span>'+label+'</span><select name="'+name+'"><option value="">'+T("غير مقيم","Not assessed")+'</option><option value="true">'+T("مستوفٍ","Compliant")+'</option><option value="false">'+T("غير مستوفٍ","Not compliant")+'</option></select></label>';
+    const statuses=[["draft","مسودة"],["submitted","مقدم"],["under_review","تحت المراجعة"]];
+    if(isAdmin()) statuses.push(["approved","معتمد"]);
+    return '<div class="ct-report-form"><h3>'+T("بيانات التقرير","Report data")+'</h3><p class="muted">'+T("أدخل القيم المتاحة فقط. لا يُستخدم أي معامل للمحتوى المحلي تلقائيًا؛ أدخل مبلغ المحتوى المحلي المحقق صراحةً. المعاملات غير المعتمدة تبقى فارغة.","Enter known data only. No local-content coefficient is applied automatically; enter achieved local content explicitly. Unapproved coefficients remain blank.")+'</p>'+
+      '<form id="ct-report-form"><input type="hidden" name="contract_id" value="'+esc(id)+'"/><div class="ct-form-grid">'+
+      input("report_year",T("السنة","Year"),"number",new Date().getFullYear(),"1")+
+      '<label class="ct-field"><span>'+T("الفترة","Period")+'</span><select name="report_quarter"><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option><option>ANNUAL</option></select></label>'+
+      '<label class="ct-field"><span>'+T("الحالة","Status")+'</span><select name="report_status">'+statuses.map(x=>'<option value="'+x[0]+'">'+T(x[1],({"draft":"Draft","submitted":"Submitted","under_review":"Under review","approved":"Approved"}[x[0]]))+'</option>').join("")+'</select></label>'+
+      '<div class="ct-form-divider ct-wide"><b>'+T("العمالة والرواتب","Workforce and wages")+'</b></div>'+
+      input("workforce_omani",T("عدد العمانيين","Omani workforce"),"number","","1")+
+      input("workforce_non_omani",T("عدد غير العمانيين","Non-Omani workforce"),"number","","1")+
+      input("omani_wages",T("رواتب العمانيين (ر.ع)","Omani wages (OMR)"),"number","","0.001")+
+      input("non_omani_wages",T("رواتب غير العمانيين (ر.ع)","Non-Omani wages (OMR)"),"number","","0.001")+
+      flag("omanization_compliant",T("استيفاء التعمين","Omanization compliant"))+
+      flag("sme_compliant",T("استيفاء متطلبات SME","SME requirement compliant"))+
+      flag("made_in_oman_compliant",T("استيفاء المنتجات العمانية","Made-in-Oman compliant"))+
+      '<div class="ct-form-divider ct-wide"><b>'+T("القيم المالية للمؤشرات","Financial indicator inputs")+'</b></div>'+
+      input("local_content_achieved",T("المحتوى المحلي المحقق (ر.ع)","Achieved local content (OMR)"),"number","","0.001")+
+      input("direct_procurement_total",T("إجمالي المشتريات المباشرة المشمولة","Covered direct procurement value"),"number","","0.001")+
+      input("direct_sme_awards",T("إسناد مباشر لـ SME","Direct SME awards"),"number","","0.001")+
+      input("subcontract_procurement_total",T("إجمالي عقود الباطن المشمولة","Covered subcontract value"),"number","","0.001")+
+      input("subcontract_sme_awards",T("إسناد من الباطن لـ SME","SME subcontract awards"),"number","","0.001")+
+      input("local_product_purchase",T("قيمة المنتجات المحلية المشتراة","Local products purchased"),"number","","0.001")+
+      input("total_government_purchases",T("إجمالي المشتريات الحكومية المشمولة","Covered government purchases"),"number","","0.001")+
+      '</div><div class="ct-form-actions"><button class="btn primary" type="submit">'+T("حفظ التقرير","Save report")+'</button><button class="btn" type="button" data-ct-action="cancel-report">'+T("إلغاء","Cancel")+'</button></div></form></div>';
+  }
+
+  function indicatorLive(code) {
+    const projects=Array.isArray(window.projects)?window.projects:[];
+    const contracts=state.records;
+    const approved=latestApprovedReports();
+    const reportByContract=new Map(approved.map(r=>[r.contract_id,r]));
+    const ends2026=(x)=>x.end_date && String(x.end_date).slice(0,4)==="2026";
+    const active=(x)=>["قيد التنفيذ","In progress","in_progress"].includes(x.contract_status||x.project_status);
+    const projectScope=projects.filter(p=>ends2026(p)&&active(p));
+    const serviceScope=contracts.filter(c=>(c.contract_type_code==="maintenance"||c.contract_type_code==="catering")&&ends2026(c)&&active(c));
+    if(code==="omanization_compliance"||code==="sme_compliance") {
+      const field=code==="omanization_compliance"?"omanization_status":"sme_10_status";
+      const rows=projectScope.map(p=>({ok:compliant(p[field])}));
+      serviceScope.forEach(c=>{const d=(reportByContract.get(c.id)||{}).report_data||{}; rows.push({ok:d[code==="omanization_compliance"?"omanization_compliant":"sme_compliant"]===true});});
+      return rows.length?{actual:rows.filter(x=>x.ok).length/rows.length,num:rows.filter(x=>x.ok).length,den:rows.length}:null;
+    }
+    if(code==="made_in_oman_compliance") {
+      const rows=projectScope.map(p=>({ok:compliant(p.made_in_oman_status)}));
+      return rows.length?{actual:rows.filter(x=>x.ok).length/rows.length,num:rows.filter(x=>x.ok).length,den:rows.length}:null;
+    }
+    const contracts2026=contracts.filter(c=>(!c.start_date||String(c.start_date).slice(0,4)<="2026")&&(!c.end_date||String(c.end_date).slice(0,4)>="2026"));
+    const contractReports=contracts2026.map(c=>({c,r:reportByContract.get(c.id)})).filter(x=>x.r&&x.r.report_data);
+    if(code==="local_content_ratio") {
+      let denominator=0,numerator=0,found=false;
+      projects.filter(p=>(!p.start_date||String(p.start_date).slice(0,4)<="2026")&&(!p.end_date||String(p.end_date).slice(0,4)>="2026")).forEach(p=>{
+        if(p.total_project_value!=null){denominator+=n(p.total_project_value); if(p.total_local_content!=null){numerator+=n(p.total_local_content);found=true;}}
+      });
+      contractReports.forEach(x=>{if(x.c.contract_value!=null){denominator+=n(x.c.contract_value);if(x.r.report_data.local_content_achieved!=null){numerator+=n(x.r.report_data.local_content_achieved);found=true;}}});
+      return denominator>0&&found?{actual:numerator/denominator,num:numerator,den:denominator}:null;
+    }
+    if(code==="sme_award_direct"||code==="sme_award_subcontract"||code==="sme_award_value") {
+      let directSME=0,directTotal=0,subSME=0,subTotal=0,has=false;
+      contractReports.forEach(x=>{
+        const d=x.r.report_data||{};
+        ["direct_sme_awards","direct_procurement_total","subcontract_sme_awards","subcontract_procurement_total"].forEach(k=>{if(d[k]!==undefined&&d[k]!==null&&d[k]!=="")has=true;});
+        directSME+=n(d.direct_sme_awards); directTotal+=n(d.direct_procurement_total);
+        subSME+=n(d.subcontract_sme_awards); subTotal+=n(d.subcontract_procurement_total);
+      });
+      if(code==="sme_award_direct") return directTotal>0?{actual:directSME/directTotal,num:directSME,den:directTotal}:null;
+      if(code==="sme_award_subcontract") return subTotal>0?{actual:subSME/subTotal,num:subSME,den:subTotal}:null;
+      const den=directTotal+subTotal,num=directSME+subSME;
+      return den>0?{actual:num/den,num:num,den:den}:null;
+    }
+    if(code==="local_product_purchase_share") {
+      let local=0,total=0,has=false;
+      contractReports.forEach(x=>{const d=x.r.report_data||{}; if(d.local_product_purchase!=null||d.total_government_purchases!=null)has=true;local+=n(d.local_product_purchase);total+=n(d.total_government_purchases);});
+      projects.forEach(p=>{ if(p.actual_made_in_oman!=null||p.total_spend!=null){has=true;local+=n(p.actual_made_in_oman);total+=n(p.total_spend);} });
+      return has&&total>0?{actual:local/total,num:local,den:total}:null;
+    }
+    return null;
+  }
+  function compliant(v) { return ["مستوفي","مستوفٍ","متوافق","compliant","Met","مستوف"].includes(String(v||"").trim()); }
+  function latestApprovedReports() {
+    const map=new Map();
+    state.reports.filter(r=>r.report_status==="approved").sort((a,b)=>
+      String(a.report_year).localeCompare(String(b.report_year))||
+      String(a.report_quarter).localeCompare(String(b.report_quarter))||
+      String(a.updated_at||a.created_at).localeCompare(String(b.updated_at||b.created_at))
+    ).forEach(r=>map.set(r.contract_id,r));
+    return Array.from(map.values());
+  }
+  function renderIndicators() {
+    const groups = [
+      {title:T("المحتوى المحلي والمشتريات","Local content and purchases"),codes:["local_content_ratio","sme_award_value","sme_award_direct","sme_award_subcontract","local_product_purchase_share"]},
+      {title:T("مؤشرات الامتثال","Compliance indicators"),codes:["omanization_compliance","sme_compliance","made_in_oman_compliance"]}
+    ];
+    let html='<section class="ct-panel"><div class="ct-panel-head"><div><h2>'+T("مؤشرات الأداء الواردة في ملف Excel","Performance indicators from the Excel workbook")+'</h2><p class="muted">'+T("تظهر أهداف 2026 والمرجع التاريخي، وتُحسب النتيجة الحية من البيانات المعتمدة عند توفرها. المرجع ليس نتيجة حية.","2026 targets and the historical reference are shown separately. Live results use approved data when available.")+'</p></div></div>'+
+      '<div class="ct-indicator-warning"><b>'+T("ملاحظة مهمة","Important note")+'</b><span>'+T("مؤشرا المحتوى المحلي الكلي ومشتريات المنتجات المحلية يحتويان #REF! في المصنف، لذلك لم نضع قيمة فعلية بديلة. كما أن نطاق مؤشر المنتجات العمانية يحتاج تأكيدًا لأن المقام في Excel (34) قد لا يطابق عنوان المؤشر.","The workbook has #REF! for the total local-content and local-product-purchase formulas, so no substitute actual is invented. The Made-in-Oman KPI scope also needs confirmation because the workbook denominator (34) may not match its title.")+'</span></div>';
+    groups.forEach(g=>{
+      html+='<h3 class="ct-group-title">'+g.title+'</h3><div class="ct-indicator-grid">';
+      g.codes.forEach(code=>{
+        const row=state.indicators.find(x=>x.code===code)||METRIC_FALLBACK.find(x=>x.code===code); if(!row)return;
+        const live=indicatorLive(code);
+        const target=row.target_annual!=null?row.target_annual:row.target_period;
+        const actual=live?live.actual:null;
+        const hasReference=row.workbook_actual!=null;
+        html+='<article class="ct-indicator-card"><div class="ct-indicator-top"><span class="ct-indicator-kind">'+(row.group_code==="compliance"?T("امتثال","Compliance"):T("قيمة مالية","Financial value"))+'</span><span class="ct-indicator-status '+(actual!=null&&target!=null?(actual>=target?"met":"under"):"pending")+'">'+(actual!=null&&target!=null?(actual>=target?T("حقق الهدف","Target met"):T("دون الهدف","Below target")):T("بانتظار بيانات","Awaiting data"))+'</span></div>'+
+          '<h4>'+esc(T(row.title_ar,row.title_en||row.title_ar))+'</h4>'+
+          '<div class="ct-main-actual"><span>'+T("نتيجة المنصة الحالية","Current live result")+'</span><b>'+(actual!=null?pct(actual):"—")+'</b></div>'+
+          '<div class="ct-metric-facts"><div><span>'+T("المستهدف المرحلي","Period target")+'</span><b>'+pct(row.target_period)+'</b></div><div><span>'+T("المستهدف السنوي 2026","2026 annual target")+'</span><b>'+pct(row.target_annual)+'</b></div><div><span>'+T("مرجع Excel","Excel reference")+'</span><b>'+(hasReference?pct(row.workbook_actual):T("غير متوفر","Unavailable"))+'</b></div></div>'+
+          (live?'<div class="ct-live-ratio">'+T("البسط / المقام الحالي","Current numerator / denominator")+': <b>'+money(live.num)+' / '+money(live.den)+'</b></div>':"")+
+          '<div class="ct-formula"><b>'+T("المعادلة","Formula")+'</b><p>'+esc(T(row.formula_ar,row.formula_en||row.formula_ar))+'</p></div>'+
+          '<p class="ct-metric-note">'+esc(row.scope_note_ar||"")+'</p></article>';
+      });
+      html+='</div>';
+    });
+    html+='<section class="panel ct-reference-table"><h3>'+T("مرجع Excel الأصلي","Original Excel reference")+'</h3><p class="muted">'+T("القيم 64.7% و55.9% و50% محفوظة كمرجع من الملف: 22/34 و19/34 و17/34. لا تُستخدم بديلًا عن النتيجة الحالية للمنصة.","The 64.7%, 55.9% and 50% values are stored as workbook references: 22/34, 19/34 and 17/34. They do not replace the live platform result.")+'</p><div class="table-wrap"><table class="ct-table"><thead><tr><th>'+T("المؤشر","Indicator")+'</th><th>'+T("المحقق في Excel","Workbook actual")+'</th><th>'+T("البسط","Numerator")+'</th><th>'+T("المقام","Denominator")+'</th><th>'+T("الهدف المرحلي","Period target")+'</th><th>'+T("هدف 2026","2026 target")+'</th></tr></thead><tbody>'+
+      state.indicators.filter(x=>x.workbook_actual!=null).map(r=>'<tr><td>'+esc(T(r.title_ar,r.title_en||r.title_ar))+'</td><td>'+pct(r.workbook_actual)+'</td><td class="ct-num">'+money(r.workbook_numerator)+'</td><td class="ct-num">'+money(r.workbook_denominator)+'</td><td>'+pct(r.target_period)+'</td><td>'+pct(r.target_annual)+'</td></tr>').join("")+
+      '</tbody></table></div></section>';
+    return html;
+  }
+
+  function addStyle() {
+    if(document.getElementById("icv-contracts-style")) return;
+    const style=document.createElement("style"); style.id="icv-contracts-style";
+    style.textContent=[
+      ".ct-shell{display:grid;gap:16px;min-width:0}.ct-hero{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:22px 24px;border-radius:18px;background:linear-gradient(115deg,#073f38,#0f766e);color:#fff;box-shadow:0 12px 28px #063b3520}.ct-hero h1{margin:2px 0 7px;font-size:24px}.ct-hero p{margin:0;max-width:780px;color:#dcece7;font-size:12px;line-height:1.8}.ct-eyebrow{font-size:11px;color:#dacb98;font-weight:800}.ct-hero-actions{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}.ct-hero .btn{white-space:nowrap}.ct-secondary{color:#fff;background:#ffffff10;border-color:#ffffff55}.ct-safeguard{display:flex;gap:10px;align-items:start;padding:10px 14px;background:#f0f7f5;border:1px solid #d5e9e4;border-radius:12px;color:#315a53;font-size:11px;line-height:1.8}.ct-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.ct-kpi{background:var(--card,#fff);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0;box-shadow:var(--shadow)}.ct-kpi>span,.ct-kpi>small{display:block;color:var(--muted);font-size:11px}.ct-kpi>b{display:block;font-size:23px;margin:9px 0;direction:ltr;text-align:right;overflow-wrap:anywhere}.ct-kpi>b small{font-size:11px;color:var(--muted)}.ct-kpi>small{font-size:10px;line-height:1.6}.ct-tabs{display:flex;gap:8px;border-bottom:1px solid var(--line);padding-bottom:8px}.ct-tabs button{border:1px solid var(--line);border-radius:10px;background:var(--card,#fff);padding:9px 16px;color:var(--ink);font:inherit;font-size:12px;cursor:pointer}.ct-tabs button.active{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:800}.ct-panel{background:var(--card,#fff);border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0;box-shadow:var(--shadow)}.ct-panel-head{display:flex;align-items:start;justify-content:space-between;gap:14px;margin-bottom:14px}.ct-panel-head h2{margin:0 0 4px;font-size:16px}.ct-panel-head p{margin:0}.ct-count{border-radius:999px;background:var(--soft);color:var(--primary2);padding:5px 9px;font-size:11px;font-weight:800;white-space:nowrap}.ct-filters{display:grid;grid-template-columns:minmax(220px,1fr) minmax(170px,220px) minmax(140px,180px) auto;gap:8px;margin-bottom:12px}.ct-filters .search,.ct-select{height:40px;border:1px solid var(--line);border-radius:10px;background:var(--card,#fff);color:var(--ink);padding:0 10px;font:inherit;font-size:12px;min-width:0}.ct-table{width:100%;border-collapse:collapse;min-width:850px;background:var(--card,#fff)}.ct-table th{padding:11px 10px;background:var(--bg);color:var(--muted);font-size:10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}.ct-table td{padding:11px 10px;font-size:11px;border-bottom:1px solid var(--line);vertical-align:middle}.ct-table tr:last-child td{border-bottom:0}.ct-table td small{display:block}.ct-cell-sub{color:var(--muted);margin-top:3px;direction:ltr;text-align:right}.ct-num{font-variant-numeric:tabular-nums;direction:ltr;text-align:right;white-space:nowrap}.ct-row-actions{display:flex;gap:5px;flex-wrap:wrap}.ct-small{font-size:10px;padding:6px 8px;border-radius:8px;white-space:nowrap}.ct-small.danger{color:#b91c1c;background:#fff5f5;border-color:#f3d4d4}.ct-status{display:inline-block;border-radius:999px;background:var(--soft);color:var(--primary2);padding:4px 8px;white-space:nowrap;font-size:10px}.ct-empty{text-align:center;color:var(--muted);padding:28px!important}.ct-form-panel,.ct-detail-panel{margin-top:14px}.ct-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.ct-field{display:flex;flex-direction:column;gap:6px;min-width:0;color:var(--ink);font-size:11px;font-weight:700}.ct-field>span{color:var(--muted)}.ct-field input,.ct-field select,.ct-field textarea{width:100%;min-width:0;min-height:39px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--card,#fff);color:var(--ink);font:inherit;font-weight:400}.ct-field textarea{resize:vertical}.ct-field small{font-size:10px;line-height:1.6;color:var(--muted);font-weight:400}.ct-wide{grid-column:1/-1}.ct-form-divider{border-top:1px solid var(--line);padding-top:12px;margin-top:4px}.ct-form-divider p{margin:5px 0 0}.ct-form-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}.ct-detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}.ct-detail-grid>div{background:var(--bg);border-radius:10px;padding:11px;min-width:0}.ct-detail-grid span{display:block;font-size:10px;color:var(--muted);margin-bottom:4px}.ct-detail-grid b{font-size:12px;overflow-wrap:anywhere}.ct-subhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;margin-bottom:10px}.ct-subhead h3,.ct-subhead p{margin:0}.ct-subhead h3,.ct-report-form h3,.ct-reference-table h3{font-size:14px}.ct-subhead p{font-size:10px;line-height:1.7}.ct-inline-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:end;padding:12px;background:var(--bg);border-radius:12px;margin-top:10px}.ct-inline-form .btn{min-height:39px}.ct-report-list{display:grid;gap:8px}.ct-report-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:10px;padding:10px 12px}.ct-report-row small{display:block;color:var(--muted);font-size:10px;margin-top:4px}.ct-report-state{font-size:10px;border-radius:999px;background:#f6f3e8;color:#725b1e;padding:5px 9px;white-space:nowrap}.ct-report-state.approved{background:#e1f4e7;color:#166534}.ct-report-form{margin-top:12px;padding:14px;border:1px dashed var(--line);border-radius:12px}.ct-report-form h3{margin:0 0 5px}.ct-report-form>p{margin:0 0 13px;line-height:1.8}.ct-indicator-warning{display:flex;flex-direction:column;gap:4px;border:1px solid #f0dfad;background:#fff9e9;color:#765319;border-radius:12px;padding:12px 14px;font-size:11px;line-height:1.8;margin:12px 0}.ct-group-title{font-size:15px;margin:18px 0 10px}.ct-indicator-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.ct-indicator-card{background:var(--card,#fff);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0;box-shadow:var(--shadow)}.ct-indicator-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.ct-indicator-kind{font-size:10px;color:var(--muted)}.ct-indicator-status{font-size:10px;border-radius:999px;padding:5px 8px;background:#f2f4f7;color:#667085;white-space:nowrap}.ct-indicator-status.met{background:#e1f4e7;color:#166534}.ct-indicator-status.under{background:#fff0d7;color:#854d0e}.ct-indicator-card h4{font-size:13px;line-height:1.8;margin:12px 0}.ct-main-actual{border-radius:10px;background:var(--bg);padding:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}.ct-main-actual span{font-size:10px;color:var(--muted)}.ct-main-actual b{font-size:24px;direction:ltr;font-variant-numeric:tabular-nums}.ct-metric-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:9px}.ct-metric-facts>div{border:1px solid var(--line);border-radius:9px;padding:9px;min-width:0}.ct-metric-facts span{display:block;font-size:10px;color:var(--muted);line-height:1.5}.ct-metric-facts b{display:block;font-size:12px;margin-top:5px;direction:ltr;text-align:right;white-space:nowrap}.ct-live-ratio{font-size:10px;color:var(--muted);margin-top:8px}.ct-formula{margin-top:10px;background:#f7faf9;border:1px solid #e4eeeb;padding:10px;border-radius:9px}.ct-formula b{font-size:10px;color:#477066}.ct-formula p{font-size:11px;margin:5px 0 0;line-height:1.8;color:#3c5550}.ct-metric-note{font-size:10px;color:var(--muted);line-height:1.8;margin:10px 0 0}.ct-reference-table{margin-top:14px}.ct-error{padding:26px}.ct-error h2{margin:8px 0}.ct-error p{line-height:1.8}.ct-error-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#fff0d7;color:#854d0e;font-weight:900;font-size:18px}.ct-form-panel,.ct-detail-panel{scroll-margin-top:20px}",
+      "@media(max-width:1120px){.ct-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ct-filters{grid-template-columns:1fr 1fr}.ct-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ct-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ct-inline-form{grid-template-columns:repeat(2,minmax(0,1fr))}}",
+      "@media(max-width:720px){.ct-hero{display:block;padding:18px}.ct-hero h1{font-size:21px}.ct-hero-actions{margin-top:12px}.ct-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ct-kpi{padding:12px}.ct-kpi>b{font-size:19px}.ct-filters{grid-template-columns:1fr}.ct-form-grid{grid-template-columns:1fr}.ct-wide{grid-column:auto}.ct-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ct-inline-form{grid-template-columns:1fr}.ct-indicator-grid{grid-template-columns:1fr}.ct-metric-facts{grid-template-columns:repeat(3,minmax(0,1fr))}.ct-panel{padding:13px}.ct-panel-head{align-items:start}.ct-panel-head h2{font-size:14px}.ct-report-row{align-items:start}.ct-subhead{align-items:start;flex-direction:column}}"
+    ].join("");
+    document.head.appendChild(style);
+  }
+
+  async function load(force) {
+    if(state.loading) return;
+    if(state.loaded&&!force){render();return;}
+    state.loading=true; state.error=""; render();
+    const db=client();
+    if(!db){state.loading=false;state.error=T("تعذر الاتصال بعميل قاعدة البيانات. أعد تحميل الصفحة بعد تسجيل الدخول.","Database client unavailable. Reload after signing in.");render();return;}
+    try {
+      const res=await Promise.all([
+        db.from("contract_types").select("*").eq("is_active",true).order("sort_order"),
+        db.from("contracts").select("*").order("created_at",{ascending:false}).limit(2000),
+        db.from("contract_participations").select("*").order("created_at",{ascending:false}).limit(5000),
+        db.from("contract_reports").select("*").order("created_at",{ascending:false}).limit(5000),
+        db.from("contract_report_items").select("*").order("created_at",{ascending:false}).limit(10000),
+        db.from("contract_indicator_definitions").select("*").eq("is_active",true).order("sort_order"),
+        db.from("government_entities").select("id,name,code").order("name"),
+        db.from("companies").select("id,name,company_type").order("name")
+      ]);
+      const err=res.find(x=>x.error);
+      if(err) throw err.error;
+      state.types=res[0].data||TYPES_FALLBACK;
+      state.records=res[1].data||[];
+      state.participants=res[2].data||[];
+      state.reports=res[3].data||[];
+      state.items=res[4].data||[];
+      state.indicators=res[5].data&&res[5].data.length?res[5].data:METRIC_FALLBACK;
+      state.entities=res[6].data||[];
+      state.companies=res[7].data||[];
+      state.loaded=true;
+    } catch(e) {
+      console.error("contracts page load",e);
+      const msg=String(e&&e.message||e||"");
+      state.error=/contract_types|contracts|contract_participations|contract_reports|contract_report_items|contract_indicator_definitions|relation .* does not exist|schema cache/i.test(msg)
+        ? T("جداول العقود الجديدة غير موجودة في قاعدة البيانات الحالية. يلزم مراجعة وتطبيق ملف migration على بيئة اختبار أولًا؛ لم يتم تغيير جداول المشاريع الحالية.","The new contracts tables are not present in this database yet. Review and apply the migration in a test environment first; existing project tables have not been changed.")
+        : (window.ICV&&window.ICV.friendlyError?window.ICV.friendlyError(e):msg);
+    } finally { state.loading=false; render(); }
+  }
+
+  async function saveContract(form) {
+    if(!canEdit()){message(T("لا تملك صلاحية إضافة أو تعديل العقود.","You do not have permission to edit contracts."),"error");return;}
+    const fd=new FormData(form), value=(k)=>String(fd.get(k)||"").trim();
+    const code=value("contract_type_code"), title=value("title");
+    if(!code||!title){message(T("أدخل نوع السجل واسم العقد.","Choose a record type and enter a title."),"error");return;}
+    const details={};
+    Array.from(form.querySelectorAll("[name^='detail_']")).forEach(el=>{const v=String(el.value||"").trim();if(v)details[el.name.slice(7)]=v;});
+    const previous=state.editing&&state.editing.details||{};
+    if(previous.notes && !details.notes) details.notes=previous.notes;
+    if(value("notes")) details.notes=value("notes");
+    const maybeNumber=(k)=>value(k)===""?null:Number(value(k));
+    const maybeDate=(k)=>value(k)||null;
+    const plan=value("has_local_content_plan");
+    const payload={
+      contract_type_code:code,title,
+      tender_number:value("tender_number")||null,
+      government_entity_id:value("government_entity_id")||null,
+      implementing_company_id:value("implementing_company_id")||null,
+      consultant:value("consultant")||null,sector:value("sector")||null,
+      contract_status:value("contract_status")||"مسند",
+      contract_value:maybeNumber("contract_value"),value_basis:value("value_basis")||"contract_value",
+      current_spend:maybeNumber("current_spend"),start_date:maybeDate("start_date"),end_date:maybeDate("end_date"),
+      original_end_date:maybeDate("original_end_date"),
+      has_local_content_plan:plan===""?null:plan==="true",
+      company_type:value("company_type")||details.company_type||null,tender_type:value("tender_type")||null,
+      details,updated_at:new Date().toISOString(),updated_by:profile().id||null
+    };
+    if(payload.start_date&&payload.end_date&&payload.end_date<payload.start_date){message(T("تاريخ الانتهاء يجب ألا يسبق تاريخ البدء.","End date cannot be before start date."),"error");return;}
+    const db=client();
+    let res;
+    if(state.editing&&state.editing.id) res=await db.from("contracts").update(payload).eq("id",state.editing.id).select().single();
+    else {payload.created_by=profile().id||null;res=await db.from("contracts").insert(payload).select().single();}
+    if(res.error){message(window.ICV?window.ICV.friendlyError(res.error):res.error.message,"error");return;}
+    state.showForm=false; state.editing=null; state.selectedId=res.data.id; state.tab="registry";
+    message(T("تم حفظ سجل العقد.","Contract saved."));
+    await load(true);
+  }
+
+  async function saveParticipation(form) {
+    if(!canEdit()) return;
+    const fd=new FormData(form), get=k=>String(fd.get(k)||"").trim();
+    if(!get("contract_id")||!get("government_entity_id")){message(T("اختر العقد والجهة المستفيدة.","Select a contract and beneficiary entity."),"error");return;}
+    const numOrNull=k=>get(k)===""?null:Number(get(k));
+    const payload={contract_id:get("contract_id"),government_entity_id:get("government_entity_id"),company_id:get("company_id")||null,assigned_value:numOrNull("assigned_value"),spend_amount:numOrNull("spend_amount"),status:"قيد التنفيذ",notes:null,created_by:profile().id||null,updated_by:profile().id||null};
+    const r=await client().from("contract_participations").insert(payload);
+    if(r.error){message(window.ICV?window.ICV.friendlyError(r.error):r.error.message,"error");return;}
+    message(T("تمت إضافة الجهة / المورد.","Beneficiary / supplier added."));
+    await load(true);
+  }
+
+  async function saveReport(form) {
+    if(!canEdit()) return;
+    const fd=new FormData(form), get=k=>String(fd.get(k)||"").trim();
+    const contractId=get("contract_id"), year=Number(get("report_year"));
+    if(!contractId||!year||year<2000||year>2200){message(T("تحقق من العقد والسنة.","Check the contract and report year."),"error");return;}
+    const asNum=k=>get(k)===""?null:Number(get(k));
+    const asBool=k=>get(k)===""?null:get(k)==="true";
+    const reportData={
+      workforce_omani:asNum("workforce_omani"),workforce_non_omani:asNum("workforce_non_omani"),
+      omani_wages:asNum("omani_wages"),non_omani_wages:asNum("non_omani_wages"),
+      omanization_compliant:asBool("omanization_compliant"),sme_compliant:asBool("sme_compliant"),made_in_oman_compliant:asBool("made_in_oman_compliant"),
+      local_content_achieved:asNum("local_content_achieved"),
+      direct_procurement_total:asNum("direct_procurement_total"),direct_sme_awards:asNum("direct_sme_awards"),
+      subcontract_procurement_total:asNum("subcontract_procurement_total"),subcontract_sme_awards:asNum("subcontract_sme_awards"),
+      local_product_purchase:asNum("local_product_purchase"),total_government_purchases:asNum("total_government_purchases")
+    };
+    const status=get("report_status")||"draft";
+    if(status==="approved"&&!isAdmin()){message(T("اعتماد التقارير متاح لمدير النظام فقط.","Only the system administrator can approve reports."),"error");return;}
+    const payload={contract_id:contractId,report_year:year,report_quarter:get("report_quarter")||"Q1",report_status:status,report_data:reportData,submitted_at:status==="draft"?null:new Date().toISOString(),approved_at:status==="approved"?new Date().toISOString():null,approved_by:status==="approved"?(profile().id||null):null,created_by:profile().id||null,updated_by:profile().id||null};
+    const r=await client().from("contract_reports").insert(payload);
+    if(r.error){message(window.ICV?window.ICV.friendlyError(r.error):r.error.message,"error");return;}
+    state.showReportForm=false; state.reportContractId=null;
+    message(T("تم حفظ التقرير. لا يدخل في المؤشرات الرسمية إلا عند اعتماده.","Report saved. It counts in official indicators only after approval."));
+    await load(true);
+  }
+
+  async function removeContract(id) {
+    if(!isAdmin()) return;
+    const c=byId(state.records,id); if(!c)return;
+    if(!confirm(T("هل تريد حذف سجل العقد ""+c.title+""؟ سيتم حذف تقاريره ومشاركاته التابعة.","Delete contract ""+c.title+"" and its dependent reports/participations?"))) return;
+    const r=await client().from("contracts").delete().eq("id",id);
+    if(r.error){message(window.ICV?window.ICV.friendlyError(r.error):r.error.message,"error");return;}
+    state.selectedId=null; message(T("تم حذف سجل العقد.","Contract deleted.")); await load(true);
+  }
+
+  async function removeParticipation(id) {
+    if(!isAdmin()) return;
+    if(!confirm(T("تأكيد حذف سجل مشاركة الجهة / المورد؟","Delete this entity/supplier participation?")))return;
+    const r=await client().from("contract_participations").delete().eq("id",id);
+    if(r.error){message(window.ICV?window.ICV.friendlyError(r.error):r.error.message,"error");return;}
+    message(T("تم حذف المشاركة.","Participation deleted."));await load(true);
+  }
+
+  function handleClick(ev) {
+    const tab=ev.target.closest("[data-ct-tab]");
+    if(tab){state.tab=tab.dataset.ctTab;render();return;}
+    const b=ev.target.closest("[data-ct-action]"); if(!b)return;
+    const action=b.dataset.ctAction, id=b.dataset.id;
+    if(action==="retry"||action==="refresh"){state.loaded=false;load(true);return;}
+    if(action==="add"){state.editing=null;state.showForm=true;state.selectedId=null;render();return;}
+    if(action==="cancel-form"){state.showForm=false;state.editing=null;render();return;}
+    if(action==="edit"){state.editing=byId(state.records,id);state.showForm=true;state.selectedId=null;render();return;}
+    if(action==="details"){state.selectedId=id;state.showForm=false;state.showReportForm=false;render();return;}
+    if(action==="close-details"){state.selectedId=null;state.showReportForm=false;render();return;}
+    if(action==="delete"){removeContract(id);return;}
+    if(action==="delete-participation"){removeParticipation(id);return;}
+    if(action==="add-report"){state.selectedId=id;state.showReportForm=true;state.reportContractId=id;render();return;}
+    if(action==="cancel-report"){state.showReportForm=false;state.reportContractId=null;render();return;}
+    if(action==="clear-filter"){state.search="";state.typeFilter="";state.statusFilter="";render();return;}
+  }
+  function handleChange(ev) {
+    if(ev.target.id==="ct-type-filter"){state.typeFilter=ev.target.value;updateRows();return;}
+    if(ev.target.id==="ct-status-filter"){state.statusFilter=ev.target.value;updateRows();return;}
+    if(ev.target.id==="ct-form-type"){
+      const form=ev.target.closest("form"); const oldDetails={};
+      if(form) Array.from(form.querySelectorAll("[name^='detail_']")).forEach(el=>{oldDetails[el.name.slice(7)]=el.value;});
+      state.editing=Object.assign({},state.editing||{}, {contract_type_code:ev.target.value,details:oldDetails});
+      const formSection=root().querySelector(".ct-form-panel"); if(formSection) formSection.outerHTML=renderContractForm();
+    }
+  }
+  function updateRows() {
+    const tbody=root()&&root().querySelector("#ct-results-body"); if(!tbody)return;
+    const rows=filteredRecords().map(c=>'<tr><td><b>'+esc(c.title)+'</b><small class="ct-cell-sub">'+esc(c.tender_number||"—")+'</small></td><td>'+esc(typeLabel(c.contract_type_code))+'</td><td>'+esc(entityLabel(c.government_entity_id))+'</td><td>'+esc(companyLabel(c.implementing_company_id))+'</td><td><span class="ct-status">'+esc(statusLabel(c.contract_status))+'</span></td><td class="ct-num">'+money(c.contract_value)+'</td><td>'+esc(dateOnly(c.end_date))+'</td><td><div class="ct-row-actions"><button class="btn ct-small" data-ct-action="details" data-id="'+esc(c.id)+'">'+T("تفاصيل","Details")+'</button>'+(canEdit()?'<button class="btn ct-small" data-ct-action="edit" data-id="'+esc(c.id)+'">'+T("تعديل","Edit")+'</button>':"")+(isAdmin()?'<button class="btn ct-small danger" data-ct-action="delete" data-id="'+esc(c.id)+'">'+T("حذف","Delete")+'</button>':"")+'</div></td></tr>').join("");
+    tbody.innerHTML=rows||'<tr><td colspan="8" class="ct-empty">'+T("لا توجد سجلات مطابقة.","No matching records.")+'</td></tr>';
+    const c=root().querySelector(".ct-count"); if(c)c.textContent=filteredRecords().length+" / "+state.records.length;
+  }
+  function handleInput(ev) {
+    if(ev.target.id==="ct-search"){state.search=ev.target.value;updateRows();}
+  }
+  function handleSubmit(ev) {
+    const form=ev.target;
+    if(form.id==="ct-contract-form"){ev.preventDefault();saveContract(form);return;}
+    if(form.id==="ct-participation-form"){ev.preventDefault();saveParticipation(form);return;}
+    if(form.id==="ct-report-form"){ev.preventDefault();saveReport(form);return;}
+  }
+
+  function open() {
+    const el=root(); if(!el)return;
+    addStyle();
+    if(!el.dataset.bound) {
+      el.dataset.bound="1";
+      el.addEventListener("click",handleClick);
+      el.addEventListener("change",handleChange);
+      el.addEventListener("input",handleInput);
+      el.addEventListener("submit",handleSubmit);
+    }
+    return load(false);
+  }
+
+  window.icvContracts={open:open,refresh:()=>load(true),goIndicators:()=>{state.tab="indicators";render();}};
+  window.icvPages=window.icvPages||{};
+  window.icvPages.contracts=open;
+})();
