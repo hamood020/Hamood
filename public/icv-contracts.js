@@ -247,35 +247,61 @@
     const contracts=state.records;
     const approved=latestApprovedReports();
     const reportByContract=new Map(approved.map(r=>[r.contract_id,r]));
-    const ends2026=(x)=>x.end_date && String(x.end_date).slice(0,4)==="2026";
-    const active=(x)=>["قيد التنفيذ","In progress","in_progress"].includes(x.contract_status||x.project_status);
+    const overlaps2026=x=>(!x.start_date||String(x.start_date).slice(0,4)<="2026")&&(!x.end_date||String(x.end_date).slice(0,4)>="2026");
+    const ends2026=x=>x.end_date&&String(x.end_date).slice(0,4)==="2026";
+    const active=x=>["قيد التنفيذ","In progress","in_progress"].includes(x.contract_status||x.project_status);
     const projectScope=projects.filter(p=>ends2026(p)&&active(p));
     const serviceScope=contracts.filter(c=>(c.contract_type_code==="maintenance"||c.contract_type_code==="catering")&&ends2026(c)&&active(c));
+
     if(code==="omanization_compliance"||code==="sme_compliance") {
       const field=code==="omanization_compliance"?"omanization_status":"sme_10_status";
-      const rows=projectScope.map(p=>({ok:compliant(p[field])}));
-      serviceScope.forEach(c=>{const d=(reportByContract.get(c.id)||{}).report_data||{}; rows.push({ok:d[code==="omanization_compliance"?"omanization_compliant":"sme_compliant"]===true});});
-      return rows.length?{actual:rows.filter(x=>x.ok).length/rows.length,num:rows.filter(x=>x.ok).length,den:rows.length}:null;
+      const flag=code==="omanization_compliance"?"omanization_compliant":"sme_compliant";
+      const rows=projectScope.map(p=>assessment(p[field]));
+      serviceScope.forEach(c=>{const r=reportByContract.get(c.id); rows.push(r&&r.report_data? (r.report_data[flag]===true?true:r.report_data[flag]===false?false:null):null);});
+      if(!rows.length||rows.some(v=>v===null)) return null;
+      const eligible=rows.filter(v=>v!=="na");
+      return eligible.length?{actual:eligible.filter(Boolean).length/eligible.length,num:eligible.filter(Boolean).length,den:eligible.length}:null;
     }
+
     if(code==="made_in_oman_compliance") {
-      const rows=projectScope.map(p=>({ok:compliant(p.made_in_oman_status)}));
-      return rows.length?{actual:rows.filter(x=>x.ok).length/rows.length,num:rows.filter(x=>x.ok).length,den:rows.length}:null;
+      const rows=projectScope.map(p=>assessment(p.made_in_oman_status));
+      if(!rows.length||rows.some(v=>v===null)) return null;
+      const eligible=rows.filter(v=>v!=="na");
+      return eligible.length?{actual:eligible.filter(Boolean).length/eligible.length,num:eligible.filter(Boolean).length,den:eligible.length}:null;
     }
-    const contracts2026=contracts.filter(c=>(!c.start_date||String(c.start_date).slice(0,4)<="2026")&&(!c.end_date||String(c.end_date).slice(0,4)>="2026"));
-    const contractReports=contracts2026.map(c=>({c,r:reportByContract.get(c.id)})).filter(x=>x.r&&x.r.report_data);
+
+    const contracts2026=contracts.filter(overlaps2026);
+    const contractReports=contracts2026.map(c=>({c,r:reportByContract.get(c.id)}));
+    const hasAllReports=contracts2026.length>0&&contractReports.every(x=>x.r&&x.r.report_status==="approved"&&x.r.report_data);
+
     if(code==="local_content_ratio") {
-      let denominator=0,numerator=0,found=false;
-      projects.filter(p=>(!p.start_date||String(p.start_date).slice(0,4)<="2026")&&(!p.end_date||String(p.end_date).slice(0,4)>="2026")).forEach(p=>{
-        if(p.total_project_value!=null){denominator+=n(p.total_project_value); if(p.total_local_content!=null){numerator+=n(p.total_local_content);found=true;}}
+      let denominator=0,numerator=0,complete=true;
+      const projectsInScope=projects.filter(overlaps2026);
+      projectsInScope.forEach(p=>{
+        const hasApproved=(window.reports||[]).some(r=>r.project_id===p.id&&["معتمد","approved"].includes(String(r.status||"")));
+        if(p.total_project_value==null||p.total_local_content==null||!hasApproved) complete=false;
+        else { denominator+=n(p.total_project_value); numerator+=n(p.total_local_content); }
       });
-      contractReports.forEach(x=>{if(x.c.contract_value!=null){denominator+=n(x.c.contract_value);if(x.r.report_data.local_content_achieved!=null){numerator+=n(x.r.report_data.local_content_achieved);found=true;}}});
-      return denominator>0&&found?{actual:numerator/denominator,num:numerator,den:denominator}:null;
-    }
-    if(code==="sme_award_direct"||code==="sme_award_subcontract"||code==="sme_award_value") {
-      let directSME=0,directTotal=0,subSME=0,subTotal=0,has=false;
+      if(contracts2026.length&&!hasAllReports) complete=false;
       contractReports.forEach(x=>{
-        const d=x.r.report_data||{};
-        ["direct_sme_awards","direct_procurement_total","subcontract_sme_awards","subcontract_procurement_total"].forEach(k=>{if(d[k]!==undefined&&d[k]!==null&&d[k]!=="")has=true;});
+        const d=x.r&&x.r.report_data;
+        if(!x.r||!d||x.c.contract_value==null||d.local_content_achieved==null) complete=false;
+        else { denominator+=n(x.c.contract_value); numerator+=n(d.local_content_achieved); }
+      });
+      return complete&&denominator>0?{actual:numerator/denominator,num:numerator,den:denominator}:null;
+    }
+
+    if(code==="sme_award_direct"||code==="sme_award_subcontract"||code==="sme_award_value") {
+      if(!hasAllReports) return null;
+      const required=code==="sme_award_direct"
+        ?["direct_sme_awards","direct_procurement_total"]
+        :code==="sme_award_subcontract"
+          ?["subcontract_sme_awards","subcontract_procurement_total"]
+          :["direct_sme_awards","direct_procurement_total","subcontract_sme_awards","subcontract_procurement_total"];
+      if(contractReports.some(x=>required.some(k=>x.r.report_data[k]===undefined||x.r.report_data[k]===null||x.r.report_data[k]===""))) return null;
+      let directSME=0,directTotal=0,subSME=0,subTotal=0;
+      contractReports.forEach(x=>{
+        const d=x.r.report_data;
         directSME+=n(d.direct_sme_awards); directTotal+=n(d.direct_procurement_total);
         subSME+=n(d.subcontract_sme_awards); subTotal+=n(d.subcontract_procurement_total);
       });
@@ -284,15 +310,23 @@
       const den=directTotal+subTotal,num=directSME+subSME;
       return den>0?{actual:num/den,num:num,den:den}:null;
     }
+
     if(code==="local_product_purchase_share") {
-      let local=0,total=0,has=false;
-      contractReports.forEach(x=>{const d=x.r.report_data||{}; if(d.local_product_purchase!=null||d.total_government_purchases!=null)has=true;local+=n(d.local_product_purchase);total+=n(d.total_government_purchases);});
-      projects.forEach(p=>{ if(p.actual_made_in_oman!=null||p.total_spend!=null){has=true;local+=n(p.actual_made_in_oman);total+=n(p.total_spend);} });
-      return has&&total>0?{actual:local/total,num:local,den:total}:null;
+      if(!hasAllReports||contractReports.some(x=>x.r.report_data.local_product_purchase==null||x.r.report_data.total_government_purchases==null)) return null;
+      const local=contractReports.reduce((a,x)=>a+n(x.r.report_data.local_product_purchase),0);
+      const total=contractReports.reduce((a,x)=>a+n(x.r.report_data.total_government_purchases),0);
+      return total>0?{actual:local/total,num:local,den:total}:null;
     }
     return null;
   }
-  function compliant(v) { return ["مستوفي","مستوفٍ","متوافق","compliant","Met","مستوف"].includes(String(v||"").trim()); }
+
+  function assessment(value) {
+    const v=String(value||"").trim().toLowerCase();
+    if(["مستوفي","مستوفٍ","مستوف","متوافق","compliant","met"].includes(v)) return true;
+    if(["غير مستوفي","غير مستوفٍ","غير مستوف","غير متوافق","not compliant","noncompliant","not met"].includes(v)) return false;
+    if(["غير منطبق","لا ينطبق","not applicable","n/a","na"].includes(v)) return "na";
+    return null;
+  }
   function latestApprovedReports() {
     const map=new Map();
     state.reports.filter(r=>r.report_status==="approved").sort((a,b)=>
