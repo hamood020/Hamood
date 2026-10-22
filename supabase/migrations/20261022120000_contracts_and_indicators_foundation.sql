@@ -58,6 +58,7 @@ CREATE INDEX IF NOT EXISTS contracts_type_idx ON public.contracts(contract_type_
 CREATE INDEX IF NOT EXISTS contracts_status_end_idx ON public.contracts(contract_status,end_date);
 CREATE INDEX IF NOT EXISTS contracts_entity_idx ON public.contracts(government_entity_id);
 CREATE INDEX IF NOT EXISTS contracts_tender_idx ON public.contracts(tender_number);
+CREATE UNIQUE INDEX IF NOT EXISTS contracts_import_source_unique_idx ON public.contracts(contract_type_code,source_sheet,source_reference) WHERE source_sheet IS NOT NULL AND source_reference IS NOT NULL;
 
 -- Framework agreements are recorded once and broken down by beneficiary entity/supplier here.
 CREATE TABLE IF NOT EXISTS public.contract_participations (
