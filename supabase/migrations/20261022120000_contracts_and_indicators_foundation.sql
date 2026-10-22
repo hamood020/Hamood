@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS public.contract_participations (
   spend_amount numeric(18,3) CHECK (spend_amount IS NULL OR spend_amount >= 0),
   status text,
   notes text,
+  details jsonb NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(details) = 'object'),
   source_sheet text,
   source_row integer CHECK (source_row IS NULL OR source_row > 0),
   created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL DEFAULT auth.uid(),
@@ -260,6 +261,148 @@ COMMENT ON TABLE public.contract_participations IS 'One row per government entit
 COMMENT ON TABLE public.contract_reports IS 'Type-specific report payload; official indicators must use approved reports only.';
 COMMENT ON TABLE public.contract_report_items IS 'Normalized financial lines; a null content coefficient means not yet confirmed.';
 COMMENT ON TABLE public.contract_indicator_definitions IS 'Workbook KPI catalog; workbook_actual is a historic reference, not a live dashboard value.';
+
+-- Atomic Excel import RPC. It accepts a bounded, typed batch and inserts only contract fields
+-- and participations; any invalid row rolls back the whole batch. It does not create approved reports.
+CREATE OR REPLACE FUNCTION public.import_contract_batch(p_batch jsonb)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_entry jsonb;
+  v_contract jsonb;
+  v_participations jsonb;
+  v_part jsonb;
+  v_details jsonb;
+  v_type text;
+  v_title text;
+  v_contract_id uuid;
+  v_contract_count integer := 0;
+  v_participation_count integer := 0;
+  v_batch_count integer;
+  v_part_count integer;
+BEGIN
+  IF NOT private.user_access_valid((SELECT auth.uid()))
+     OR NOT private.has_valid_role(ARRAY['admin','section_head','editor']::text[]) THEN
+    RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
+  END IF;
+
+  IF p_batch IS NULL OR jsonb_typeof(p_batch) <> 'array' THEN
+    RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'IMPORT_BATCH_MUST_BE_ARRAY';
+  END IF;
+  v_batch_count := jsonb_array_length(p_batch);
+  IF v_batch_count < 1 OR v_batch_count > 500 THEN
+    RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'IMPORT_BATCH_SIZE_INVALID';
+  END IF;
+
+  FOR v_entry IN SELECT value FROM jsonb_array_elements(p_batch) LOOP
+    IF jsonb_typeof(v_entry) <> 'object' THEN
+      RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'IMPORT_ENTRY_MUST_BE_OBJECT';
+    END IF;
+    v_contract := v_entry->'contract';
+    IF v_contract IS NULL OR jsonb_typeof(v_contract) <> 'object' THEN
+      RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'IMPORT_CONTRACT_MISSING';
+    END IF;
+
+    v_type := nullif(btrim(v_contract->>'contract_type_code'), '');
+    v_title := nullif(btrim(v_contract->>'title'), '');
+    IF v_type IS NULL OR v_title IS NULL THEN
+      RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'IMPORT_TYPE_AND_TITLE_REQUIRED';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM public.contract_types t WHERE t.code = v_type AND t.is_active) THEN
+      RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'IMPORT_CONTRACT_TYPE_INVALID';
+    END IF;
+
+    v_details := coalesce(v_contract->'details', '{}'::jsonb);
+    IF jsonb_typeof(v_details) <> 'object' THEN
+      RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'IMPORT_DETAILS_MUST_BE_OBJECT';
+    END IF;
+
+    INSERT INTO public.contracts (
+      contract_type_code,title,tender_number,government_entity_id,implementing_company_id,
+      consultant,sector,contract_status,contract_value,value_basis,current_spend,
+      start_date,end_date,original_end_date,has_local_content_plan,company_type,tender_type,
+      details,source_sheet,source_row,source_reference,created_by,updated_by
+    ) VALUES (
+      v_type,v_title,nullif(btrim(v_contract->>'tender_number'),''),
+      nullif(v_contract->>'government_entity_id','')::uuid,
+      nullif(v_contract->>'implementing_company_id','')::uuid,
+      nullif(btrim(v_contract->>'consultant'),''),
+      nullif(btrim(v_contract->>'sector'),''),
+      coalesce(nullif(btrim(v_contract->>'contract_status'),''),'مسند'),
+      nullif(v_contract->>'contract_value','')::numeric,
+      coalesce(nullif(v_contract->>'value_basis',''),'not_provided'),
+      nullif(v_contract->>'current_spend','')::numeric,
+      nullif(v_contract->>'start_date','')::date,
+      nullif(v_contract->>'end_date','')::date,
+      nullif(v_contract->>'original_end_date','')::date,
+      CASE WHEN v_contract->>'has_local_content_plan' IS NULL THEN NULL
+           ELSE (v_contract->>'has_local_content_plan')::boolean END,
+      nullif(btrim(v_contract->>'company_type'),''),
+      nullif(btrim(v_contract->>'tender_type'),''),
+      v_details,
+      nullif(btrim(v_contract->>'source_sheet'),''),
+      nullif(v_contract->>'source_row','')::integer,
+      nullif(btrim(v_contract->>'source_reference'),''),
+      (SELECT auth.uid()),(SELECT auth.uid())
+    ) RETURNING id INTO v_contract_id;
+    v_contract_count := v_contract_count + 1;
+
+    v_participations := coalesce(v_entry->'participations','[]'::jsonb);
+    IF jsonb_typeof(v_participations) <> 'array' THEN
+      RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'IMPORT_PARTICIPATIONS_MUST_BE_ARRAY';
+    END IF;
+    v_part_count := jsonb_array_length(v_participations);
+    IF v_part_count > 5000 OR v_participation_count + v_part_count > 10000 THEN
+      RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'IMPORT_PARTICIPATION_LIMIT_EXCEEDED';
+    END IF;
+
+    FOR v_part IN SELECT value FROM jsonb_array_elements(v_participations) LOOP
+      IF jsonb_typeof(v_part) <> 'object'
+         OR nullif(v_part->>'government_entity_id','') IS NULL THEN
+        RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'IMPORT_PARTICIPATION_ENTITY_REQUIRED';
+      END IF;
+      IF v_part->'details' IS NOT NULL AND jsonb_typeof(v_part->'details') <> 'object' THEN
+        RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'IMPORT_PARTICIPATION_DETAILS_INVALID';
+      END IF;
+
+      INSERT INTO public.contract_participations (
+        contract_id,government_entity_id,company_id,assigned_value,spend_amount,
+        status,notes,details,source_sheet,source_row,created_by,updated_by
+      ) VALUES (
+        v_contract_id,
+        (v_part->>'government_entity_id')::uuid,
+        nullif(v_part->>'company_id','')::uuid,
+        nullif(v_part->>'assigned_value','')::numeric,
+        nullif(v_part->>'spend_amount','')::numeric,
+        nullif(btrim(v_part->>'status'),''),
+        nullif(btrim(v_part->>'notes'),''),
+        coalesce(v_part->'details','{}'::jsonb),
+        nullif(btrim(v_part->>'source_sheet'),''),
+        nullif(v_part->>'source_row','')::integer,
+        (SELECT auth.uid()),(SELECT auth.uid())
+      );
+      v_participation_count := v_participation_count + 1;
+    END LOOP;
+  END LOOP;
+
+  RETURN jsonb_build_object(
+    'inserted_contracts',v_contract_count,
+    'inserted_participations',v_participation_count,
+    'reports_created',0,
+    'official_indicators_affected',false
+  );
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.import_contract_batch(jsonb) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.import_contract_batch(jsonb) TO authenticated;
+
+COMMENT ON FUNCTION public.import_contract_batch(jsonb) IS
+  'Atomic import of validated contract records and framework participations. Does not import or approve reports.';
+
 
 -- Never inherit the default client grants on newly-created public tables.
 REVOKE ALL ON TABLE public.contract_types FROM PUBLIC, anon, authenticated;
