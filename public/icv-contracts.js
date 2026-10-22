@@ -183,7 +183,9 @@
       (ps.map(p=>'<tr><td>'+esc(entityLabel(p.government_entity_id))+'</td><td>'+esc(companyLabel(p.company_id))+'</td><td class="ct-num">'+money(p.assigned_value)+'</td><td class="ct-num">'+money(p.spend_amount)+'</td><td>'+esc(p.status||"—")+'</td>'+(isAdmin()?'<td><button class="btn ct-small danger" data-ct-action="delete-participation" data-id="'+esc(p.id)+'">'+T("حذف","Delete")+'</button></td>':"")+'</tr>').join("")||'<tr><td colspan="6" class="ct-empty">'+T("لم تتم إضافة جهات أو موردين بعد.","No beneficiary entities or suppliers have been added yet.")+'</td></tr>')+'</tbody></table></div>';
       if(canEdit()) h+='<form id="ct-participation-form" class="ct-inline-form"><input type="hidden" name="contract_id" value="'+esc(id)+'"/><label class="ct-field"><span>'+T("الجهة المستفيدة","Beneficiary entity")+'</span><select name="government_entity_id" required>'+optionList(state.entities,"",false)+'</select></label><label class="ct-field"><span>'+T("المورد","Supplier")+'</span><select name="company_id">'+optionList(state.companies,"",true,T("غير محدد","Not specified"))+'</select></label><label class="ct-field"><span>'+T("القيمة المسندة","Awarded value")+'</span><input name="assigned_value" type="number" min="0" step=".001"/></label><label class="ct-field"><span>'+T("الصرف","Spend")+'</span><input name="spend_amount" type="number" min="0" step=".001"/></label><button class="btn primary" type="submit">'+T("إضافة الجهة / المورد","Add entity / supplier")+'</button></form>';
     }
-    h+='<div class="ct-subhead"><div><h3>'+T("التقارير والبيانات المعتمدة","Reports and approved data")+'</h3><p class="muted">'+T("المؤشرات الرسمية تعتمد فقط على التقارير المعتمدة. البيانات غير المعتمدة لا تُحسب كإنجاز رسمي.","Official indicators use approved reports only. Unapproved reports are not counted as achieved performance.")+'</p></div>'+(canEdit()?'<button class="btn primary" data-ct-action="add-report" data-id="'+esc(id)+'">＋ '+T("إضافة تقرير","Add report")+'</button>':"")+'</div>';
+    h+='<div class="ct-subhead"><div><h3>'+T("التقارير والبيانات المعتمدة","Reports and approved data")+'</h3><p class="muted">'+T("المؤشرات الرسمية تعتمد فقط على التقارير المعتمدة. البيانات غير المعتمدة لا تُحسب كإنجاز رسمي.","Official indicators use approved reports only. Unapproved reports are not counted as achieved performance.")+'</p></div>'+(canEdit()? (framework&&!ps.length
+      ? '<span class="muted">'+T("أضف جهة مستفيدة قبل التقرير","Add a beneficiary before reporting")+'</span>'
+      : '<button class="btn primary" data-ct-action="add-report" data-id="'+esc(id)+'">＋ '+T("إضافة تقرير","Add report")+'</button>'):"")+'</div>';
     h+='<div class="ct-report-list">'+(rs.map(r=>{
       const d=r.report_data||{};
       const lines=state.items.filter(item=>item.report_id===r.id);
@@ -237,6 +239,12 @@
     const contract=byId(state.records,id)||{};
     const family=typeOf(contract.contract_type_code).family;
     const needsWorkforce=family==="project_like"||family==="service";
+    const frameworkParticipants=state.participants.filter(p=>p.contract_id===id);
+    const participationField=family==="framework"
+      ? (frameworkParticipants.length
+        ? '<label class="ct-field ct-wide"><span>'+T("الجهة المستفيدة / المورد الذي يغطيه التقرير","Beneficiary entity / supplier covered by this report")+' *</span><select name="participation_id" required><option value="">'+T("اختر الجهة والمورد","Select entity and supplier")+'</option>'+frameworkParticipants.map(p=>'<option value="'+esc(p.id)+'">'+esc(entityLabel(p.government_entity_id))+(p.company_id?' — '+esc(companyLabel(p.company_id)):"")+'</option>').join("")+'</select><small>'+T("يسجل هذا التقرير نتائج مشاركة واحدة فقط في العقد الإطاري، لمنع خلط قيم الجهات المختلفة.","This report is for one framework participation only, preventing values from different entities from being mixed.")+'</small></label>'
+        : '<div class="ct-form-divider ct-wide"><b>'+T("لا توجد جهات مستفيدة","No beneficiary entities")+'</b><p class="muted">'+T("أضف جهة مستفيدة وموردًا في تفاصيل العقد قبل تسجيل التقرير.","Add a beneficiary entity and supplier in the contract details before creating a report.")+'</p></div>')
+      : '<input type="hidden" name="participation_id" value=""/>';
     const statuses=[["draft","مسودة"],["submitted","مقدم"]];
     if(["admin","section_head"].includes(profile().role)) statuses.push(["under_review","تحت المراجعة"]);
     if(isAdmin()) statuses.push(["approved","معتمد"]);
@@ -261,6 +269,7 @@
       input("total_government_purchases",T("إجمالي المشتريات الحكومية المشمولة","Covered government purchases"),"number","","0.001");
     return '<div class="ct-report-form"><h3>'+T("بيانات التقرير","Report data")+'</h3><p class="muted">'+T("يختلف هذا النموذج حسب عائلة العقد. إذا كانت التقارير تراكمية فأدخل آخر إجمالي معتمد حتى هذه الفترة؛ المؤشرات تستخدم أحدث تقرير معتمد داخل سنة القياس ولا تجمع الإجماليات التراكمية المتكررة. البنود التفصيلية اختيارية، ولا يُطبّق معامل محتوى محلي تلقائيًا ما لم يُدخل معامل معتمد.","This form varies by contract family. For cumulative reports, enter the latest approved cumulative total to this period; indicators use the latest approved report within the measurement year and do not add repeated cumulative totals. Line items are optional; no coefficient is applied unless approved.")+'</p>'+
       '<form id="ct-report-form"><input type="hidden" name="contract_id" value="'+esc(id)+'"/><div class="ct-form-grid">'+
+      participationField+
       input("report_year",T("السنة","Year"),"number",new Date().getFullYear(),"1")+
       '<label class="ct-field"><span>'+T("الفترة","Period")+'</span><select name="report_quarter"><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option><option>ANNUAL</option></select></label>'+
       '<label class="ct-field"><span>'+T("الحالة","Status")+'</span><select name="report_status">'+statuses.map(x=>'<option value="'+x[0]+'">'+T(x[1],({"draft":"Draft","submitted":"Submitted","under_review":"Under review","approved":"Approved"}[x[0]]))+'</option>').join("")+'</select></label>'+
@@ -986,8 +995,16 @@
   async function saveReport(form) {
     if(!canEdit()) return;
     const fd=new FormData(form), get=k=>String(fd.get(k)||"").trim();
-    const contractId=get("contract_id"), year=Number(get("report_year"));
+    const contractId=get("contract_id"), year=Number(get("report_year")), participationId=get("participation_id")||null;
+    const reportContract=byId(state.records,contractId);
     if(!contractId||!year||year<2000||year>2200){message(T("تحقق من العقد والسنة.","Check the contract and report year."),"error");return;}
+    if(typeOf(reportContract?.contract_type_code).family==="framework") {
+      if(!participationId||!state.participants.some(p=>p.id===participationId&&p.contract_id===contractId)) {
+        message(T("اختر الجهة المستفيدة الصحيحة للعقد الإطاري.","Select a valid framework beneficiary."),"error");return;
+      }
+    } else if(participationId) {
+      message(T("هذا النوع من العقود لا يستخدم مشاركة مرتبطة بالتقرير.","This contract type cannot attach a participation to its report."),"error");return;
+    }
     const asNum=k=>get(k)===""?null:Number(get(k));
     const asBool=k=>get(k)===""?null:get(k)==="true";
     const lineItems=Array.from(form.querySelectorAll(".ct-item-row")).map(row=>{
@@ -1040,7 +1057,7 @@
 
     const status=get("report_status")||"draft";
     if(status==="approved"&&!isAdmin()){message(T("اعتماد التقارير متاح لمدير النظام فقط.","Only the system administrator can approve reports."),"error");return;}
-    const payload={contract_id:contractId,report_year:year,report_quarter:get("report_quarter")||"Q1",report_status:status,report_data:reportData,submitted_at:status==="draft"?null:new Date().toISOString(),approved_at:status==="approved"?new Date().toISOString():null,approved_by:status==="approved"?(profile().id||null):null,created_by:profile().id||null,updated_by:profile().id||null};
+    const payload={contract_id:contractId,participation_id:participationId,report_year:year,report_quarter:get("report_quarter")||"Q1",report_status:status,report_data:reportData,submitted_at:status==="draft"?null:new Date().toISOString(),approved_at:status==="approved"?new Date().toISOString():null,approved_by:status==="approved"?(profile().id||null):null,created_by:profile().id||null,updated_by:profile().id||null};
     const r=await client().from("contract_reports").insert(payload).select("id").single();
     if(r.error){message(window.ICV?window.ICV.friendlyError(r.error):r.error.message,"error");return;}
     if(lineItems.length){
