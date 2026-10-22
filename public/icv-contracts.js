@@ -424,7 +424,7 @@
   async function removeContract(id) {
     if(!isAdmin()) return;
     const c=byId(state.records,id); if(!c)return;
-    if(!confirm(T("هل تريد حذف سجل العقد ""+c.title+""؟ سيتم حذف تقاريره ومشاركاته التابعة.","Delete contract ""+c.title+"" and its dependent reports/participations?"))) return;
+    if(!confirm(T("هل تريد حذف سجل العقد المحدد؟ سيتم حذف تقاريره ومشاركاته التابعة.","Delete the selected contract and its dependent reports/participations?"))) return;
     const r=await client().from("contracts").delete().eq("id",id);
     if(r.error){message(window.ICV?window.ICV.friendlyError(r.error):r.error.message,"error");return;}
     state.selectedId=null; message(T("تم حذف سجل العقد.","Contract deleted.")); await load(true);
