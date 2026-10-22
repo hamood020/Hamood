@@ -177,32 +177,68 @@
     return h;
   }
 
+  function reportItemRow() {
+    const categories = [
+      ["made_in_oman", T("منتج صنع في عُمان", "Made-in-Oman product")],
+      ["local_supplier", T("مورد محلي", "Local supplier")],
+      ["direct_import", T("استيراد مباشر", "Direct import")],
+      ["local_service", T("خدمة محلية", "Local service")],
+      ["foreign_service", T("خدمة أجنبية", "Foreign service")],
+      ["sme_direct", T("إسناد SME مباشر", "Direct SME award")],
+      ["sme_subcontract", T("إسناد SME من الباطن", "SME subcontract")],
+      ["omani_wages", T("رواتب العمانيين", "Omani wages")],
+      ["non_omani_wages", T("رواتب غير العمانيين", "Non-Omani wages")],
+      ["other", T("بند آخر", "Other item")]
+    ];
+    const categoryOptions = categories.map(x=>'<option value="'+x[0]+'">'+esc(x[1])+'</option>').join("");
+    return '<div class="ct-item-row">'+
+      '<label class="ct-field"><span>'+T("فئة التكلفة","Cost category")+'</span><select data-item-field="category_code">'+categoryOptions+'</select></label>'+
+      '<label class="ct-field"><span>'+T("طريقة الإسناد","Award route")+'</span><select data-item-field="procurement_route"><option value="not_applicable">'+T("غير منطبق","Not applicable")+'</option><option value="direct">'+T("مباشر","Direct")+'</option><option value="subcontract">'+T("من الباطن","Subcontract")+'</option></select></label>'+
+      '<label class="ct-field"><span>'+T("المورد / الشركة","Supplier / company")+'</span><select data-item-field="company_id">'+optionList(state.companies,"",true,T("غير محدد","Not specified"))+'</select></label>'+
+      '<label class="ct-field"><span>'+T("قيمة البند (ر.ع)","Item amount (OMR)")+'</span><input data-item-field="amount" type="number" min="0" step="0.001" value=""/></label>'+
+      '<label class="ct-field"><span>'+T("معامل معتمد (اختياري، من 0 إلى 1)","Approved coefficient (optional, 0 to 1)")+'</span><input data-item-field="content_coefficient" type="number" min="0" max="1" step="0.000001" value=""/></label>'+
+      '<label class="ct-field"><span>'+T("المحتوى المحلي المحقق (ر.ع)","Achieved local content (OMR)")+'</span><input data-item-field="local_content_amount" type="number" min="0" step="0.001" value=""/></label>'+
+      '<label class="ct-field"><span>'+T("منشأة صغيرة أو متوسطة؟","SME?")+'</span><select data-item-field="is_sme"><option value="">'+T("غير محدد","Not specified")+'</option><option value="true">'+T("نعم","Yes")+'</option><option value="false">'+T("لا","No")+'</option></select></label>'+
+      '<label class="ct-field"><span>'+T("منتج عماني؟","Omani product?")+'</span><select data-item-field="is_omani_product"><option value="">'+T("غير محدد","Not specified")+'</option><option value="true">'+T("نعم","Yes")+'</option><option value="false">'+T("لا","No")+'</option></select></label>'+
+      '<div class="ct-item-row-remove"><button type="button" class="btn ct-small" data-ct-action="remove-item-row">'+T("حذف البند","Remove line")+'</button></div>'+
+    '</div>';
+  }
+
   function renderReportForm(id) {
     const input=(name,label,type,value,step)=>'<label class="ct-field"><span>'+label+'</span><input name="'+name+'" type="'+type+'" '+(step?'step="'+step+'"':"")+' '+(type==="number"?'min="0"':"")+' value="'+esc(value??"")+'"/></label>';
     const flag=(name,label)=>'<label class="ct-field"><span>'+label+'</span><select name="'+name+'"><option value="">'+T("غير مقيم","Not assessed")+'</option><option value="true">'+T("مستوفٍ","Compliant")+'</option><option value="false">'+T("غير مستوفٍ","Not compliant")+'</option></select></label>';
+    const contract=byId(state.records,id)||{};
+    const family=typeOf(contract.contract_type_code).family;
+    const needsWorkforce=family==="project_like"||family==="service";
     const statuses=[["draft","مسودة"],["submitted","مقدم"],["under_review","تحت المراجعة"]];
     if(isAdmin()) statuses.push(["approved","معتمد"]);
-    return '<div class="ct-report-form"><h3>'+T("بيانات التقرير","Report data")+'</h3><p class="muted">'+T("أدخل القيم المتاحة فقط. لا يُستخدم أي معامل للمحتوى المحلي تلقائيًا؛ أدخل مبلغ المحتوى المحلي المحقق صراحةً. المعاملات غير المعتمدة تبقى فارغة.","Enter known data only. No local-content coefficient is applied automatically; enter achieved local content explicitly. Unapproved coefficients remain blank.")+'</p>'+
-      '<form id="ct-report-form"><input type="hidden" name="contract_id" value="'+esc(id)+'"/><div class="ct-form-grid">'+
-      input("report_year",T("السنة","Year"),"number",new Date().getFullYear(),"1")+
-      '<label class="ct-field"><span>'+T("الفترة","Period")+'</span><select name="report_quarter"><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option><option>ANNUAL</option></select></label>'+
-      '<label class="ct-field"><span>'+T("الحالة","Status")+'</span><select name="report_status">'+statuses.map(x=>'<option value="'+x[0]+'">'+T(x[1],({"draft":"Draft","submitted":"Submitted","under_review":"Under review","approved":"Approved"}[x[0]]))+'</option>').join("")+'</select></label>'+
-      '<div class="ct-form-divider ct-wide"><b>'+T("العمالة والرواتب","Workforce and wages")+'</b></div>'+
-      input("workforce_omani",T("عدد العمانيين","Omani workforce"),"number","","1")+
-      input("workforce_non_omani",T("عدد غير العمانيين","Non-Omani workforce"),"number","","1")+
-      input("omani_wages",T("رواتب العمانيين (ر.ع)","Omani wages (OMR)"),"number","","0.001")+
-      input("non_omani_wages",T("رواتب غير العمانيين (ر.ع)","Non-Omani wages (OMR)"),"number","","0.001")+
-      flag("omanization_compliant",T("استيفاء التعمين","Omanization compliant"))+
+    const workforceSection=needsWorkforce
+      ? '<div class="ct-form-divider ct-wide"><b>'+T("العمالة والرواتب","Workforce and wages")+'</b><p class="muted">'+T("يظهر هذا القسم للمشاريع وعقود الخدمات مثل الصيانة والتغذية.","This section is shown for project-like records and service contracts such as maintenance and catering.")+'</p></div>'+
+        input("workforce_omani",T("عدد العمانيين","Omani workforce"),"number","","1")+
+        input("workforce_non_omani",T("عدد غير العمانيين","Non-Omani workforce"),"number","","1")+
+        input("omani_wages",T("رواتب العمانيين (ر.ع)","Omani wages (OMR)"),"number","","0.001")+
+        input("non_omani_wages",T("رواتب غير العمانيين (ر.ع)","Non-Omani wages (OMR)"),"number","","0.001")+
+        flag("omanization_compliant",T("استيفاء التعمين","Omanization compliant"))
+      : "";
+    const statusSection='<div class="ct-form-divider ct-wide"><b>'+T("حالة الاستيفاء","Compliance status")+'</b><p class="muted">'+T("لا تدخل قيمة غير مقيمة على أنها مستوفية. اتركها غير مقيمة إذا لم تتوفر أدلة.","Do not treat an unassessed value as compliant. Leave it unassessed if evidence is unavailable.")+'</p></div>'+
       flag("sme_compliant",T("استيفاء متطلبات SME","SME requirement compliant"))+
-      flag("made_in_oman_compliant",T("استيفاء المنتجات العمانية","Made-in-Oman compliant"))+
-      '<div class="ct-form-divider ct-wide"><b>'+T("القيم المالية للمؤشرات","Financial indicator inputs")+'</b></div>'+
+      flag("made_in_oman_compliant",T("استيفاء المنتجات العمانية","Made-in-Oman compliant"));
+    const financialSection='<div class="ct-form-divider ct-wide"><b>'+T("القيم المالية للمؤشرات","Financial indicator inputs")+'</b><p class="muted">'+T("أدخل الإجماليات الموثقة من التقرير. تظل معاملات الاحتساب غير المحددة غير مستخدمة.","Enter totals supported by the report. Unconfirmed coefficients are not automatically applied.")+'</p></div>'+
       input("local_content_achieved",T("المحتوى المحلي المحقق (ر.ع)","Achieved local content (OMR)"),"number","","0.001")+
       input("direct_procurement_total",T("إجمالي المشتريات المباشرة المشمولة","Covered direct procurement value"),"number","","0.001")+
       input("direct_sme_awards",T("إسناد مباشر لـ SME","Direct SME awards"),"number","","0.001")+
       input("subcontract_procurement_total",T("إجمالي عقود الباطن المشمولة","Covered subcontract value"),"number","","0.001")+
       input("subcontract_sme_awards",T("إسناد من الباطن لـ SME","SME subcontract awards"),"number","","0.001")+
       input("local_product_purchase",T("قيمة المنتجات المحلية المشتراة","Local products purchased"),"number","","0.001")+
-      input("total_government_purchases",T("إجمالي المشتريات الحكومية المشمولة","Covered government purchases"),"number","","0.001")+
+      input("total_government_purchases",T("إجمالي المشتريات الحكومية المشمولة","Covered government purchases"),"number","","0.001");
+    return '<div class="ct-report-form"><h3>'+T("بيانات التقرير","Report data")+'</h3><p class="muted">'+T("يختلف هذا النموذج حسب عائلة العقد. البنود التفصيلية اختيارية؛ لا يُطبّق أي معامل محتوى محلي تلقائيًا ما لم يُدخل معامل معتمد.","This form varies by contract family. Detailed line items are optional; no local-content coefficient is applied unless an approved coefficient is entered.")+'</p>'+
+      '<form id="ct-report-form"><input type="hidden" name="contract_id" value="'+esc(id)+'"/><div class="ct-form-grid">'+
+      input("report_year",T("السنة","Year"),"number",new Date().getFullYear(),"1")+
+      '<label class="ct-field"><span>'+T("الفترة","Period")+'</span><select name="report_quarter"><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option><option>ANNUAL</option></select></label>'+
+      '<label class="ct-field"><span>'+T("الحالة","Status")+'</span><select name="report_status">'+statuses.map(x=>'<option value="'+x[0]+'">'+T(x[1],({"draft":"Draft","submitted":"Submitted","under_review":"Under review","approved":"Approved"}[x[0]]))+'</option>').join("")+'</select></label>'+
+      workforceSection+statusSection+financialSection+
+      '<div class="ct-form-divider ct-wide"><b>'+T("تفصيل بنود التقرير (اختياري)","Report line items (optional)")+'</b><p class="muted">'+T("أضف بندًا لكل فئة تكلفة أو مورد تريد تتبعه. المعامل فارغ افتراضيًا حتى يتم اعتماده.","Add one line for each cost category or supplier you want to track. The coefficient stays blank until approved.")+'</p></div>'+
+      '<div class="ct-item-lines ct-wide">'+reportItemRow()+'</div><div class="ct-wide"><button type="button" class="btn" data-ct-action="add-item-row">＋ '+T("إضافة بند آخر","Add another line")+'</button></div>'+
       '</div><div class="ct-form-actions"><button class="btn primary" type="submit">'+T("حفظ التقرير","Save report")+'</button><button class="btn" type="button" data-ct-action="cancel-report">'+T("إلغاء","Cancel")+'</button></div></form></div>';
   }
 
