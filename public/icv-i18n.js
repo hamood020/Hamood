@@ -4,6 +4,7 @@
   const KEY = "icv-ui-language";
   const dict = {
     "متابعة المحتوى المحلي":"Local Content Follow-up",
+    "العقود والمؤشرات":"Contracts & Indicators",
     "منصة داخلية لإدارة المشاريع":"Internal Project Management Platform",
     "أدخل بيانات حسابك للوصول إلى المنصة":"Enter your account details to access the platform",
     "اسم المستخدم أو البريد الإلكتروني":"Username or email address",
