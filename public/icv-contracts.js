@@ -184,8 +184,6 @@
       ["direct_import", T("استيراد مباشر", "Direct import")],
       ["local_service", T("خدمة محلية", "Local service")],
       ["foreign_service", T("خدمة أجنبية", "Foreign service")],
-      ["sme_direct", T("إسناد SME مباشر", "Direct SME award")],
-      ["sme_subcontract", T("إسناد SME من الباطن", "SME subcontract")],
       ["omani_wages", T("رواتب العمانيين", "Omani wages")],
       ["non_omani_wages", T("رواتب غير العمانيين", "Non-Omani wages")],
       ["other", T("بند آخر", "Other item")]
@@ -438,6 +436,30 @@
     if(!contractId||!year||year<2000||year>2200){message(T("تحقق من العقد والسنة.","Check the contract and report year."),"error");return;}
     const asNum=k=>get(k)===""?null:Number(get(k));
     const asBool=k=>get(k)===""?null:get(k)==="true";
+    const lineItems=Array.from(form.querySelectorAll(".ct-item-row")).map(row=>{
+      const val=k=>String(row.querySelector('[data-item-field="'+k+'"]')?.value||"").trim();
+      const amount=val("amount")===""?null:Number(val("amount"));
+      const coefficient=val("content_coefficient")===""?null:Number(val("content_coefficient"));
+      let local=val("local_content_amount")===""?null:Number(val("local_content_amount"));
+      if(local===null&&coefficient!==null&&amount!==null) local=amount*coefficient;
+      return {
+        category_code:val("category_code"),
+        procurement_route:val("procurement_route")||"not_applicable",
+        company_id:val("company_id")||null,
+        amount:amount,
+        content_coefficient:coefficient,
+        local_content_amount:local,
+        is_sme:val("is_sme")===""?null:val("is_sme")==="true",
+        is_omani_product:val("is_omani_product")===""?null:val("is_omani_product")==="true",
+        notes:null
+      };
+    }).filter(x=>x.category_code&&x.amount!==null&&Number.isFinite(x.amount));
+    for(const item of lineItems){
+      if(item.amount<0||!Number.isFinite(item.amount)){message(T("تحقق من مبالغ البنود.","Check line item amounts."),"error");return;}
+      if(item.content_coefficient!==null&&(!Number.isFinite(item.content_coefficient)||item.content_coefficient<0||item.content_coefficient>1)){message(T("المعامل يجب أن يكون بين صفر وواحد.","Coefficient must be between zero and one."),"error");return;}
+      if(item.local_content_amount!==null&&(!Number.isFinite(item.local_content_amount)||item.local_content_amount<0||item.local_content_amount>item.amount)){message(T("المحتوى المحلي للبند يجب أن يكون بين صفر وقيمة البند.","Line local content must be between zero and the line amount."),"error");return;}
+    }
+
     const reportData={
       workforce_omani:asNum("workforce_omani"),workforce_non_omani:asNum("workforce_non_omani"),
       omani_wages:asNum("omani_wages"),non_omani_wages:asNum("non_omani_wages"),
@@ -447,13 +469,35 @@
       subcontract_procurement_total:asNum("subcontract_procurement_total"),subcontract_sme_awards:asNum("subcontract_sme_awards"),
       local_product_purchase:asNum("local_product_purchase"),total_government_purchases:asNum("total_government_purchases")
     };
+    const wageCodes=["omani_wages","non_omani_wages"];
+    const purchaseCodes=["made_in_oman","local_supplier","direct_import"];
+    const eligibleFinancial=item=>!wageCodes.includes(item.category_code);
+    const goodsLines=lineItems.filter(item=>purchaseCodes.includes(item.category_code));
+    const directLines=lineItems.filter(item=>item.procurement_route==="direct"&&eligibleFinancial(item));
+    const subLines=lineItems.filter(item=>item.procurement_route==="subcontract"&&eligibleFinancial(item));
+    const hasAnyLocal= lineItems.length>0 && lineItems.every(item=>item.local_content_amount!==null);
+    if(reportData.local_content_achieved===null&&hasAnyLocal) reportData.local_content_achieved=lineItems.reduce((a,x)=>a+x.local_content_amount,0);
+    if(reportData.direct_procurement_total===null&&directLines.length) reportData.direct_procurement_total=directLines.reduce((a,x)=>a+x.amount,0);
+    if(reportData.direct_sme_awards===null&&directLines.length&&directLines.every(x=>x.is_sme!==null)) reportData.direct_sme_awards=directLines.filter(x=>x.is_sme).reduce((a,x)=>a+x.amount,0);
+    if(reportData.subcontract_procurement_total===null&&subLines.length) reportData.subcontract_procurement_total=subLines.reduce((a,x)=>a+x.amount,0);
+    if(reportData.subcontract_sme_awards===null&&subLines.length&&subLines.every(x=>x.is_sme!==null)) reportData.subcontract_sme_awards=subLines.filter(x=>x.is_sme).reduce((a,x)=>a+x.amount,0);
+    if(reportData.local_product_purchase===null&&goodsLines.length&&goodsLines.every(x=>x.is_omani_product!==null)) reportData.local_product_purchase=goodsLines.filter(x=>x.is_omani_product).reduce((a,x)=>a+x.amount,0);
+    if(reportData.total_government_purchases===null&&goodsLines.length) reportData.total_government_purchases=goodsLines.reduce((a,x)=>a+x.amount,0);
+
     const status=get("report_status")||"draft";
     if(status==="approved"&&!isAdmin()){message(T("اعتماد التقارير متاح لمدير النظام فقط.","Only the system administrator can approve reports."),"error");return;}
     const payload={contract_id:contractId,report_year:year,report_quarter:get("report_quarter")||"Q1",report_status:status,report_data:reportData,submitted_at:status==="draft"?null:new Date().toISOString(),approved_at:status==="approved"?new Date().toISOString():null,approved_by:status==="approved"?(profile().id||null):null,created_by:profile().id||null,updated_by:profile().id||null};
-    const r=await client().from("contract_reports").insert(payload);
+    const r=await client().from("contract_reports").insert(payload).select("id").single();
     if(r.error){message(window.ICV?window.ICV.friendlyError(r.error):r.error.message,"error");return;}
+    let lineItemError=null;
+    if(lineItems.length){
+      const prepared=lineItems.map(item=>({...item,report_id:r.data.id,created_by:profile().id||null}));
+      const ir=await client().from("contract_report_items").insert(prepared);
+      if(ir.error) lineItemError=ir.error;
+    }
     state.showReportForm=false; state.reportContractId=null;
-    message(T("تم حفظ التقرير. لا يدخل في المؤشرات الرسمية إلا عند اعتماده.","Report saved. It counts in official indicators only after approval."));
+    if(lineItemError) message(T("تم حفظ التقرير، لكن تعذر حفظ بعض بنود التفصيل. افتح سجل التقرير وأعد إدخال البنود.","The report saved, but the line items could not be saved. Re-open the report and add the line items again."),"error");
+    else message(T("تم حفظ التقرير. لا يدخل في المؤشرات الرسمية إلا عند اعتماده.","Report saved. It counts in official indicators only after approval."));
     await load(true);
   }
 
