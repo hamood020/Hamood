@@ -457,25 +457,56 @@ RETURNS trigger
 LANGUAGE plpgsql
 SET search_path TO ''
 AS $function$
+DECLARE
+  v_admin boolean := private.has_valid_role(ARRAY['admin']::text[]);
+  v_section_head boolean := private.has_valid_role(ARRAY['section_head']::text[]);
 BEGIN
-  IF NOT private.has_valid_role(ARRAY['admin']::text[]) THEN
-    IF TG_OP = 'INSERT' AND NEW.report_status = 'approved' THEN
-      RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
-    END IF;
-    IF TG_OP = 'UPDATE' THEN
-      -- Once approved, staff cannot change any substantive field (including the contract,
-      -- year, or quarter to which the approval applies). Admins may amend through the audited path.
+  IF NOT v_admin THEN
+    IF TG_OP = 'INSERT' THEN
+      IF NEW.report_status = 'approved' THEN
+        RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
+      END IF;
+      IF NEW.report_status = 'under_review' AND NOT v_section_head THEN
+        RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
+      END IF;
+      IF NEW.report_status NOT IN ('draft','submitted','under_review') THEN
+        RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
+      END IF;
+    ELSE
+      -- An approved report is immutable to all non-admin roles, including its contract/period.
       IF OLD.report_status = 'approved'
          AND (to_jsonb(NEW) - ARRAY['updated_at','updated_by'])
              IS DISTINCT FROM (to_jsonb(OLD) - ARRAY['updated_at','updated_by']) THEN
         RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
       END IF;
-      IF NEW.report_status = 'approved' AND OLD.report_status IS DISTINCT FROM 'approved' THEN
+
+      -- Submitted/reviewed/rejected reports have a fixed payload: users cannot amend
+      -- report_data or move it to another contract/year/quarter after submission.
+      IF OLD.report_status <> 'draft'
+         AND (to_jsonb(NEW) - ARRAY['report_status','updated_at','updated_by','approved_at','approved_by'])
+             IS DISTINCT FROM
+             (to_jsonb(OLD) - ARRAY['report_status','updated_at','updated_by','approved_at','approved_by']) THEN
         RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
       END IF;
+
       IF NEW.approved_at IS DISTINCT FROM OLD.approved_at
          OR NEW.approved_by IS DISTINCT FROM OLD.approved_by THEN
         RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
+      END IF;
+
+      IF NEW.report_status IS DISTINCT FROM OLD.report_status THEN
+        IF NEW.report_status = 'approved' OR NEW.report_status = 'rejected' THEN
+          RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
+        END IF;
+        IF NEW.report_status = 'under_review' AND NOT v_section_head THEN
+          RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
+        END IF;
+        IF NEW.report_status = 'submitted' AND OLD.report_status NOT IN ('draft','rejected') THEN
+          RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
+        END IF;
+        IF NEW.report_status = 'under_review' AND OLD.report_status <> 'submitted' THEN
+          RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
+        END IF;
       END IF;
     END IF;
   END IF;
