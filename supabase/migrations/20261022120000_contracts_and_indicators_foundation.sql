@@ -265,4 +265,64 @@ COMMENT ON TABLE public.contract_participations IS 'One row per government entit
 COMMENT ON TABLE public.contract_reports IS 'Type-specific report payload; official indicators must use approved reports only.';
 COMMENT ON TABLE public.contract_report_items IS 'Normalized financial lines; a null content coefficient means not yet confirmed.';
 COMMENT ON TABLE public.contract_indicator_definitions IS 'Workbook KPI catalog; workbook_actual is a historic reference, not a live dashboard value.';
+
+-- Protect official report approvals, and prevent staff from editing data after approval.
+CREATE OR REPLACE FUNCTION private.guard_contract_report_approval()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO ''
+AS $function$
+BEGIN
+  IF NOT private.has_valid_role(ARRAY['admin']::text[]) THEN
+    IF TG_OP = 'INSERT' AND NEW.report_status = 'approved' THEN
+      RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
+    END IF;
+    IF TG_OP = 'UPDATE' THEN
+      IF OLD.report_status = 'approved'
+         AND (NEW.report_status IS DISTINCT FROM OLD.report_status
+              OR NEW.report_data IS DISTINCT FROM OLD.report_data
+              OR NEW.approved_at IS DISTINCT FROM OLD.approved_at
+              OR NEW.approved_by IS DISTINCT FROM OLD.approved_by) THEN
+        RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
+      END IF;
+      IF NEW.report_status = 'approved' AND OLD.report_status IS DISTINCT FROM 'approved' THEN
+        RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
+      END IF;
+      IF NEW.approved_at IS DISTINCT FROM OLD.approved_at
+         OR NEW.approved_by IS DISTINCT FROM OLD.approved_by THEN
+        RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
+      END IF;
+    END IF;
+  END IF;
+
+  IF NEW.report_status = 'approved' THEN
+    NEW.approved_at := coalesce(NEW.approved_at, now());
+    NEW.approved_by := coalesce(NEW.approved_by, (SELECT auth.uid()));
+  ELSE
+    NEW.approved_at := NULL;
+    NEW.approved_by := NULL;
+  END IF;
+  NEW.updated_at := now();
+  RETURN NEW;
+END;
+$function$;
+REVOKE ALL ON FUNCTION private.guard_contract_report_approval() FROM PUBLIC, anon, authenticated;
+CREATE TRIGGER contract_reports_guard_approval
+  BEFORE INSERT OR UPDATE ON public.contract_reports
+  FOR EACH ROW EXECUTE FUNCTION private.guard_contract_report_approval();
+
+-- Reuse the platform's existing protected audit writer on records with UUID primary keys.
+DROP TRIGGER IF EXISTS contracts_write_audit ON public.contracts;
+CREATE TRIGGER contracts_write_audit AFTER INSERT OR UPDATE OR DELETE ON public.contracts
+  FOR EACH ROW EXECUTE FUNCTION private.write_audit();
+DROP TRIGGER IF EXISTS contract_participations_write_audit ON public.contract_participations;
+CREATE TRIGGER contract_participations_write_audit AFTER INSERT OR UPDATE OR DELETE ON public.contract_participations
+  FOR EACH ROW EXECUTE FUNCTION private.write_audit();
+DROP TRIGGER IF EXISTS contract_reports_write_audit ON public.contract_reports;
+CREATE TRIGGER contract_reports_write_audit AFTER INSERT OR UPDATE OR DELETE ON public.contract_reports
+  FOR EACH ROW EXECUTE FUNCTION private.write_audit();
+DROP TRIGGER IF EXISTS contract_report_items_write_audit ON public.contract_report_items;
+CREATE TRIGGER contract_report_items_write_audit AFTER INSERT OR UPDATE OR DELETE ON public.contract_report_items
+  FOR EACH ROW EXECUTE FUNCTION private.write_audit();
+
 COMMIT;
