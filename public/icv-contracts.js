@@ -809,7 +809,7 @@
       (state.importIgnoredSheets.length?'<p class="ct-import-muted">'+T("أوراق تم استثناؤها من الاستيراد لتجنب التكرار: ","Sheets excluded to avoid duplicate imports: ")+esc(state.importIgnoredSheets.join("، "))+'</p>':"")+
       (stats?'<div class="ct-import-stats"><div><span>'+T("الصفوف المقروءة","Rows read")+'</span><b>'+stats.rowsRead+'</b></div><div><span>'+T("العقود المكتشفة","Contracts detected")+'</span><b>'+stats.recordsDetected+'</b></div><div><span>'+T("سجلات جديدة","New records")+'</span><b>'+stats.newRecords+'</b></div><div><span>'+T("المشاركات التابعة","Participations")+'</span><b>'+stats.participations+'</b></div><div><span>'+T("المكررات المستثناة","Duplicates skipped")+'</span><b>'+stats.duplicates+'</b></div><div><span>'+T("علاقات تحتاج مطابقة","Unmatched relationships")+'</span><b>'+stats.unresolved+'</b></div></div>':"")+
       (state.importCandidates.length?'<h3 class="ct-group-title">'+T("معاينة أول 12 سجلًا","Preview first 12 records")+'</h3><div class="table-wrap"><table class="ct-table"><thead><tr><th>'+T("العقد / المشروع","Contract / project")+'</th><th>'+T("النوع","Type")+'</th><th>'+T("المصدر","Source")+'</th><th>'+T("الصرف/المدفوعات (ر.ع)","Spend/orders (OMR)")+'</th><th>'+T("المشاركات","Participants")+'</th><th>'+T("الحالة","Disposition")+'</th></tr></thead><tbody>'+preview+'</tbody></table></div>':"")+
-      (warnings?'<div class="ct-import-warnings"><b>'+T("ملاحظات تحتاج انتباهك","Items to review")+'</b><ul>'+warnings+'</ul>'+(state.importWarnings.length>18?'<small>'+T("يعرض أهم 18 ملاحظة فقط؛ عدد الملاحظات الكامل: ","Showing first 18 items; total warnings: ")+state.importWarnings.length+'</small>':"")+'</div>':"")+
+      (warnings.length?'<div class="ct-import-warnings"><b>'+T("ملاحظات تحتاج انتباهك","Items to review")+'</b><ul>'+warnings+'</ul>'+(state.importWarnings.length>18?'<small>'+T("يعرض أهم 18 ملاحظة فقط؛ عدد الملاحظات الكامل: ","Showing first 18 items; total warnings: ")+state.importWarnings.length+'</small>':"")+'</div>':"")+
       '<div class="ct-form-actions"><button class="btn primary" data-ct-action="execute-import" '+(!state.importBatch.length||state.importBusy?"disabled":"")+'>'+T("استيراد ","Import ")+state.importBatch.length.toLocaleString("en-US")+' '+T("سجل جديد","new records")+'</button><button class="btn" data-ct-action="reset-import">'+T("إعادة اختيار ملف","Choose another file")+'</button></div>'+
       '<p class="ct-import-muted">'+T("تُحفظ الصفوف التي لا تطابق جهة أو شركة في لقطة المصدر مع تنبيه للمراجعة؛ لا تُنشأ بيانات رئيسية جديدة تلقائيًا. وتبقى كل المؤشرات الحية بانتظار التقارير المعتمدة.","Rows with unmatched entities/companies remain in the source snapshot with a warning; no master data is auto-created. Live indicators still wait for approved reports.")+'</p></section>';
   }
@@ -1033,6 +1033,12 @@
     const b=ev.target.closest("[data-ct-action]"); if(!b)return;
     const action=b.dataset.ctAction, id=b.dataset.id;
     if(action==="retry"||action==="refresh"){state.loaded=false;load(true);return;}
+    if(action==="import"){state.showImport=true;render();return;}
+    if(action==="close-import"){state.showImport=false;render();return;}
+    if(action==="reset-import"){
+      state.importWorkbookName="";state.importSheets=[];state.importSelectedSheets=[];state.importCandidates=[];state.importBatch=[];state.importWarnings=[];state.importIgnoredSheets=[];state.importStats=null;state.importError="";render();return;
+    }
+    if(action==="execute-import"){executeImport();return;}
     if(action==="add"){state.editing=null;state.showForm=true;state.selectedId=null;render();return;}
     if(action==="cancel-form"){state.showForm=false;state.editing=null;render();return;}
     if(action==="edit"){state.editing=byId(state.records,id);state.showForm=true;state.selectedId=null;render();return;}
@@ -1047,6 +1053,17 @@
     if(action==="clear-filter"){state.search="";state.typeFilter="";state.statusFilter="";render();return;}
   }
   function handleChange(ev) {
+    if(ev.target.id==="ct-import-file"){
+      const file=ev.target.files&&ev.target.files[0];
+      if(file) loadImportFile(file);
+      return;
+    }
+    if(ev.target.matches("[data-ct-import-sheet]")){
+      state.importSelectedSheets=Array.from(root().querySelectorAll("[data-ct-import-sheet]:checked")).map(x=>x.value);
+      importBuildCandidates();
+      render();
+      return;
+    }
     if(ev.target.id==="ct-type-filter"){state.typeFilter=ev.target.value;updateRows();return;}
     if(ev.target.id==="ct-status-filter"){state.statusFilter=ev.target.value;updateRows();return;}
     if(ev.target.id==="ct-form-type"){
