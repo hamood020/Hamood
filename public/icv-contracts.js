@@ -28,7 +28,10 @@
     tab:"registry", loaded:false, loading:false, error:"", editing:null, selectedId:null,
     search:"", typeFilter:"", statusFilter:"", types:TYPES_FALLBACK, records:[],
     participants:[], reports:[], items:[], indicators:METRIC_FALLBACK, entities:[], companies:[],
-    showForm:false, showReportForm:false, reportContractId:null
+    showForm:false, showReportForm:false, reportContractId:null,
+    showImport:false, importBusy:false, importWorkbookName:"", importSheets:[],
+    importSelectedSheets:[], importCandidates:[], importBatch:[], importWarnings:[],
+    importIgnoredSheets:[], importStats:null, importError:""
   };
   const root = () => document.getElementById(PAGE_ID);
   const client = () => window.__icvAccessClient;
@@ -75,7 +78,7 @@
     const near=state.records.filter(c=>c.end_date && new Date(c.end_date+"T00:00:00")>=new Date() && new Date(c.end_date+"T00:00:00")<=new Date(Date.now()+30*86400000)).length;
     el.innerHTML =
       '<div class="ct-shell">'+
-        '<div class="ct-hero"><div><div class="ct-eyebrow">'+T("توسعة مستقلة عن المشاريع الإنمائية","An isolated extension to development projects")+'</div><h1>'+T("المشاريع والعقود","Projects & Contracts")+'</h1><p>'+T("سجل مستقل لأنواع العقود المختلفة، مع الاحتفاظ بنماذج المشاريع الإنمائية والتقارير الحالية كما هي.","Separate register for different contract types while leaving the existing development-project workflow intact.")+'</p></div><div class="ct-hero-actions"><button class="btn ct-secondary" data-ct-action="refresh">↻ '+T("تحديث البيانات","Refresh data")+'</button>'+(canEdit()?'<button class="btn primary" data-ct-action="add">＋ '+T("إضافة سجل","Add record")+'</button>':'')+'</div></div>'+
+        '<div class="ct-hero"><div><div class="ct-eyebrow">'+T("توسعة مستقلة عن المشاريع الإنمائية","An isolated extension to development projects")+'</div><h1>'+T("المشاريع والعقود","Projects & Contracts")+'</h1><p>'+T("سجل مستقل لأنواع العقود المختلفة، مع الاحتفاظ بنماذج المشاريع الإنمائية والتقارير الحالية كما هي.","Separate register for different contract types while leaving the existing development-project workflow intact.")+'</p></div><div class="ct-hero-actions"><button class="btn ct-secondary" data-ct-action="refresh">↻ '+T("تحديث البيانات","Refresh data")+'</button>'+(canEdit()?'<button class="btn ct-secondary" data-ct-action="import">⇧ '+T("استيراد Excel","Import Excel")+'</button><button class="btn primary" data-ct-action="add">＋ '+T("إضافة سجل","Add record")+'</button>':'')+'</div></div>'+
         '<div class="ct-safeguard"><strong>ⓘ '+T("حدود التغيير","Change boundary")+'</strong><span>'+T("هذه الصفحة تستخدم جداول العقود الجديدة فقط. لا تعدّل جدول projects ولا تقرأ تقارير المشاريع بغرض الكتابة عليها.","This page only writes to the new contract tables. It does not modify the projects table or existing project reports.")+'</span></div>'+
         '<div class="ct-kpis">'+
           '<div class="ct-kpi"><span>'+T("سجلات العقود","Contract records")+'</span><b>'+count.toLocaleString("en-US")+'</b><small>'+T("العقد الإطاري يسجل مرة واحدة","Each framework is counted once")+'</small></div>'+
@@ -85,6 +88,7 @@
           '<div class="ct-kpi"><span>'+T("تنتهي خلال 30 يومًا","Ending in 30 days")+'</span><b>'+near.toLocaleString("en-US")+'</b><small>'+T("من السجلات ذات تاريخ انتهاء معروف","Known end dates only")+'</small></div>'+
         '</div>'+
         '<div class="ct-tabs"><button class="'+(state.tab==="registry"?"active":"")+'" data-ct-tab="registry">'+T("سجل العقود","Contract register")+'</button><button class="'+(state.tab==="indicators"?"active":"")+'" data-ct-tab="indicators">'+T("مؤشرات Excel","Workbook indicators")+'</button></div>'+
+        (state.showImport ? renderImportPanel() : "")+
         (state.tab==="registry" ? renderRegistry() : renderIndicators())+
       '</div>';
     addStyle();
@@ -381,6 +385,453 @@
       state.indicators.filter(x=>x.workbook_actual!=null).map(r=>'<tr><td>'+esc(T(r.title_ar,r.title_en||r.title_ar))+'</td><td>'+pct(r.workbook_actual)+'</td><td class="ct-num">'+money(r.workbook_numerator)+'</td><td class="ct-num">'+money(r.workbook_denominator)+'</td><td>'+pct(r.target_period)+'</td><td>'+pct(r.target_annual)+'</td></tr>').join("")+
       '</tbody></table></div></section>';
     return html;
+  }
+
+
+  const IMPORT_RULES = [
+    {sheet:"المدن المستقبلية",typeCode:"future_cities",mode:"simple"},
+    {sheet:"العقد الإطاري لتقنية المعلومات",typeCode:"framework_it",mode:"wide"},
+    {sheet:"العقد الإطاري للمركبات",typeCode:"framework_vehicles",mode:"wide"},
+    {sheet:"العقد الإطاري للشاحنات والمعدات",typeCode:"framework_trucks_equipment",mode:"wide"},
+    {sheet:"العقد الإطاري للادراج الطلابية",typeCode:"framework_student_desks",mode:"supplier_rows"},
+    {sheet:"العقد الإطاري للكتب المدرسية",typeCode:"framework_school_books",mode:"supplier_rows"},
+    {sheet:"عقود الصيانة",typeCode:"maintenance",mode:"simple"},
+    {sheet:"عقود التغذية",typeCode:"catering",mode:"simple"},
+    {sheet:"التوريدات",typeCode:"supplies",mode:"simple"}
+  ];
+
+  function importNormalize(value) {
+    return String(value==null?"":value).normalize("NFKC")
+      .replace(/[\u064B-\u065F\u0670\u0640]/g,"")
+      .replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
+      .toLowerCase().replace(/[^\p{L}\p{N}]/gu,"");
+  }
+  function importText(value) {
+    if(value==null) return "";
+    if(value instanceof Date) return value.toISOString().slice(0,10);
+    return String(value).trim();
+  }
+  function importNumber(value) {
+    if(typeof value==="number") return Number.isFinite(value)?value:null;
+    const raw=importText(value);
+    if(!raw||/^#/.test(raw)) return null;
+    const clean=raw.replace(/OMR/gi,"").replace(/ريال\s*عماني|ر\.?\s*ع\.?/g,"").replace(/[,٬\s]/g,"").replace(/[^\d.\-]/g,"");
+    if(!clean||!/^[-+]?(?:\d+\.?\d*|\.\d+)$/.test(clean)) return null;
+    const result=Number(clean);
+    return Number.isFinite(result)?result:null;
+  }
+  function importDate(value) {
+    if(value instanceof Date&&!Number.isNaN(value.getTime())) return value.toISOString().slice(0,10);
+    if(typeof value==="number"&&value>20000&&value<80000) {
+      const d=new Date(Date.UTC(1899,11,30)+Math.round(value)*86400000);
+      return Number.isNaN(d.getTime())?null:d.toISOString().slice(0,10);
+    }
+    const raw=importText(value);
+    if(!raw||/^#/.test(raw)) return null;
+    let m=raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+    if(m) return m[1]+"-"+String(m[2]).padStart(2,"0")+"-"+String(m[3]).padStart(2,"0");
+    const parsed=new Date(raw);
+    return !Number.isNaN(parsed.getTime())&&/\d/.test(raw)?parsed.toISOString().slice(0,10):null;
+  }
+  function importHeaderIndex(headers, terms, exact) {
+    const normalized=headers.map(importNormalize);
+    for(const term of terms) {
+      const wanted=importNormalize(term);
+      const idx=normalized.findIndex(v=>exact?v===wanted:v.includes(wanted));
+      if(idx>=0) return idx;
+    }
+    return -1;
+  }
+  function importCell(row, index) { return index>=0?row[index]:null; }
+  function importRowSnapshot(headers,row) {
+    const out={};
+    headers.forEach((h,i)=>{
+      const key=importText(h), value=row[i];
+      if(!key||value==null||value==="") return;
+      out[key]=value instanceof Date?value.toISOString():value;
+    });
+    return out;
+  }
+  function importFindMaster(collection, name) {
+    const wanted=importNormalize(name);
+    if(!wanted) return null;
+    const matches=collection.filter(x=>importNormalize(x.name)===wanted);
+    return matches.length===1?matches[0]:null;
+  }
+  function importBool(value) {
+    const v=importNormalize(value);
+    if(["نعم","yes","true","1","موجود"].includes(v)) return true;
+    if(["لا","no","false","0","غيرموجود"].includes(v)) return false;
+    return null;
+  }
+  function importStatus(value, family) {
+    const raw=importText(value);
+    if(!raw) return family==="framework"||family==="project_like"?"قيد التنفيذ":"مسند";
+    const v=importNormalize(raw);
+    if(v.includes("متعثر")) return "متعثر";
+    if(v.includes("منتهي")||v.includes("مكتمل")) return "منتهي";
+    if(v.includes("مسند")) return "مسند";
+    if(v.includes("تنفيذ")||v.includes("جاري")||v.includes("قيد")) return "قيد التنفيذ";
+    return raw;
+  }
+  function importSheetRule(name) {
+    const normalized=importNormalize(name);
+    return IMPORT_RULES.find(rule=>importNormalize(rule.sheet)===normalized)||null;
+  }
+  function importKey(contract, context) {
+    const code=contract.contract_type_code||"";
+    const family=typeOf(code).family;
+    const base=code+"|"+importNormalize(contract.tender_number)+"|"+importNormalize(contract.title);
+    return family==="framework"?base:base+"|"+importNormalize(context||"");
+  }
+  function importExistingKey(c) {
+    const details=c.details||{};
+    const entity=details.workbook_source_entity_name||entityLabel(c.government_entity_id);
+    const company=details.workbook_source_company_name||companyLabel(c.implementing_company_id);
+    return importKey(c, String(entity==="—"?"":entity)+"|"+String(company==="—"?"":company));
+  }
+  function importCreateBase(rule, sheetName, headers, row, sourceRow) {
+    const titleIdx=importHeaderIndex(headers,["اسم المشروع","اسم العقد"],false);
+    const entityIdx=importHeaderIndex(headers,["الجهة الحكومية","الجهة"],false);
+    const companyIdx=importHeaderIndex(headers,["الجهة المنفذة","الشركة المنفذة","الشركات","المقاول","المورد"],false);
+    const tenderIdx=importHeaderIndex(headers,["رقم نوع المناقصة","رقم المناقصة"],false);
+    const statusIdx=importHeaderIndex(headers,["حالة العقد","حالة المشروع","حالة"],false);
+    const startIdx=importHeaderIndex(headers,["تاريخ البدء","تاريخ البداية"],false);
+    const endIdx=importHeaderIndex(headers,["تاريخ الانتهاء","تاريخ الانتهاء"],false);
+    const valueIdx=importHeaderIndex(headers,["قيمة المشروع الاجمالي","قيمة العقد","القيمة التعاقدية"],true);
+    const spendIdx=importHeaderIndex(headers,["اجمالي التكلفة في العقد","اجمالي التكلفة في المشروع","اجمالي الصرف الفعلي"],true);
+    const planIdx=importHeaderIndex(headers,["خطة المحتوى المحلي"],false);
+    const consultantIdx=importHeaderIndex(headers,["الاستشاري"],false);
+    const sectorIdx=importHeaderIndex(headers,["قطاع العمل","المجال"],false);
+    const companyTypeIdx=importHeaderIndex(headers,["نوع الشركة"],false);
+    const tenderTypeIdx=importHeaderIndex(headers,["نوع المناقصة"],false);
+    const title=importText(importCell(row,titleIdx));
+    const entityName=importText(importCell(row,entityIdx));
+    const companyName=importText(importCell(row,companyIdx));
+    const entity=importFindMaster(state.entities,entityName);
+    const company=importFindMaster(state.companies,companyName);
+    const tender=importText(importCell(row,tenderIdx))||null;
+    const start=importDate(importCell(row,startIdx));
+    const end=importDate(importCell(row,endIdx));
+    const value=importNumber(importCell(row,valueIdx));
+    let status=importStatus(importCell(row,statusIdx),typeOf(rule.typeCode).family);
+    const details={
+      workbook_source_entity_name:entityName||null,
+      workbook_source_company_name:companyName||null,
+      workbook_snapshot:importRowSnapshot(headers,row),
+      workbook_imported_at:new Date().toISOString()
+    };
+    const missing=[];
+    if(entityName&&!entity) { details.unmapped_entity_name=entityName; missing.push({kind:"entity",name:entityName}); }
+    if(companyName&&!company) { details.unmapped_company_name=companyName; missing.push({kind:"company",name:companyName}); }
+    const record={
+      contract:{
+        contract_type_code:rule.typeCode,title,tender_number:tender,
+        government_entity_id:entity?entity.id:null,implementing_company_id:company?company.id:null,
+        consultant:importText(importCell(row,consultantIdx))||null,
+        sector:importText(importCell(row,sectorIdx))||null,
+        contract_status:status,contract_value:value,
+        value_basis:value===null?"not_provided":"contract_value",
+        current_spend:importNumber(importCell(row,spendIdx)),
+        start_date:start,end_date:end,original_end_date:end,
+        has_local_content_plan:importBool(importCell(row,planIdx)),
+        company_type:importText(importCell(row,companyTypeIdx))||null,
+        tender_type:importText(importCell(row,tenderTypeIdx))||null,
+        details,source_sheet:sheetName,source_row:sourceRow,
+        source_reference:"excel-import|"+importKey({contract_type_code:rule.typeCode,tender_number:tender,title},String(entityName||"")+"|"+String(companyName||""))
+      },
+      participations:[],
+      meta:{rule,sheetName,sourceRow,entityName,companyName,missing,skippedDuplicate:false}
+    };
+    if(value===null&&rule.mode==="simple") record.contract.value_basis="not_provided";
+    return record;
+  }
+  function importNonBlank(row) {
+    return Array.isArray(row)&&row.some(v=>v!==null&&v!==undefined&&String(v).trim()!=="");
+  }
+  function importWideSupplierIndices(headers) {
+    const endDateIdx=importHeaderIndex(headers,["تاريخ الانتهاء"],false);
+    const fieldIdx=importHeaderIndex(headers,["المجال"],false);
+    const start=Math.max(0,(endDateIdx>=0?endDateIdx:fieldIdx)+1);
+    let end=headers.length;
+    for(let i=start;i<headers.length;i++) {
+      const h=importNormalize(headers[i]);
+      if(!h||h.startsWith(importNormalize("اجمالي"))||h.includes(importNormalize("المحتوى المحلي"))||h.startsWith(importNormalize("نسبة"))||h.includes(importNormalize("ملاحظات"))) { end=i;break; }
+    }
+    const indices=[];
+    for(let i=start;i<end;i++) if(importText(headers[i])) indices.push(i);
+    return {start,end,indices};
+  }
+  function importBuildCandidates() {
+    const selected=state.importSheets.filter(s=>state.importSelectedSheets.includes(s.actualName));
+    const candidates=[], warnings=[], warningKeys=new Set();
+    const seenCandidates=new Set();
+    let rowsRead=0,skippedBlank=0,skippedInvalid=0;
+    const addWarning=(kind,name,sheetName,rowNo)=>{
+      const key=kind+"|"+importNormalize(name)+"|"+sheetName;
+      if(!warningKeys.has(key)){warningKeys.add(key);warnings.push({kind,name,sheetName,rowNo});}
+    };
+    for(const sh of selected) {
+      const rule=sh.rule, allRows=sh.rows||[];
+      if(!allRows.length) continue;
+      const headers=(allRows[0]||[]).map(v=>importText(v));
+      if(importHeaderIndex(headers,["اسم المشروع","اسم العقد"],false)<0) {
+        addWarning("missing_title_header","",sh.actualName,1); skippedInvalid+=Math.max(0,allRows.length-1);continue;
+      }
+      const dataRows=allRows.slice(1).map((row,i)=>({row:row||[],sourceRow:i+2})).filter(x=>importNonBlank(x.row));
+      rowsRead+=dataRows.length;
+      if(rule.mode==="simple") {
+        for(const item of dataRows) {
+          const candidate=importCreateBase(rule,sh.actualName,headers,item.row,item.sourceRow);
+          if(!candidate.contract.title) { skippedInvalid++;continue; }
+          if(candidate.meta.missing) candidate.meta.missing.forEach(m=>addWarning("unmapped_"+m.kind,m.name,sh.actualName,item.sourceRow));
+          candidates.push(candidate);
+        }
+        continue;
+      }
+
+      const groups=new Map();
+      if(rule.mode==="wide") {
+        const supplierInfo=importWideSupplierIndices(headers);
+        const entityIdx=importHeaderIndex(headers,["الجهة الحكومية","الجهة"],false);
+        const tenderIdx=importHeaderIndex(headers,["رقم المناقصة"],false);
+        const titleIdx=importHeaderIndex(headers,["اسم العقد"],false);
+        const statusIdx=importHeaderIndex(headers,["حالة العقد"],false);
+        const startIdx=importHeaderIndex(headers,["تاريخ البدء"],false);
+        const endIdx=importHeaderIndex(headers,["تاريخ الانتهاء"],false);
+        const rowTotalIdx=importHeaderIndex(headers,["اجمالي الطلب في العقد للجهة","اجمالي الطلب في العقد","اجمالي تكلفة المورد في العقد"],false);
+        const frameworkFieldIdx=importHeaderIndex(headers,["المجال"],false);
+        for(const item of dataRows) {
+          const row=item.row, title=importText(importCell(row,titleIdx));
+          if(!title) { skippedInvalid++;continue; }
+          const tender=importText(importCell(row,tenderIdx));
+          const key=importKey({contract_type_code:rule.typeCode,title,tender_number:tender},"");
+          let group=groups.get(key);
+          if(!group) {
+            const candidate=importCreateBase(rule,sh.actualName,headers,row,item.sourceRow);
+            candidate.contract.title=title;
+            candidate.contract.tender_number=tender||null;
+            candidate.contract.value_basis="not_provided";
+            candidate.contract.contract_value=null;
+            candidate.contract.current_spend=0;
+            candidate.contract.government_entity_id=null;
+            candidate.contract.implementing_company_id=null;
+            candidate.contract.consultant=null;
+            candidate.contract.sector=importText(importCell(row,frameworkFieldIdx))||candidate.contract.sector;
+            candidate.contract.details={workbook_source_entity_name:null,workbook_source_company_name:null,workbook_rows:[],unmapped_entity_rows:[],unmapped_supplier_names:[],workbook_imported_at:new Date().toISOString()};
+            candidate.contract.source_reference="excel-import|"+key;
+            candidate.participations=[];
+            candidate.meta={rule,sheetName:sh.actualName,sourceRow:item.sourceRow,entityName:"",companyName:"",missing:[],skippedDuplicate:false};
+            group=candidate; groups.set(key,group);
+          }
+          const entityName=importText(importCell(row,entityIdx));
+          const entity=importFindMaster(state.entities,entityName);
+          const rowInfo={source_row:item.sourceRow,entity_name:entityName||null,workbook_totals:{},unmapped_supplier_values:[]};
+          for(let i=supplierInfo.end;i<headers.length;i++) {
+            if(importText(headers[i])&&row[i]!==null&&row[i]!==undefined&&row[i]!=="") rowInfo.workbook_totals[importText(headers[i])]=row[i] instanceof Date?row[i].toISOString():row[i];
+          }
+          let rowSupplierTotal=0;
+          for(const idx of supplierInfo.indices) {
+            const amount=importNumber(row[idx]);
+            const supplierName=importText(headers[idx]);
+            if(amount===null||amount<=0||!supplierName) continue;
+            rowSupplierTotal+=amount;
+            const company=importFindMaster(state.companies,supplierName);
+            if(!entity||!company) {
+              if(!entity) addWarning("unmapped_entity",entityName,sh.actualName,item.sourceRow);
+              if(!company) {
+                addWarning("unmapped_company",supplierName,sh.actualName,item.sourceRow);
+                group.contract.details.unmapped_supplier_names.push(supplierName);
+                rowInfo.unmapped_supplier_values.push({supplier:supplierName,amount:amount});
+              }
+              continue;
+            }
+            group.participations.push({
+              government_entity_id:entity.id,company_id:company.id,assigned_value:null,spend_amount:amount,
+              status:importStatus(importCell(row,statusIdx),"framework"),notes:null,
+              details:{workbook_supplier_column:supplierName,source_entity_name:entityName},
+              source_sheet:sh.actualName,source_row:item.sourceRow
+            });
+          }
+          if(entityName&&!entity) {
+            group.contract.details.unmapped_entity_rows.push({source_row:item.sourceRow,entity_name:entityName});
+            rowInfo.unmapped_supplier_values=rowInfo.unmapped_supplier_values.concat(supplierInfo.indices.map(idx=>({supplier:importText(headers[idx]),amount:importNumber(row[idx])})).filter(x=>x.amount>0&&!rowInfo.unmapped_supplier_values.some(y=>y.supplier===x.supplier)));
+          }
+          const reportedTotal=importNumber(importCell(row,rowTotalIdx));
+          rowInfo.reported_order_total=reportedTotal;
+          rowInfo.supplier_column_total=rowSupplierTotal;
+          const rowSpend=reportedTotal!==null&&(reportedTotal>0||rowSupplierTotal===0)?reportedTotal:rowSupplierTotal;
+          group.contract.current_spend=n(group.contract.current_spend)+rowSpend;
+          group.contract.source_row=Math.min(group.contract.source_row||item.sourceRow,item.sourceRow);
+          if(!group.contract.start_date) group.contract.start_date=importDate(importCell(row,startIdx));
+          if(!group.contract.end_date) { group.contract.end_date=importDate(importCell(row,endIdx));group.contract.original_end_date=group.contract.end_date; }
+          if(rowInfo.unmapped_supplier_values.length===0) delete rowInfo.unmapped_supplier_values;
+          group.contract.details.workbook_rows.push(rowInfo);
+        }
+        groups.forEach(candidate=>{
+          candidate.contract.details.unmapped_supplier_names=[...new Set(candidate.contract.details.unmapped_supplier_names)];
+          candidates.push(candidate);
+        });
+      } else if(rule.mode==="supplier_rows") {
+        const titleIdx=importHeaderIndex(headers,["اسم العقد"],false);
+        const entityIdx=importHeaderIndex(headers,["الجهة"],false);
+        const companyIdx=importHeaderIndex(headers,["الشركات","الشركة","المورد"],false);
+        const tenderIdx=importHeaderIndex(headers,["رقم المناقصة"],false);
+        const amountIdx=importHeaderIndex(headers,["اجمالي تكلفة المورد في العقد","اجمالي تكلفة المزود في العقد","اجمالي تكلفة المورد"],false);
+        const lcIdx=headers.findIndex(h=>{const v=importNormalize(h);return v.includes(importNormalize("المحتوى المحلي"))&&!v.includes(importNormalize("نسبة"));});
+        const ratioIdx=importHeaderIndex(headers,["نسبة المحتوى المحلي"],false);
+        const statusIdx=importHeaderIndex(headers,["حالة العقد"],false);
+        const sectorIdx=importHeaderIndex(headers,["المجال"],false);
+        for(const item of dataRows) {
+          const row=item.row, title=importText(importCell(row,titleIdx));
+          if(!title) {skippedInvalid++;continue;}
+          const tender=importText(importCell(row,tenderIdx));
+          const key=importKey({contract_type_code:rule.typeCode,title,tender_number:tender},"");
+          let group=groups.get(key);
+          if(!group) {
+            group=importCreateBase(rule,sh.actualName,headers,row,item.sourceRow);
+            group.contract.title=title;group.contract.tender_number=tender||null;
+            group.contract.value_basis="not_provided";group.contract.contract_value=null;
+            group.contract.current_spend=null;
+            group.contract.details={workbook_source_entity_name:null,workbook_source_company_name:null,workbook_rows:[],unmapped_entity_rows:[],unmapped_supplier_names:[],workbook_imported_at:new Date().toISOString()};
+            group.contract.source_reference="excel-import|"+key;
+            group.participations=[];
+            group.meta={rule,sheetName:sh.actualName,sourceRow:item.sourceRow,entityName:"",companyName:"",missing:[],skippedDuplicate:false};
+            groups.set(key,group);
+          }
+          const entityName=importText(importCell(row,entityIdx));
+          const companyName=importText(importCell(row,companyIdx));
+          const entity=importFindMaster(state.entities,entityName);
+          const company=importFindMaster(state.companies,companyName);
+          const amount=importNumber(importCell(row,amountIdx));
+          const localContent=importNumber(importCell(row,lcIdx));
+          const workbookRatio=importNumber(importCell(row,ratioIdx));
+          const rowSnapshot=importRowSnapshot(headers,row);
+          group.contract.details.workbook_rows.push({source_row:item.sourceRow,entity_name:entityName,company_name:companyName,amount,workbook_local_content:localContent,workbook_ratio:workbookRatio,raw:rowSnapshot});
+          if(amount!==null) group.contract.details.workbook_total_supplier_value=n(group.contract.details.workbook_total_supplier_value)+amount;
+          if(entityName&&!entity) addWarning("unmapped_entity",entityName,sh.actualName,item.sourceRow);
+          if(companyName&&!company) { addWarning("unmapped_company",companyName,sh.actualName,item.sourceRow);group.contract.details.unmapped_supplier_names.push(companyName); }
+          if(!entity&&entityName) group.contract.details.unmapped_entity_rows.push({source_row:item.sourceRow,entity_name:entityName});
+          if(entity&&company&&amount!==null&&amount>0) {
+            group.participations.push({
+              government_entity_id:entity.id,company_id:company.id,assigned_value:amount,spend_amount:null,
+              status:importStatus(importCell(row,statusIdx),"framework"),
+              notes:null,details:{workbook_local_content:localContent,workbook_ratio:workbookRatio,workbook_source_amount:amount,workbook_source_field:importText(headers[amountIdx]),sector:importText(importCell(row,sectorIdx))},
+              source_sheet:sh.actualName,source_row:item.sourceRow
+            });
+          }
+          group.contract.source_row=Math.min(group.contract.source_row||item.sourceRow,item.sourceRow);
+        }
+        groups.forEach(candidate=>{
+          candidate.contract.details.unmapped_supplier_names=[...new Set(candidate.contract.details.unmapped_supplier_names)];
+          candidates.push(candidate);
+        });
+      }
+    }
+
+    const existing=new Set(state.records.map(importExistingKey));
+    const seen=new Set();
+    candidates.forEach(candidate=>{
+      const context=String(candidate.meta.entityName||candidate.meta.companyName||"");
+      const key=importKey(candidate.contract,context);
+      const duplicate=existing.has(key)||seen.has(key);
+      candidate.meta.skippedDuplicate=duplicate;
+      if(duplicate) addWarning("duplicate",candidate.contract.title,candidate.meta.sheetName,candidate.meta.sourceRow);
+      else seen.add(key);
+    });
+    state.importCandidates=candidates;
+    state.importBatch=candidates.filter(c=>!c.meta.skippedDuplicate).map(c=>({contract:c.contract,participations:c.participations,meta:c.meta}));
+    state.importWarnings=warnings;
+    state.importStats={
+      sheetsSelected:selected.length,rowsRead,recordsDetected:candidates.length,
+      newRecords:state.importBatch.length,duplicates:candidates.filter(c=>c.meta.skippedDuplicate).length,
+      participations:state.importBatch.reduce((sum,c)=>sum+c.participations.length,0),
+      skippedBlank,skippedInvalid,
+      unresolved:warnings.filter(w=>w.kind==="unmapped_entity"||w.kind==="unmapped_company").length
+    };
+  }
+
+  function loadImportFile(file) {
+    if(!file) return;
+    if(!window.XLSX||typeof window.XLSX.read!=="function") {
+      state.importError=T("مكتبة قراءة Excel غير متاحة. أعد تحميل الصفحة وحاول مجددًا.","Excel reader is unavailable. Reload the page and try again.");render();return;
+    }
+    state.importBusy=true;state.importError="";state.importWorkbookName=file.name;render();
+    const reader=new FileReader();
+    reader.onerror=()=>{
+      state.importBusy=false;state.importError=T("تعذر قراءة الملف المختار.","The selected file could not be read.");render();
+    };
+    reader.onload=()=>{
+      try {
+        const wb=window.XLSX.read(reader.result,{type:"array",cellDates:true});
+        state.importSheets=[];
+        state.importIgnoredSheets=[];
+        wb.SheetNames.forEach(name=>{
+          const rule=importSheetRule(name);
+          if(!rule){state.importIgnoredSheets.push(name);return;}
+          const ws=wb.Sheets[name];
+          const rows=window.XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null,blankrows:true});
+          state.importSheets.push({actualName:name,rule,rows});
+        });
+        state.importSelectedSheets=state.importSheets.map(x=>x.actualName);
+        state.importBusy=false;
+        if(!state.importSheets.length) state.importError=T("لم أجد أيًا من أوراق العقود المعروفة في الملف. لم تُحفظ أي بيانات.","No supported contract sheets were found. No data has been saved.");
+        importBuildCandidates();
+        render();
+      } catch(err) {
+        console.error("Excel import preview failed",err);
+        state.importBusy=false;state.importError=T("تعذر تحليل الملف. تأكد أنه ملف Excel صالح وغير محمي بكلمة مرور.","The file could not be parsed. Verify it is a valid, unprotected Excel workbook.");render();
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function renderImportPanel() {
+    const stats=state.importStats;
+    const supported=state.importSheets.map(sh=>{
+      const selected=state.importSelectedSheets.includes(sh.actualName);
+      const rowCount=Math.max(0,(sh.rows||[]).length-1);
+      return '<label class="ct-import-sheet"><input type="checkbox" data-ct-import-sheet value="'+esc(sh.actualName)+'" '+(selected?"checked":"")+'/><span><b>'+esc(sh.actualName)+'</b><small>'+esc(typeLabel(sh.rule.typeCode))+' · '+rowCount.toLocaleString("en-US")+' '+T("صفوف في الورقة","sheet rows")+'</small></span></label>';
+    }).join("");
+    const preview=(state.importCandidates||[]).slice(0,12).map(c=>
+      '<tr><td>'+esc(c.contract.title)+'</td><td>'+esc(typeLabel(c.contract.contract_type_code))+'</td><td>'+esc(c.meta.sheetName)+' · '+c.meta.sourceRow+'</td><td class="ct-num">'+money(c.contract.current_spend)+'</td><td>'+c.participations.length+'</td><td><span class="ct-status '+(c.meta.skippedDuplicate?"ct-dup":"")+'">'+(c.meta.skippedDuplicate?T("مكرر — سيُتجاوز","Duplicate — skipped"):T("جديد","New"))+'</span></td></tr>'
+    ).join("");
+    const warnings=(state.importWarnings||[]).slice(0,18).map(w=>{
+      const label=w.kind==="unmapped_entity"?T("جهة غير مطابقة","Unmatched entity"):w.kind==="unmapped_company"?T("شركة/مورد غير مطابق","Unmatched company/supplier"):w.kind==="duplicate"?T("تكرار","Duplicate"):T("مشكلة في الورقة","Sheet issue");
+      return '<li><b>'+label+':</b> '+esc(w.name||"—")+' <small>('+esc(w.sheetName||"")+ (w.rowNo?" · "+w.rowNo:"") +')</small></li>';
+    }).join("");
+    return '<section class="panel ct-import-panel"><div class="ct-panel-head"><div><h2>'+T("استيراد بقية المشاريع والعقود من Excel","Import additional projects and contracts from Excel")+'</h2><p class="muted">'+T("معاينة فقط أولًا. لن تُحفظ أي بيانات إلا بعد الضغط على زر الاستيراد، ولا يتم استيراد المشاريع الإنمائية أو أوراق المؤشرات كعقود جديدة.","Preview first. Nothing is saved until you import; development projects and KPI/report sheets are not imported as new contracts.")+'</p></div><button class="btn" data-ct-action="close-import">× '+T("إغلاق","Close")+'</button></div>'+
+      '<div class="ct-import-safety"><b>'+T("حماية البيانات","Data safeguard")+'</b><span>'+T("يستورد هذا المعالج السجلات الأساسية والمشاركات فقط. لا ينشئ تقارير معتمدة، ولا يغيّر جدول المشاريع الحالي. أوراق المؤشرات تُسجل مسبقًا كمرجع منفصل.","This wizard imports registry records and participations only. It creates no approved reports and does not change the existing projects table. KPI sheets are stored separately as reference definitions.")+'</span></div>'+
+      '<label class="ct-import-file"><span>'+T("اختر ملف Excel","Choose Excel workbook")+'</span><input id="ct-import-file" type="file" accept=".xlsx,.xls,.xlsm" /><small>'+(state.importWorkbookName?T("الملف المختار: ","Selected file: ")+esc(state.importWorkbookName):T("يدعم .xlsx و.xls و.xlsm. تتم القراءة محليًا في المتصفح.","Supports .xlsx, .xls, and .xlsm. The file is read locally in the browser."))+'</small></label>'+
+      (state.importBusy?'<p class="muted">'+T("تتم قراءة الملف وبناء المعاينة...","Reading workbook and preparing preview...")+'</p>':"")+
+      (state.importError?'<div class="ct-import-error">'+esc(state.importError)+'</div>':"")+
+      (state.importSheets.length?'<h3 class="ct-group-title">'+T("أوراق العقود التي يمكن استيرادها","Supported contract sheets")+'</h3><div class="ct-import-sheets">'+supported+'</div>':"")+
+      (state.importIgnoredSheets.length?'<p class="ct-import-muted">'+T("أوراق تم استثناؤها من الاستيراد لتجنب التكرار: ","Sheets excluded to avoid duplicate imports: ")+esc(state.importIgnoredSheets.join("، "))+'</p>':"")+
+      (stats?'<div class="ct-import-stats"><div><span>'+T("الصفوف المقروءة","Rows read")+'</span><b>'+stats.rowsRead+'</b></div><div><span>'+T("العقود المكتشفة","Contracts detected")+'</span><b>'+stats.recordsDetected+'</b></div><div><span>'+T("سجلات جديدة","New records")+'</span><b>'+stats.newRecords+'</b></div><div><span>'+T("المشاركات التابعة","Participations")+'</span><b>'+stats.participations+'</b></div><div><span>'+T("المكررات المستثناة","Duplicates skipped")+'</span><b>'+stats.duplicates+'</b></div><div><span>'+T("علاقات تحتاج مطابقة","Unmatched relationships")+'</span><b>'+stats.unresolved+'</b></div></div>':"")+
+      (state.importCandidates.length?'<h3 class="ct-group-title">'+T("معاينة أول 12 سجلًا","Preview first 12 records")+'</h3><div class="table-wrap"><table class="ct-table"><thead><tr><th>'+T("العقد / المشروع","Contract / project")+'</th><th>'+T("النوع","Type")+'</th><th>'+T("المصدر","Source")+'</th><th>'+T("الصرف/المدفوعات (ر.ع)","Spend/orders (OMR)")+'</th><th>'+T("المشاركات","Participants")+'</th><th>'+T("الحالة","Disposition")+'</th></tr></thead><tbody>'+preview+'</tbody></table></div>':"")+
+      (warnings?'<div class="ct-import-warnings"><b>'+T("ملاحظات تحتاج انتباهك","Items to review")+'</b><ul>'+warnings+'</ul>'+(state.importWarnings.length>18?'<small>'+T("يعرض أهم 18 ملاحظة فقط؛ عدد الملاحظات الكامل: ","Showing first 18 items; total warnings: ")+state.importWarnings.length+'</small>':"")+'</div>':"")+
+      '<div class="ct-form-actions"><button class="btn primary" data-ct-action="execute-import" '+(!state.importBatch.length||state.importBusy?"disabled":"")+'>'+T("استيراد ","Import ")+state.importBatch.length.toLocaleString("en-US")+' '+T("سجل جديد","new records")+'</button><button class="btn" data-ct-action="reset-import">'+T("إعادة اختيار ملف","Choose another file")+'</button></div>'+
+      '<p class="ct-import-muted">'+T("تُحفظ الصفوف التي لا تطابق جهة أو شركة في لقطة المصدر مع تنبيه للمراجعة؛ لا تُنشأ بيانات رئيسية جديدة تلقائيًا. وتبقى كل المؤشرات الحية بانتظار التقارير المعتمدة.","Rows with unmatched entities/companies remain in the source snapshot with a warning; no master data is auto-created. Live indicators still wait for approved reports.")+'</p></section>';
+  }
+
+  async function executeImport() {
+    if(!canEdit()||state.importBusy||!state.importBatch.length) return;
+    if(state.importBatch.length>500){message(T("قسّم الاستيراد إلى مجموعات أصغر من 500 سجل.","Split the import into batches of fewer than 500 records."),"error");return;}
+    state.importBusy=true;render();
+    try {
+      const payload=state.importBatch.map(c=>({contract:c.contract,participations:c.participations}));
+      const r=await client().rpc("import_contract_batch",{p_batch:payload});
+      if(r.error) throw r.error;
+      const summary=r.data||{};
+      state.showImport=false;state.importBusy=false;state.importWorkbookName="";state.importSheets=[];
+      state.importSelectedSheets=[];state.importCandidates=[];state.importBatch=[];state.importWarnings=[];state.importStats=null;state.importIgnoredSheets=[];state.importError="";
+      await load(true);
+      message(T("اكتمل الاستيراد الذري: ","Atomic import complete: ")+(summary.inserted_contracts||0)+T(" سجل عقد و"," contracts and ")+(summary.inserted_participations||0)+T(" مشاركة. لم تُنشأ تقارير معتمدة."," participations. No approved reports were created."));
+    } catch(err) {
+      state.importBusy=false;
+      state.importError=window.ICV&&window.ICV.friendlyError?window.ICV.friendlyError(err):String(err&&err.message||err);
+      render();
+    }
   }
 
   function addStyle() {
