@@ -266,6 +266,52 @@ COMMENT ON TABLE public.contract_reports IS 'Type-specific report payload; offic
 COMMENT ON TABLE public.contract_report_items IS 'Normalized financial lines; a null content coefficient means not yet confirmed.';
 COMMENT ON TABLE public.contract_indicator_definitions IS 'Workbook KPI catalog; workbook_actual is a historic reference, not a live dashboard value.';
 
+-- Never inherit the default client grants on newly-created public tables.
+REVOKE ALL ON TABLE public.contract_types FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON TABLE public.contracts FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON TABLE public.contract_participations FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON TABLE public.contract_reports FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON TABLE public.contract_report_items FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON TABLE public.contract_indicator_definitions FROM PUBLIC, anon, authenticated;
+
+-- Re-grant only the authenticated application privileges described by the RLS policies.
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.contract_types TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.contracts TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.contract_participations TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.contract_reports TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.contract_report_items TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.contract_indicator_definitions TO authenticated;
+
+-- Dictionary rows use code rather than id as the primary key; write a separate audit entry
+-- instead of calling the standard UUID-key writer (which groups id-less rows together).
+CREATE OR REPLACE FUNCTION private.write_contract_dictionary_audit()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_actor uuid := (SELECT auth.uid());
+  v_old jsonb := CASE WHEN tg_op IN ('UPDATE','DELETE') THEN to_jsonb(old) END;
+  v_new jsonb := CASE WHEN tg_op IN ('INSERT','UPDATE') THEN to_jsonb(new) END;
+  v_id text := coalesce(v_new->>'code', v_old->>'code');
+BEGIN
+  IF tg_op = 'UPDATE' AND (v_old - ARRAY['updated_at']) = (v_new - ARRAY['updated_at']) THEN
+    RETURN new;
+  END IF;
+  INSERT INTO public.audit_log(actor_user_id, operation, table_name, record_id, old_data, new_data)
+  VALUES (v_actor, tg_op, tg_table_name, v_id, v_old, v_new);
+  RETURN coalesce(new, old);
+END;
+$function$;
+REVOKE ALL ON FUNCTION private.write_contract_dictionary_audit() FROM PUBLIC, anon, authenticated;
+CREATE TRIGGER contract_types_write_audit
+  AFTER INSERT OR UPDATE OR DELETE ON public.contract_types
+  FOR EACH ROW EXECUTE FUNCTION private.write_contract_dictionary_audit();
+CREATE TRIGGER contract_indicator_definitions_write_audit
+  AFTER INSERT OR UPDATE OR DELETE ON public.contract_indicator_definitions
+  FOR EACH ROW EXECUTE FUNCTION private.write_contract_dictionary_audit();
+
 -- Protect official report approvals, and prevent staff from editing data after approval.
 CREATE OR REPLACE FUNCTION private.guard_contract_report_approval()
 RETURNS trigger
