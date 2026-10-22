@@ -30,7 +30,68 @@ BEGIN
 END
 $assert$;
 
+INSERT INTO public.government_entities(id,name) VALUES
+ ('60000000-0000-0000-0000-000000000001','CI beneficiary entity');
+INSERT INTO public.companies(id,name,company_type) VALUES
+ ('70000000-0000-0000-0000-000000000001','CI supplier','SME');
+
 SET LOCAL ROLE authenticated;
+-- Excel import is one atomic RPC: contract + entity/supplier participation.
+SELECT public.import_contract_batch(
+ '[{
+    "contract":{
+      "contract_type_code":"supplies",
+      "title":"CI imported contract",
+      "tender_number":"CI-IMPORT-001",
+      "contract_status":"قيد التنفيذ",
+      "value_basis":"not_provided",
+      "current_spend":100,
+      "source_sheet":"التوريدات",
+      "source_row":2,
+      "source_reference":"supplies|ci-import-001",
+      "details":{"workbook_snapshot":{"source":"CI"}}
+    },
+    "participations":[{
+      "government_entity_id":"60000000-0000-0000-0000-000000000001",
+      "company_id":"70000000-0000-0000-0000-000000000001",
+      "spend_amount":100,
+      "details":{"workbook_factor":0.18},
+      "source_sheet":"التوريدات",
+      "source_row":2
+    }]
+ }]'::jsonb
+);
+
+-- Invalid child participation must roll back the contract row as well.
+DO $atomic_import$
+BEGIN
+  BEGIN
+    PERFORM public.import_contract_batch(
+      '[{
+        "contract":{
+          "contract_type_code":"supplies",
+          "title":"CI atomic rollback probe",
+          "source_sheet":"التوريدات",
+          "source_row":99,
+          "source_reference":"supplies|atomic-probe"
+        },
+        "participations":[{
+          "government_entity_id":"60000000-0000-0000-0000-000000000001",
+          "company_id":"99999999-9999-9999-9999-999999999999",
+          "spend_amount":50
+        }]
+      }]'::jsonb
+    );
+    RAISE EXCEPTION 'Expected the missing supplier foreign key to abort the import';
+  EXCEPTION WHEN foreign_key_violation THEN
+    NULL;
+  END;
+  IF EXISTS (SELECT 1 FROM public.contracts WHERE title='CI atomic rollback probe') THEN
+    RAISE EXCEPTION 'Atomic import left a partial contract record';
+  END IF;
+END
+$atomic_import$;
+
 INSERT INTO public.contracts(id,contract_type_code,title,contract_status,value_basis,contract_value)
 VALUES ('10000000-0000-0000-0000-000000000001','supplies','CI contract row','قيد التنفيذ','contract_value',100.000);
 
@@ -101,6 +162,12 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.audit_log WHERE table_name='contracts' AND record_id='10000000-0000-0000-0000-000000000001') THEN
     RAISE EXCEPTION 'Contract audit trigger did not write the audit log';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.contracts WHERE title='CI imported contract' AND source_reference='supplies|ci-import-001') THEN
+    RAISE EXCEPTION 'The atomic import RPC did not create its main contract';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.contract_participations WHERE spend_amount=100 AND company_id='70000000-0000-0000-0000-000000000001') THEN
+    RAISE EXCEPTION 'The atomic import RPC did not create the supplier participation';
   END IF;
 END
 $post$;
