@@ -236,14 +236,14 @@
       flag("sme_compliant",T("استيفاء متطلبات SME","SME requirement compliant"))+
       flag("made_in_oman_compliant",T("استيفاء المنتجات العمانية","Made-in-Oman compliant"));
     const financialSection='<div class="ct-form-divider ct-wide"><b>'+T("القيم المالية للمؤشرات","Financial indicator inputs")+'</b><p class="muted">'+T("أدخل الإجماليات الموثقة من التقرير. تظل معاملات الاحتساب غير المحددة غير مستخدمة.","Enter totals supported by the report. Unconfirmed coefficients are not automatically applied.")+'</p></div>'+
-      input("local_content_achieved",T("المحتوى المحلي المحقق (ر.ع)","Achieved local content (OMR)"),"number","","0.001")+
+      input("local_content_achieved",T("المحتوى المحلي المحقق التراكمي حتى الفترة (ر.ع)","Cumulative achieved local content to date (OMR)"),"number","","0.001")+
       input("direct_procurement_total",T("إجمالي المشتريات المباشرة المشمولة","Covered direct procurement value"),"number","","0.001")+
       input("direct_sme_awards",T("إسناد مباشر لـ SME","Direct SME awards"),"number","","0.001")+
       input("subcontract_procurement_total",T("إجمالي عقود الباطن المشمولة","Covered subcontract value"),"number","","0.001")+
       input("subcontract_sme_awards",T("إسناد من الباطن لـ SME","SME subcontract awards"),"number","","0.001")+
       input("local_product_purchase",T("قيمة المنتجات المحلية المشتراة","Local products purchased"),"number","","0.001")+
       input("total_government_purchases",T("إجمالي المشتريات الحكومية المشمولة","Covered government purchases"),"number","","0.001");
-    return '<div class="ct-report-form"><h3>'+T("بيانات التقرير","Report data")+'</h3><p class="muted">'+T("يختلف هذا النموذج حسب عائلة العقد. البنود التفصيلية اختيارية؛ لا يُطبّق أي معامل محتوى محلي تلقائيًا ما لم يُدخل معامل معتمد.","This form varies by contract family. Detailed line items are optional; no local-content coefficient is applied unless an approved coefficient is entered.")+'</p>'+
+    return '<div class="ct-report-form"><h3>'+T("بيانات التقرير","Report data")+'</h3><p class="muted">'+T("يختلف هذا النموذج حسب عائلة العقد. إذا كانت التقارير تراكمية فأدخل آخر إجمالي معتمد حتى هذه الفترة؛ المؤشرات تستخدم أحدث تقرير معتمد داخل سنة القياس ولا تجمع الإجماليات التراكمية المتكررة. البنود التفصيلية اختيارية، ولا يُطبّق معامل محتوى محلي تلقائيًا ما لم يُدخل معامل معتمد.","This form varies by contract family. For cumulative reports, enter the latest approved cumulative total to this period; indicators use the latest approved report within the measurement year and do not add repeated cumulative totals. Line items are optional; no coefficient is applied unless approved.")+'</p>'+
       '<form id="ct-report-form"><input type="hidden" name="contract_id" value="'+esc(id)+'"/><div class="ct-form-grid">'+
       input("report_year",T("السنة","Year"),"number",new Date().getFullYear(),"1")+
       '<label class="ct-field"><span>'+T("الفترة","Period")+'</span><select name="report_quarter"><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option><option>ANNUAL</option></select></label>'+
@@ -257,7 +257,8 @@
   function indicatorLive(code) {
     const projects=Array.isArray(window.projects)?window.projects:[];
     const contracts=state.records;
-    const approved=latestApprovedReports();
+    // Workbook indicators are explicitly measured for 2026; do not accidentally take a later-year report.
+    const approved=latestApprovedReports(2026);
     const reportByContract=new Map(approved.map(r=>[r.contract_id,r]));
     const overlaps2026=x=>(!x.start_date||String(x.start_date).slice(0,4)<="2026")&&(!x.end_date||String(x.end_date).slice(0,4)>="2026");
     const ends2026=x=>x.end_date&&String(x.end_date).slice(0,4)==="2026";
@@ -339,16 +340,16 @@
     if(["غير منطبق","لا ينطبق","not applicable","n/a","na"].includes(v)) return "na";
     return null;
   }
-  function latestApprovedReports() {
+  function latestApprovedReports(year) {
     const map=new Map();
     const quarterRank=q=>q==="ANNUAL"?5:(Number(String(q||"").replace(/\\D/g,""))||0);
-    state.reports.filter(r=>r.report_status==="approved").sort((a,b)=>
-      n(a.report_year)-n(b.report_year)||
+    state.reports.filter(r=>r.report_status==="approved"&&(year==null||n(r.report_year)===Number(year))).sort((a,b)=>
       quarterRank(a.report_quarter)-quarterRank(b.report_quarter)||
       String(a.updated_at||a.created_at).localeCompare(String(b.updated_at||b.created_at))
     ).forEach(r=>map.set(r.contract_id,r));
     return Array.from(map.values());
   }
+
   function renderIndicators() {
     const groups = [
       {title:T("المحتوى المحلي والمشتريات","Local content and purchases"),codes:["local_content_ratio","sme_award_value","sme_award_direct","sme_award_subcontract","local_product_purchase_share"]},
@@ -540,15 +541,21 @@
     const payload={contract_id:contractId,report_year:year,report_quarter:get("report_quarter")||"Q1",report_status:status,report_data:reportData,submitted_at:status==="draft"?null:new Date().toISOString(),approved_at:status==="approved"?new Date().toISOString():null,approved_by:status==="approved"?(profile().id||null):null,created_by:profile().id||null,updated_by:profile().id||null};
     const r=await client().from("contract_reports").insert(payload).select("id").single();
     if(r.error){message(window.ICV?window.ICV.friendlyError(r.error):r.error.message,"error");return;}
-    let lineItemError=null;
     if(lineItems.length){
       const prepared=lineItems.map(item=>({...item,report_id:r.data.id,created_by:profile().id||null}));
       const ir=await client().from("contract_report_items").insert(prepared);
-      if(ir.error) lineItemError=ir.error;
+      if(ir.error) {
+        // Supabase JS has no client transaction; best-effort rollback prevents a partial report.
+        const undo=await client().from("contract_reports").delete().eq("id",r.data.id);
+        state.showReportForm=false; state.reportContractId=null;
+        if(undo.error) message(T("تعذر حفظ بنود التقرير وتعذر التراجع عن سجل التقرير. سجّل رقم التقرير واطلب مراجعة المسؤول قبل إعادة الإدخال: ","Report line items failed and rollback failed. Record this report ID and ask an administrator before retrying: ")+r.data.id,"error");
+        else message(T("تعذر حفظ البنود التفصيلية؛ أُلغي التقرير بالكامل. راجع البنود وحاول مجددًا.","Line items could not be saved, so the report was rolled back. Review the entries and try again."),"error");
+        await load(true);
+        return;
+      }
     }
     state.showReportForm=false; state.reportContractId=null;
-    if(lineItemError) message(T("تم حفظ التقرير، لكن تعذر حفظ بعض بنود التفصيل. افتح سجل التقرير وأعد إدخال البنود.","The report saved, but the line items could not be saved. Re-open the report and add the line items again."),"error");
-    else message(T("تم حفظ التقرير. لا يدخل في المؤشرات الرسمية إلا عند اعتماده.","Report saved. It counts in official indicators only after approval."));
+    message(T("تم حفظ التقرير. لا يدخل في المؤشرات الرسمية إلا عند اعتماده.","Report saved. It counts in official indicators only after approval."));
     await load(true);
   }
 
