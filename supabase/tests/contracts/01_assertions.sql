@@ -127,6 +127,31 @@ BEGIN
 END
 $approval_update$;
 
+-- Editors cannot reject or bypass the section-head review step.
+DO $editor_transition$
+BEGIN
+  BEGIN
+    UPDATE public.contract_reports SET report_status='rejected'
+    WHERE id='20000000-0000-0000-0000-000000000001';
+    RAISE EXCEPTION 'Expected editor rejection to be denied';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+  BEGIN
+    UPDATE public.contract_reports SET report_data=report_data || '{"local_content_achieved":999}'::jsonb
+    WHERE id='20000000-0000-0000-0000-000000000001';
+    RAISE EXCEPTION 'Expected a submitted payload edit to be denied';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+END
+$editor_transition$;
+
+SELECT set_config('test.role','section_head',true);
+UPDATE public.contract_reports SET report_status='under_review'
+WHERE id='20000000-0000-0000-0000-000000000001';
+SELECT set_config('test.role','editor',true);
+
 -- Administrator may approve; after approval, staff must not be able to move the report
 -- to a different reporting period (or otherwise change its substantive fields).
 SELECT set_config('test.role','admin',true);
