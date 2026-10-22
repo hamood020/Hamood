@@ -526,9 +526,13 @@
     const sectorIdx=importHeaderIndex(headers,["قطاع العمل","المجال"],false);
     const companyTypeIdx=importHeaderIndex(headers,["نوع الشركة"],false);
     const tenderTypeIdx=importHeaderIndex(headers,["نوع المناقصة"],false);
-    const title=importText(importCell(row,titleIdx));
+    let title=importText(importCell(row,titleIdx));
     const entityName=importText(importCell(row,entityIdx));
     const companyName=importText(importCell(row,companyIdx));
+    const tenderTypeName=importText(importCell(row,tenderTypeIdx));
+    if(!title&&rule.typeCode==="supplies"&&(companyName||importText(importCell(row,tenderIdx)))) {
+      title=["توريدات",tenderTypeName,companyName,importText(importCell(row,tenderIdx))?("مناقصة "+importText(importCell(row,tenderIdx))):""].filter(Boolean).join(" — ");
+    }
     const entity=importFindMaster(state.entities,entityName);
     const company=importFindMaster(state.companies,companyName);
     const tender=importText(importCell(row,tenderIdx))||null;
@@ -596,8 +600,12 @@
       const rule=sh.rule, allRows=sh.rows||[];
       if(!allRows.length) continue;
       const headers=(allRows[0]||[]).map(v=>importText(v));
-      if(importHeaderIndex(headers,["اسم المشروع","اسم العقد"],false)<0) {
-        addWarning("missing_title_header","",sh.actualName,1); skippedInvalid+=Math.max(0,allRows.length-1);continue;
+      const hasTitleHeader=importHeaderIndex(headers,["اسم المشروع","اسم العقد"],false)>=0;
+      const validSupplyShape=rule.typeCode==="supplies"
+        && importHeaderIndex(headers,["الشركة المنفذة","الشركة"],false)>=0
+        && importHeaderIndex(headers,["رقم المناقصة","رقم نوع المناقصة"],false)>=0;
+      if(!hasTitleHeader&&!validSupplyShape) {
+        addWarning("missing_title_header","",sh.actualName,1); skippedInvalid+=Math.max(0,allRows.length-1-dataRows.length);continue;
       }
       const dataRows=allRows.slice(1).map((row,i)=>({row:row||[],sourceRow:i+2})).filter(x=>importNonBlank(x.row));
       rowsRead+=dataRows.length;
