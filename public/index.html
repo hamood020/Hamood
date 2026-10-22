@@ -1230,6 +1230,9 @@
           <button data-page="projects" onclick="showPage('projects', this)">
             <span class="ico">▦</span><span>المشاريع</span>
           </button>
+          <button data-page="contracts" onclick="showPage('contracts', this)">
+            <span class="ico">▤</span><span>العقود والمؤشرات</span>
+          </button>
           <button data-page="entities" onclick="showPage('entities', this)">
             <span class="ico">🏛</span><span>الجهات الحكومية</span>
           </button>
@@ -1311,6 +1314,7 @@
         </div>
         <div id="page-dashboard"></div>
         <div id="page-projects" class="hidden"></div>
+        <div id="page-contracts" class="hidden"></div>
         <div id="page-project-detail" class="hidden"></div>
         <div id="page-entity-profiles" class="hidden"></div>
         <div id="page-entities" class="hidden"></div>
@@ -1485,6 +1489,7 @@
           plans: "خطط المحتوى المحلي",
           followups: "متابعة الموظفين",
           audit: "سجل التدقيق",
+          contracts: "العقود والمؤشرات",
         };
         pageTitle.textContent = titles[name] || name;
       }
@@ -2462,6 +2467,7 @@
     <script src="icv-location.js?v=20261020-01"></script>
     <script src="icv-oman-map.js?v=20261020-01"></script>
     <script src="icv-home.js?v=20261020-07"></script>
+    <script src="icv-contracts.js?v=20261022-01"></script>
     <script id="icvSequentialNumberingPatch">
       (function () {
         function renumberProjectRows() {
@@ -2622,6 +2628,7 @@
             plans: "خطط المحتوى المحلي",
             followups: "متابعة الموظفين",
             audit: "سجل التدقيق",
+            contracts: "العقود والمؤشرات",
             profile: "ملفي الشخصي",
             users: "إدارة المستخدمين",
             "local-content": "المحتوى المحلي",
