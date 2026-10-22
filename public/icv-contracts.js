@@ -189,6 +189,8 @@
     h+='<div class="ct-report-list">'+(rs.map(r=>{
       const d=r.report_data||{};
       const lines=state.items.filter(item=>item.report_id===r.id);
+      const participation=r.participation_id?byId(state.participants,r.participation_id):null;
+      const reportScope=participation ? " · "+entityLabel(participation.government_entity_id)+(participation.company_id?" — "+companyLabel(participation.company_id):"") : "";
       const stateLabels={draft:T("مسودة","Draft"),submitted:T("مقدم","Submitted"),under_review:T("تحت المراجعة","Under review"),approved:T("معتمد","Approved"),rejected:T("مرفوض","Rejected")};
       let actions="";
       const role=profile().role;
@@ -199,7 +201,7 @@
         actions+='<button class="btn ct-small danger" data-ct-action="report-status" data-id="'+esc(r.id)+'" data-status="rejected">'+T("رفض","Reject")+'</button>';
       }
       if(canEdit() && r.report_status==="rejected") actions+='<button class="btn ct-small" data-ct-action="report-status" data-id="'+esc(r.id)+'" data-status="submitted">'+T("إعادة الإرسال","Resubmit")+'</button>';
-      return '<div class="ct-report-row"><div><b>'+esc(r.report_quarter+" "+r.report_year)+'</b><small>'+T("المحتوى المحلي التراكمي","Cumulative local content")+': '+money(d.local_content_achieved)+' '+T("ر.ع","OMR")+'</small></div><span class="ct-report-state '+(r.report_status==="approved"?"approved":"")+'">'+esc(stateLabels[r.report_status]||r.report_status)+'</span></div>'+
+      return '<div class="ct-report-row"><div><b>'+esc(r.report_quarter+" "+r.report_year)+esc(reportScope)+'</b><small>'+T("المحتوى المحلي التراكمي","Cumulative local content")+': '+money(d.local_content_achieved)+' '+T("ر.ع","OMR")+'</small></div><span class="ct-report-state '+(r.report_status==="approved"?"approved":"")+'">'+esc(stateLabels[r.report_status]||r.report_status)+'</span></div>'+
         (actions?'<div class="ct-report-actions">'+actions+'</div>':"")+
         (lines.length?'<div class="ct-saved-lines">'+lines.map(item=>'<span>'+esc(categoryLabel(item.category_code))+' · '+money(item.amount)+' '+T("ر.ع","OMR")+(item.company_id?' · '+esc(companyLabel(item.company_id)):"")+'</span>').join("")+'</div>':"");
     }).join("")||'<div class="ct-empty">'+T("لا توجد تقارير مسجلة.","No reports recorded.")+'</div>')+'</div>';
