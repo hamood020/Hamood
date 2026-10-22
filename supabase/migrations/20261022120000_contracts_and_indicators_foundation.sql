@@ -253,12 +253,7 @@ CREATE POLICY "contract report items staff update" ON public.contract_report_ite
 CREATE POLICY "contract report items admin delete" ON public.contract_report_items FOR DELETE TO authenticated
   USING (private.user_access_valid((SELECT auth.uid())) AND private.is_admin());
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.contract_types TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.contracts TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.contract_participations TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.contract_reports TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.contract_report_items TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.contract_indicator_definitions TO authenticated;
+
 
 COMMENT ON TABLE public.contracts IS 'Independent contract register; does not replace or alter public.projects.';
 COMMENT ON TABLE public.contract_participations IS 'One row per government entity and supplier usage of a framework agreement.';
