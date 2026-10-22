@@ -93,7 +93,64 @@ END
 $atomic_import$;
 
 INSERT INTO public.contracts(id,contract_type_code,title,contract_status,value_basis,contract_value)
-VALUES ('10000000-0000-0000-0000-000000000001','supplies','CI contract row','قيد التنفيذ','contract_value',100.000);
+VALUES ('10000000-0000-0000-0000-000000000001','supplies','CI contract row','قيد التنفيذ','contract_value',100.000),
+       ('30000000-0000-0000-0000-000000000001','framework_vehicles','CI framework row','قيد التنفيذ','not_provided',NULL);
+
+INSERT INTO public.contract_participations(id,contract_id,government_entity_id,company_id,spend_amount,status)
+VALUES ('40000000-0000-0000-0000-000000000001',
+        '30000000-0000-0000-0000-000000000001',
+        '60000000-0000-0000-0000-000000000001',
+        '70000000-0000-0000-0000-000000000001',50,'قيد التنفيذ');
+
+-- Framework agreements require every report to target a valid beneficiary/supplier participation.
+DO $framework_scope$
+BEGIN
+  BEGIN
+    PERFORM public.create_contract_report_with_items(
+      '{"contract_id":"30000000-0000-0000-0000-000000000001","report_year":2026,"report_quarter":"Q1","report_status":"draft","report_data":{}}'::jsonb,
+      '[]'::jsonb
+    );
+    RAISE EXCEPTION 'Expected a framework report without participation to be rejected';
+  EXCEPTION WHEN check_violation THEN
+    NULL;
+  END;
+
+  BEGIN
+    PERFORM public.create_contract_report_with_items(
+      '{"contract_id":"30000000-0000-0000-0000-000000000001","participation_id":"20000000-0000-0000-0000-000000000099","report_year":2026,"report_quarter":"Q1","report_status":"draft","report_data":{}}'::jsonb,
+      '[]'::jsonb
+    );
+    RAISE EXCEPTION 'Expected a mismatched participation to be rejected';
+  EXCEPTION WHEN check_violation OR foreign_key_violation THEN
+    NULL;
+  END;
+END
+$framework_scope$;
+
+-- Create a framework report atomically with its cost line.
+SELECT public.create_contract_report_with_items(
+  '{"contract_id":"30000000-0000-0000-0000-000000000001","participation_id":"40000000-0000-0000-0000-000000000001","report_year":2026,"report_quarter":"Q1","report_status":"draft","report_data":{"local_content_achieved":35}}'::jsonb,
+  '[{"category_code":"made_in_oman","procurement_route":"direct","amount":50,"content_coefficient":0.7,"is_sme":true,"is_omani_product":true}]'::jsonb
+);
+
+-- If one line fails validation, neither the report nor any of its lines may persist.
+DO $atomic_report$
+BEGIN
+  BEGIN
+    PERFORM public.create_contract_report_with_items(
+      '{"contract_id":"30000000-0000-0000-0000-000000000001","participation_id":"40000000-0000-0000-0000-000000000001","report_year":2026,"report_quarter":"Q2","report_status":"draft","report_data":{"local_content_achieved":10}}'::jsonb,
+      '[{"category_code":"made_in_oman","amount":50,"content_coefficient":1.7}]'::jsonb
+    );
+    RAISE EXCEPTION 'Expected an invalid coefficient to abort the report transaction';
+  EXCEPTION WHEN SQLSTATE '22023' THEN
+    NULL;
+  END;
+  IF EXISTS (SELECT 1 FROM public.contract_reports
+             WHERE contract_id='30000000-0000-0000-0000-000000000001' AND report_quarter='Q2') THEN
+    RAISE EXCEPTION 'Atomic report RPC left a partial Q2 report';
+  END IF;
+END
+$atomic_report$;
 
 -- Editors cannot self-approve a contract report.
 DO $approval$
@@ -180,6 +237,16 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.contract_report_items WHERE report_id='20000000-0000-0000-0000-000000000001') THEN
     RAISE EXCEPTION 'Contract report line item was not saved';
+  END IF;
+  IF NOT EXISTS (
+      SELECT 1 FROM public.contract_reports r
+      JOIN public.contract_report_items i ON i.report_id=r.id
+      WHERE r.contract_id='30000000-0000-0000-0000-000000000001'
+        AND r.participation_id='40000000-0000-0000-0000-000000000001'
+        AND r.report_quarter='Q1' AND i.content_coefficient=0.7
+        AND i.local_content_amount=35
+  ) THEN
+    RAISE EXCEPTION 'Atomic report RPC failed to persist participation report and derived line value';
   END IF;
   IF (SELECT report_status FROM public.contract_reports WHERE id='20000000-0000-0000-0000-000000000001') <> 'approved'
      OR (SELECT report_year FROM public.contract_reports WHERE id='20000000-0000-0000-0000-000000000001') <> 2026 THEN
