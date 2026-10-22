@@ -319,11 +319,11 @@ BEGIN
       RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
     END IF;
     IF TG_OP = 'UPDATE' THEN
+      -- Once approved, staff cannot change any substantive field (including the contract,
+      -- year, or quarter to which the approval applies). Admins may amend through the audited path.
       IF OLD.report_status = 'approved'
-         AND (NEW.report_status IS DISTINCT FROM OLD.report_status
-              OR NEW.report_data IS DISTINCT FROM OLD.report_data
-              OR NEW.approved_at IS DISTINCT FROM OLD.approved_at
-              OR NEW.approved_by IS DISTINCT FROM OLD.approved_by) THEN
+         AND (to_jsonb(NEW) - ARRAY['updated_at','updated_by'])
+             IS DISTINCT FROM (to_jsonb(OLD) - ARRAY['updated_at','updated_by']) THEN
         RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'ACCESS_DENIED';
       END IF;
       IF NEW.report_status = 'approved' AND OLD.report_status IS DISTINCT FROM 'approved' THEN
