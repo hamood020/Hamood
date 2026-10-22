@@ -66,6 +66,26 @@ BEGIN
 END
 $approval_update$;
 
+-- Administrator may approve; after approval, staff must not be able to move the report
+-- to a different reporting period (or otherwise change its substantive fields).
+SELECT set_config('test.role','admin',true);
+UPDATE public.contract_reports
+SET report_status='approved'
+WHERE id='20000000-0000-0000-0000-000000000001';
+SELECT set_config('test.role','editor',true);
+
+DO $approved_lock$
+BEGIN
+  BEGIN
+    UPDATE public.contract_reports SET report_year=2027
+    WHERE id='20000000-0000-0000-0000-000000000001';
+    RAISE EXCEPTION 'Expected an approved report retarget to be denied';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+END
+$approved_lock$;
+
 RESET ROLE;
 DO $post$
 BEGIN
@@ -74,6 +94,10 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.contract_report_items WHERE report_id='20000000-0000-0000-0000-000000000001') THEN
     RAISE EXCEPTION 'Contract report line item was not saved';
+  END IF;
+  IF (SELECT report_status FROM public.contract_reports WHERE id='20000000-0000-0000-0000-000000000001') <> 'approved'
+     OR (SELECT report_year FROM public.contract_reports WHERE id='20000000-0000-0000-0000-000000000001') <> 2026 THEN
+    RAISE EXCEPTION 'Approved report status or period changed unexpectedly';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.audit_log WHERE table_name='contracts' AND record_id='10000000-0000-0000-0000-000000000001') THEN
     RAISE EXCEPTION 'Contract audit trigger did not write the audit log';
