@@ -1061,22 +1061,9 @@
 
     const status=get("report_status")||"draft";
     if(status==="approved"&&!isAdmin()){message(T("اعتماد التقارير متاح لمدير النظام فقط.","Only the system administrator can approve reports."),"error");return;}
-    const payload={contract_id:contractId,participation_id:participationId,report_year:year,report_quarter:get("report_quarter")||"Q1",report_status:status,report_data:reportData,submitted_at:status==="draft"?null:new Date().toISOString(),approved_at:status==="approved"?new Date().toISOString():null,approved_by:status==="approved"?(profile().id||null):null,created_by:profile().id||null,updated_by:profile().id||null};
-    const r=await client().from("contract_reports").insert(payload).select("id").single();
+    const payload={contract_id:contractId,participation_id:participationId,report_year:year,report_quarter:get("report_quarter")||"Q1",report_status:status,report_data:reportData};
+    const r=await client().rpc("create_contract_report_with_items",{p_report:payload,p_items:lineItems});
     if(r.error){message(window.ICV?window.ICV.friendlyError(r.error):r.error.message,"error");return;}
-    if(lineItems.length){
-      const prepared=lineItems.map(item=>({...item,report_id:r.data.id,created_by:profile().id||null}));
-      const ir=await client().from("contract_report_items").insert(prepared);
-      if(ir.error) {
-        // Supabase JS has no client transaction; best-effort rollback prevents a partial report.
-        const undo=await client().from("contract_reports").delete().eq("id",r.data.id);
-        state.showReportForm=false; state.reportContractId=null;
-        if(undo.error) message(T("تعذر حفظ بنود التقرير وتعذر التراجع عن سجل التقرير. سجّل رقم التقرير واطلب مراجعة المسؤول قبل إعادة الإدخال: ","Report line items failed and rollback failed. Record this report ID and ask an administrator before retrying: ")+r.data.id,"error");
-        else message(T("تعذر حفظ البنود التفصيلية؛ أُلغي التقرير بالكامل. راجع البنود وحاول مجددًا.","Line items could not be saved, so the report was rolled back. Review the entries and try again."),"error");
-        await load(true);
-        return;
-      }
-    }
     state.showReportForm=false; state.reportContractId=null;
     message(T("تم حفظ التقرير. لا يدخل في المؤشرات الرسمية إلا عند اعتماده.","Report saved. It counts in official indicators only after approval."));
     await load(true);
