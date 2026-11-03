@@ -425,9 +425,19 @@
       const compliance = '<div class="lc-paired-side lc-compliance"><div class="lc-paired-label">' + T("الاستيفاء", "Compliance") + '</div><div class="lc-crit-val">' + pct(v) + '</div>' + statusChip(st) +
         '<div class="lc-gauge"><i class="' + (st === OK ? "ok" : st === BAD ? "bad" : "na") + '" style="width:' + (v == null ? 0 : Math.min(100, v / max * 100)) + '%"></i><em style="inset-inline-start:' + ((threshold || 0) / max * 100) + '%"></em></div>' +
         '<small class="lc-sub">' + T("حد الاستيفاء", "Compliance threshold") + ': ' + (threshold == null ? "—" : threshold + "%") + '</small></div>';
-      const local = '<div class="lc-paired-side lc-local"><div class="lc-paired-label">' + T("المحتوى المحلي", "Local content") + '</div><div class="lc-crit-val">' + money(d.amount) + ' ' + cur() + '</div>' +
-        '<div class="lc-sub">' + T("من إجمالي", "Of total") + ' ' + money(d.spend) + ' ' + cur() + '</div>' +
-        '<div class="lc-coefficients"><span>' + T("الأعلى", "Highest") + ' <b>' + d.high + '%</b></span><span>' + T("الأدنى", "Lowest") + ' <b>' + d.low + '%</b></span></div></div>';
+      const lowValue = d.spend * d.low / 100;
+      const highValue = d.spend * d.high / 100;
+      const range = Math.max(1, highValue - lowValue);
+      const progress = Math.max(0, Math.min(1, (d.amount - lowValue) / range));
+      const local = '<div class="lc-paired-side lc-local"><div class="lc-paired-label">' + T("المحتوى المحلي", "Local content") + '</div>' +
+        '<div class="lc-local-chart"><svg viewBox="0 0 240 150" role="img" aria-label="' + T("مقياس قيمة المحتوى المحلي بين الحدين الأدنى والأعلى", "Local content value between minimum and maximum") + '">' +
+        '<path class="lc-arc-bg" d="M 22 126 A 98 98 0 0 1 218 126" pathLength="100"/>' +
+        '<path class="lc-arc-value" d="M 22 126 A 98 98 0 0 1 218 126" pathLength="100" style="stroke-dasharray:' + (progress * 100).toFixed(2) + ' 100"/>' +
+        '<text class="lc-arc-number" x="120" y="83" text-anchor="middle">' + money(d.amount) + '</text>' +
+        '<text class="lc-arc-unit" x="120" y="103" text-anchor="middle">' + cur() + '</text>' +
+        '<text class="lc-arc-caption" x="120" y="120" text-anchor="middle">' + T("القيمة المحلية الفعلية", "Actual local value") + '</text>' +
+        '</svg><div class="lc-arc-limits"><span><b>' + money(lowValue) + '</b><small>' + T("الأدنى", "Minimum") + ' · ' + d.low + '%</small></span><span><b>' + money(highValue) + '</b><small>' + T("الأعلى", "Maximum") + ' · ' + d.high + '%</small></span></div></div>' +
+        '<div class="lc-sub">' + T("من إجمالي", "Of total") + ' ' + money(d.spend) + ' ' + cur() + '</div></div>';
       return '<div class="lc-paired-card"><h3>' + d.title + '</h3><div class="lc-paired-content">' + compliance + local + '</div></div>';
     }).join("") + '</div>';
     const counts =
@@ -789,6 +799,18 @@
       "#page-local-content .lc-paired-label{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:6px}" +
       "#page-local-content .lc-coefficients{display:flex;gap:18px;margin-top:10px;font-size:12px;color:var(--muted)}" +
       "#page-local-content .lc-coefficients b{color:var(--ink);margin-inline-start:4px}" +
+      "#page-local-content .lc-local-chart{max-width:360px;margin:0 auto}" +
+      "#page-local-content .lc-local-chart svg{display:block;width:100%;height:auto;overflow:visible}" +
+      "#page-local-content .lc-local-chart .lc-arc-bg{fill:none;stroke:#e8e4f0;stroke-width:15;stroke-linecap:round}" +
+      "#page-local-content .lc-local-chart .lc-arc-value{fill:none;stroke:#d9a441;stroke-width:15;stroke-linecap:round;transition:stroke-dasharray .25s ease}" +
+      "#page-local-content .lc-arc-number{font-size:27px;font-weight:800;fill:var(--primary2)}" +
+      "#page-local-content .lc-arc-unit{font-size:12px;fill:var(--muted)}" +
+      "#page-local-content .lc-arc-caption{font-size:11px;fill:var(--ink)}" +
+      "#page-local-content .lc-arc-limits{display:flex;justify-content:space-between;gap:12px;margin-top:-2px;font-variant-numeric:tabular-nums}" +
+      "#page-local-content .lc-arc-limits span{display:grid;gap:2px;font-size:12px}" +
+      "#page-local-content .lc-arc-limits span:last-child{text-align:end}" +
+      "#page-local-content .lc-arc-limits b{color:var(--primary2)}" +
+      "#page-local-content .lc-arc-limits small{font-size:11px;color:var(--muted)}" +
 
       "#page-local-content .lc-crit{border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}" +
       "#page-local-content .lc-crit-top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px}" +
