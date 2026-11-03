@@ -409,20 +409,27 @@
         .map((k) => '<div class="card"><div class="label">' + k[0] + '</div><div class="value">' + k[1] + '</div><div class="sub">' + k[2] + "</div></div>")
         .join("") +
       "</div>";
-    const crit =
-      '<div class="lc-criteria">' +
-      CRITERIA.map((c) => {
-        const v = P.crit[c.key],
-          th = cfg.th[c.key];
-        const st = v == null ? NA : v >= th ? OK : BAD;
-        const max = Math.max(th * 2, v || 0, 1);
-        return (
-          '<div class="lc-crit"><div class="lc-crit-top"><b>' + T(c.ar, c.en) + "</b>" + statusChip(st) + '</div><div class="lc-crit-val">' + pct(v) + "</div>" +
-          '<div class="lc-gauge" title="' + T("الحد", "Threshold") + " " + th + '%"><i class="' + (st === OK ? "ok" : st === BAD ? "bad" : "na") + '" style="width:' + (v == null ? 0 : Math.min(100, (v / max) * 100)) + '%"></i><em style="inset-inline-start:' + (th / max) * 100 + '%"></em></div>' +
-          '<small class="lc-sub">' + T("الحد", "Threshold") + " " + th + "%</small></div>"
-        );
-      }).join("") +
-      "</div>";
+    // Four paired cards: compliance on the right, local-content contribution on the left.
+    const cardDefs = [
+      { key: "wages", title: T("القوى العاملة / الأجور", "Workforce / wages"), compliance: "om", high: 80, low: 20, amount: COMPONENTS.filter(c => c.group === "wages").reduce((a,c) => a + P.lcComp[c.key], 0), spend: COMPONENTS.filter(c => c.group === "wages").reduce((a,c) => a + P.comp[c.key], 0) },
+      { key: "goods", title: T("المشتريات", "Purchases"), compliance: "goods", high: 70, low: 6, amount: COMPONENTS.filter(c => c.group === "goods").reduce((a,c) => a + P.lcComp[c.key], 0), spend: COMPONENTS.filter(c => c.group === "goods").reduce((a,c) => a + P.comp[c.key], 0) },
+      { key: "subs", title: T("عقود الباطن", "Subcontracts"), compliance: "sme", high: 70, low: 10, amount: COMPONENTS.filter(c => c.group === "subs").reduce((a,c) => a + P.lcComp[c.key], 0), spend: COMPONENTS.filter(c => c.group === "subs").reduce((a,c) => a + P.comp[c.key], 0) },
+      { key: "services", title: T("الخدمات", "Services"), compliance: "srv", high: 70, low: 10, amount: COMPONENTS.filter(c => c.group === "services").reduce((a,c) => a + P.lcComp[c.key], 0), spend: COMPONENTS.filter(c => c.group === "services").reduce((a,c) => a + P.comp[c.key], 0) },
+    ];
+    const crit = '<div class="lc-criteria lc-paired">' + cardDefs.map(d => {
+      const c = CRITERIA.find(x => x.key === d.compliance);
+      const v = c ? P.crit[c.key] : null;
+      const threshold = c ? cfg.th[c.key] : null;
+      const st = v == null ? NA : v >= threshold ? OK : BAD;
+      const max = Math.max((threshold || 100) * 1.5, v || 0, 1);
+      const compliance = '<div class="lc-paired-side lc-compliance"><div class="lc-paired-label">' + T("الاستيفاء", "Compliance") + '</div><div class="lc-crit-val">' + pct(v) + '</div>' + statusChip(st) +
+        '<div class="lc-gauge"><i class="' + (st === OK ? "ok" : st === BAD ? "bad" : "na") + '" style="width:' + (v == null ? 0 : Math.min(100, v / max * 100)) + '%"></i><em style="inset-inline-start:' + ((threshold || 0) / max * 100) + '%"></em></div>' +
+        '<small class="lc-sub">' + T("حد الاستيفاء", "Compliance threshold") + ': ' + (threshold == null ? "—" : threshold + "%") + '</small></div>';
+      const local = '<div class="lc-paired-side lc-local"><div class="lc-paired-label">' + T("المحتوى المحلي", "Local content") + '</div><div class="lc-crit-val">' + money(d.amount) + ' ' + cur() + '</div>' +
+        '<div class="lc-sub">' + T("من إجمالي", "Of total") + ' ' + money(d.spend) + ' ' + cur() + '</div>' +
+        '<div class="lc-coefficients"><span>' + T("الأعلى", "Highest") + ' <b>' + d.high + '%</b></span><span>' + T("الأدنى", "Lowest") + ' <b>' + d.low + '%</b></span></div></div>';
+      return '<div class="lc-paired-card"><h3>' + d.title + '</h3><div class="lc-paired-content">' + compliance + local + '</div></div>';
+    }).join("") + '</div>';
     const counts =
       '<div class="lc-counts">' +
       '<span class="lc-chip ok">' + statusCount(OK) + " " + T("مستوفي", "compliant") + "</span>" +
@@ -430,7 +437,7 @@
       '<span class="lc-chip na">' + statusCount(NA) + " " + T("بلا تقارير معتمدة", "without approved reports") + "</span></div>";
     html += section(
       1,
-      T("مؤشرات المحفظة", "Portfolio indicators"),
+      T("المؤشرات", "Indicators"),
       list.length + " " + T("مشروع", "projects"),
       kpis + crit + counts,
       T(
@@ -774,6 +781,15 @@
       "#page-local-content .lc-kpis{margin-bottom:12px}" +
       "#page-local-content .lc-kpis .value{font-size:20px}" +
       "#page-local-content .lc-criteria{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}" +
+      "#page-local-content .lc-paired{grid-template-columns:1fr;gap:14px}" +
+      "#page-local-content .lc-paired-card{border:1px solid var(--line);border-radius:16px;padding:16px;background:var(--surface,white)}" +
+      "#page-local-content .lc-paired-card h3{margin:0 0 12px;font-size:15px}" +
+      "#page-local-content .lc-paired-content{display:grid;grid-template-columns:1fr 1fr;gap:16px}" +
+      "#page-local-content .lc-paired-side{min-width:0;padding:12px;border-radius:12px;background:var(--surface-2,#f7f9fb)}" +
+      "#page-local-content .lc-paired-label{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:6px}" +
+      "#page-local-content .lc-coefficients{display:flex;gap:18px;margin-top:10px;font-size:12px;color:var(--muted)}" +
+      "#page-local-content .lc-coefficients b{color:var(--ink);margin-inline-start:4px}" +
+
       "#page-local-content .lc-crit{border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}" +
       "#page-local-content .lc-crit-top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px}" +
       "#page-local-content .lc-crit-val{font-size:22px;font-weight:800;margin:6px 0 2px}" +
