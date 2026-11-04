@@ -666,17 +666,6 @@
       '</b></div><div class="detail-item"><small>الملاحظات</small><b>' +
       esc2(p.notes || "—") +
       "</b></div></div></section>" +
-      '<section id="extension" class="section-card"><div class="section-card-head"><div><h2>تمديد المشروع</h2><p>تاريخ الانتهاء الأصلي والحالي وسجل جميع التغييرات</p></div><span class="section-tag">' +
-      history.length +
-      ' تغيير</span></div><div class="detail-grid"><div class="detail-item"><small>تاريخ الانتهاء الأصلي</small><b>' +
-      fmtProjectDate(p.original_end_date || p.end_date) +
-      '</b></div><div class="detail-item"><small>تاريخ الانتهاء الحالي</small><b>' +
-      fmtProjectDate(p.end_date) +
-      '</b></div><div class="detail-item"><small>عدد التمديدات</small><b>' +
-      history.length +
-      '</b></div></div><div class="icv-history" style="margin-top:12px">' +
-      historyHtml +
-      "</div></section>" +
       '<div class="compliance-strip"><div class="compliance-title">حالة الالتزام بالمحتوى المحلي: <span class="status-text ' +
       statusDot(compliance) +
       '">' +
@@ -706,6 +695,17 @@
       '</span></div></div><div class="percent">' +
       (smeStatus === "غير منطبق" ? "—" : pct(sme)) +
       "</div></div></div></div></section>" +
+      '<section id="extension" class="section-card"><div class="section-card-head"><div><h2>تمديد المشروع</h2><p>تاريخ الانتهاء الأصلي والحالي وسجل جميع التغييرات</p></div><span class="section-tag">' +
+      history.length +
+      ' تغيير</span></div><div class="detail-grid"><div class="detail-item"><small>تاريخ الانتهاء الأصلي</small><b>' +
+      fmtProjectDate(p.original_end_date || p.end_date) +
+      '</b></div><div class="detail-item"><small>تاريخ الانتهاء الحالي</small><b>' +
+      fmtProjectDate(p.end_date) +
+      '</b></div><div class="detail-item"><small>عدد التمديدات</small><b>' +
+      history.length +
+      '</b></div></div><div class="icv-history" style="margin-top:12px">' +
+      historyHtml +
+      "</div></section>" +
       '<nav class="project-nav"><div class="project-nav-inner"><a href="#overview">نظرة عامة</a><a href="#workforce">العمالة والرواتب</a><a href="#purchases">المشتريات</a><a href="#services">الخدمات</a><a href="#subcontracts">عقود الباطن</a><a href="#basic">البيانات الأساسية</a><a href="#plan">الخطة</a><a href="#reports">التقارير</a><a href="#extension">التمديدات</a></div></nav>' +
       '<section id="overview" class="project-kpis"><div class="project-kpi"><small>إجمالي الصرف</small><b>' +
       money(totalExpenditure) +
