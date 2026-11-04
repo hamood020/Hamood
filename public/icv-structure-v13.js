@@ -242,14 +242,32 @@
       }
       const fc = document.getElementById("projectFilterCount");
       if (fc) fc.textContent = x.length + " مشروع";
+      const complianceSettings = window.__icvCalculationSettings?.thresholds || {};
+      const thresholdPct = (value, fallback) => {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return fallback;
+        return n > 0 && n <= 1 ? n * 100 : n;
+      };
+      const complianceThresholds = {
+        omanization: thresholdPct(complianceSettings.omanization, 30),
+        services: thresholdPct(complianceSettings.services, 10),
+        sme: thresholdPct(complianceSettings.sme, 10),
+      };
+      const complianceLine = (label, status, value, threshold) => {
+        const pctValue = value == null || value === "" ? null : Number(value);
+        const near = status === "غير مستوفي" && pctValue != null && Number.isFinite(pctValue) && pctValue >= threshold * 0.9;
+        const state = status === "مستوفي" ? "ok" : near ? "warn" : status === "غير مستوفي" ? "bad" : "na";
+        const word = state === "ok" ? "مستوفي" : state === "warn" ? "قريب" : state === "bad" ? "غير مستوفي" : "—";
+        return '<div class="project-compliance-line"><span class="project-compliance-label">' + label + '</span><span class="project-compliance-state ' + state + '">' + word + "</span></div>";
+      };
       document.getElementById("pg").innerHTML =
+        '<style>.project-compliance-cell{min-width:112px;display:grid;gap:3px}.project-compliance-line{display:flex;align-items:center;justify-content:space-between;gap:7px;white-space:nowrap;font-size:9px;line-height:1.45}.project-compliance-label{color:#64748b;font-weight:700}.project-compliance-state{font-size:8px;font-weight:800;border-radius:5px;padding:1px 5px}.project-compliance-state.ok{color:#087443;background:#eaf8f0}.project-compliance-state.bad{color:#b42318;background:#fff0ef}.project-compliance-state.warn{color:#a15c00;background:#fff5dc}.project-compliance-state.na{color:#667085;background:#f2f4f7}</style>' +
         '<div class="panel"><div class="section-head"><h2>قائمة المشاريع</h2><span class="muted">' +
         x.length +
-        ' مشروع</span></div><div class="table-wrap"><table><thead><tr><th>م</th><th>اسم المشروع</th><th>الجهة الحكومية</th><th>رقم المشروع/المناقصة</th><th>الشركة المنفذة</th><th>القيمة</th><th>الإنجاز</th><th>تاريخ انتهاء المشروع</th><th>آخر تقرير</th><th>غير مستلمة</th><th>الحالة</th></tr></thead><tbody>' +
+        ' مشروع</span></div><div class="table-wrap"><table><thead><tr><th>م</th><th>اسم المشروع</th><th>الجهة الحكومية</th><th>رقم المشروع/المناقصة</th><th>الشركة المنفذة</th><th>القيمة</th><th>الإنجاز</th><th>تاريخ انتهاء المشروع</th><th>آخر تقرير</th><th>الاستيفاء</th><th>الحالة</th></tr></thead><tbody>' +
         x
           .map((p, idx) => {
-            const r = rs(p.id).slice(-1)[0],
-              u = Math.max(0, Number(p.target_reports || 0) - rs(p.id).length);
+            const r = rs(p.id).slice(-1)[0];
             return (
               "<tr><td>" +
               (idx + 1) +
@@ -271,9 +289,11 @@
               date(p.end_date) +
               "</td><td>" +
               esc(r ? r.annual_period + " " + r.quarter : "—") +
-              "</td><td>" +
-              u +
-              "</td><td>" +
+              '</td><td><div class="project-compliance-cell">' +
+              complianceLine("تعمين", p.omanization_status, p.omanization_pct, complianceThresholds.omanization) +
+              complianceLine("خدمات", p.services_status, p.services_pct, complianceThresholds.services) +
+              complianceLine("SME", p.sme_10_status, p.sme_pct, complianceThresholds.sme) +
+              "</div></td><td>" +
               esc(p.project_status || "—") +
               "</td></tr>"
             );
