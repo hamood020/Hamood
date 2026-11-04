@@ -964,37 +964,6 @@
           @media(max-width:900px){.icv-project-charts{grid-template-columns:1fr}}
           @media(max-width:760px){.icv-project-body{grid-template-columns:1fr}.icv-project-sidebar{position:static;order:2}.icv-project-main{order:1}.icv-project-sidebar #basic .detail-grid{grid-template-columns:1fr 1fr}.icv-project-bar{grid-template-columns:88px minmax(0,1fr) 65px}}
         `;
-
-          /* Unified typography for the project page */
-          .icv-project-body{font-size:14px;line-height:1.55}
-          .icv-project-main,.icv-project-sidebar{font-size:14px;line-height:1.55}
-          .icv-project-main .section-card-head h2,.icv-project-sidebar .section-card-head h2{font-size:16px;line-height:1.4;font-weight:750}
-          .icv-project-main .section-card-head p,.icv-project-sidebar .section-card-head p{font-size:12px;line-height:1.55}
-          .icv-project-main .section-tag,.icv-project-sidebar .section-tag{font-size:11px;line-height:1.4}
-          .icv-project-sidebar #basic .detail-item{padding:9px 11px}
-          .icv-project-sidebar #basic .detail-item small,.icv-project-main .detail-item small{font-size:12px;line-height:1.5}
-          .icv-project-sidebar #basic .detail-item b,.icv-project-main .detail-item b{font-size:14px;line-height:1.5;font-weight:700}
-          .icv-project-chart h3{font-size:15px;line-height:1.45;font-weight:750}
-          .icv-project-chart p{font-size:12px;line-height:1.5}
-          .icv-project-bar{font-size:12px;line-height:1.45}
-          .icv-project-ratio span{font-size:12px}
-          .icv-project-ratio strong{font-size:28px}
-          .icv-project-donut strong{font-size:24px;line-height:1.2}
-          .icv-project-donut span{font-size:10px;line-height:1.3}
-          .icv-project-legend{font-size:13px;line-height:1.45}
-          .icv-project-legend span,.icv-project-legend b{font-size:13px;line-height:1.45}
-          .icv-project-report-ring strong{font-size:27px}
-          .icv-project-report-ring span{font-size:12px;line-height:1.4}
-          .icv-project-report-stat b{font-size:17px;line-height:1.4}
-          .icv-project-report-stat span{font-size:12px;line-height:1.45}
-          .icv-project-main table{font-size:13px;line-height:1.5}
-          .icv-project-main table th{font-size:13px;font-weight:750}
-          .icv-project-main table td{font-size:13px}
-          .icv-project-main .project-kpi small,.icv-project-main .project-kpi span{font-size:12px;line-height:1.45}
-          .icv-project-main .project-kpi b{font-size:17px;line-height:1.4}
-          .icv-project-main .label,.icv-project-main .status-text{font-size:13px;line-height:1.45}
-          .icv-project-main .percent{font-size:14px;line-height:1.4;font-weight:750}
-          @media(max-width:760px){.icv-project-chart h3{font-size:15px}.icv-project-legend span,.icv-project-legend b{font-size:13px}}
         document.head.appendChild(style);
       }
       const body = document.createElement("div");
