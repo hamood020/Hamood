@@ -907,6 +907,72 @@
       pct(n(p.total_project_value) ? (totalLocalContent / n(p.total_project_value)) * 100 : 0) +
       "</b></div></div></section>" +
       "</div>";
+    // Project layout: keep basic information in a compact LEFT sidebar;
+    // the application-wide navigation remains on the RIGHT.
+    const shell = root.querySelector(".icv-shell");
+    const hero = shell?.querySelector(".project-hero");
+    const basic = shell?.querySelector("#basic");
+    if (shell && hero && basic) {
+      if (!document.getElementById("icv-project-overview-layout-style")) {
+        const style = document.createElement("style");
+        style.id = "icv-project-overview-layout-style";
+        style.textContent = `
+          .icv-project-body{display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px;align-items:start;direction:ltr;min-width:0}
+          .icv-project-sidebar,.icv-project-main{direction:rtl;min-width:0;display:grid;gap:14px}
+          .icv-project-sidebar{position:sticky;top:12px}
+          .icv-project-sidebar #basic{padding:15px}
+          .icv-project-sidebar #basic .section-card-head{margin-bottom:11px}
+          .icv-project-sidebar #basic .detail-grid{grid-template-columns:1fr;gap:7px}
+          .icv-project-sidebar #basic .detail-item{padding:8px 10px}
+          .icv-project-sidebar #basic .detail-item small{font-size:9px}
+          .icv-project-sidebar #basic .detail-item b{font-size:10px}
+          .icv-project-charts{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}
+          .icv-project-chart{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;min-width:0}
+          .icv-project-chart h3{margin:0 0 4px;font-size:13px}
+          .icv-project-chart p{margin:0 0 13px;color:var(--muted);font-size:10px}
+          .icv-project-bars{display:grid;gap:13px}
+          .icv-project-bar{display:grid;grid-template-columns:105px minmax(0,1fr) 78px;gap:8px;align-items:center;font-size:10px}
+          .icv-project-track{height:10px;background:#edf1f5;border-radius:20px;overflow:hidden}
+          .icv-project-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#0d756d,#55b6a8)}
+          .icv-project-fill.blue{background:linear-gradient(90deg,#3977c7,#83b6ee)}
+          .icv-project-fill.gold{background:linear-gradient(90deg,#d69b18,#f0ce6b)}
+          .icv-project-ratio{display:grid;place-items:center;min-height:130px;text-align:center}
+          .icv-project-ratio strong{font-size:30px;color:var(--primary)}
+          .icv-project-ratio span{font-size:10px;color:var(--muted)}
+          @media(max-width:1100px){.icv-project-body{grid-template-columns:240px minmax(0,1fr)}.icv-project-charts{grid-template-columns:1fr}}
+          @media(max-width:760px){.icv-project-body{grid-template-columns:1fr}.icv-project-sidebar{position:static;order:2}.icv-project-main{order:1}.icv-project-sidebar #basic .detail-grid{grid-template-columns:1fr 1fr}.icv-project-bar{grid-template-columns:88px minmax(0,1fr) 65px}}
+        `;
+        document.head.appendChild(style);
+      }
+      const body = document.createElement("div");
+      body.className = "icv-project-body";
+      const sidebar = document.createElement("aside");
+      sidebar.className = "icv-project-sidebar";
+      const main = document.createElement("div");
+      main.className = "icv-project-main";
+      shell.insertBefore(body, hero.nextSibling);
+      body.append(sidebar, main);
+      sidebar.appendChild(basic);
+      while (body.nextSibling) main.appendChild(body.nextSibling);
+      const maxValue = Math.max(n(p.total_project_value), totalExpenditure, totalLocalContent, 1);
+      const bar = (label, value, color) =>
+        '<div class="icv-project-bar"><span>' + label + '</span><div class="icv-project-track"><div class="icv-project-fill ' + color + '" style="width:' +
+        Math.max(0, Math.min(100, (n(value) / maxValue) * 100)).toFixed(1) +
+        '%"></div></div><b>' + money(value) + '</b></div>';
+      const charts = document.createElement("section");
+      charts.className = "icv-project-charts";
+      charts.innerHTML =
+        '<div class="icv-project-chart"><h3>مقارنة قيمة المشروع بالصرف والمحتوى المحلي</h3><p>القيم مستخرجة من بيانات المشروع والتقارير المعتمدة.</p><div class="icv-project-bars">' +
+        bar("قيمة المشروع", p.total_project_value, "blue") +
+        bar("إجمالي الصرف", totalExpenditure, "") +
+        bar("المحتوى المحلي", totalLocalContent, "gold") +
+        '</div></div><div class="icv-project-chart"><h3>نسبة المحتوى المحلي</h3><p>المحتوى المحلي من إجمالي الصرف المعتمد.</p><div class="icv-project-ratio"><div><strong>' +
+        pct(totalExpenditure ? (totalLocalContent / totalExpenditure) * 100 : 0) +
+        '</strong><br><span>من إجمالي الصرف</span></div></div></div>';
+      const overview = main.querySelector("#overview");
+      if (overview) main.insertBefore(charts, overview.nextSibling);
+      else main.insertBefore(charts, main.firstChild);
+    }
   }
   window.icvAddProjectNote = async (event, projectId) => {
     event.preventDefault();
