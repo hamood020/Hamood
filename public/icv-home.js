@@ -368,15 +368,15 @@
         );
         const wr = ps.filter((p) => (p.compliance_status || NA) !== NA),
           ok = wr.filter((p) => p.compliance_status === OK).length;
-        return { name: entityName(ps[0]), n: ps.length, v: ps.reduce((s, p) => s + num(p.total_project_value), 0), rep: due ? (rec / due) * 100 : null, cmp: wr.length ? (ok / wr.length) * 100 : null, stuck: ps.filter((p) => p.project_status === ST.stuck).length };
+        return { name: entityName(ps[0]), n: ps.length, v: ps.reduce((s, p) => s + num(p.total_spend), 0), rep: due ? (rec / due) * 100 : null, cmp: wr.length ? (ok / wr.length) * 100 : null, stuck: ps.filter((p) => p.project_status === ST.stuck).length };
       })
-      .sort((a, b) => (b.cmp ?? -1) - (a.cmp ?? -1) || (b.rep ?? -1) - (a.rep ?? -1) || b.v - a.v);
+      .sort((a, b) => b.v - a.v);
     const bar = (v) =>
       v == null
         ? '<span class="hm-sub">—</span>'
         : '<span class="hm-n">' + Math.round(v) + '%</span><span class="hm-mini"><i style="width:' + v + "%;background:" + (v >= 70 ? "var(--green)" : v >= 40 ? "var(--amber)" : "var(--red)") + '"></i></span>';
     return (
-      '<div class="table-wrap"><table class="hm-table"><thead><tr><th>' + T("الجهة", "Entity") + "</th><th>" + T("المشاريع", "Projects") + "</th><th>" + T("القيمة", "Value") + " (" + cur() + ")</th><th>" + T("انتظام التقارير", "Reporting") + "</th><th>" + T("المستوفي", "Compliant") + "</th><th>" + T("متعثر", "Stalled") + "</th></tr></thead><tbody>" +
+      '<div class="table-wrap"><table class="hm-table"><thead><tr><th>' + T("الجهة", "Entity") + "</th><th>" + T("المشاريع", "Projects") + "</th><th>" + T("إجمالي الصرف", "Total spending") + " (" + cur() + ")</th><th>" + T("انتظام التقارير", "Reporting") + "</th><th>" + T("المستوفي", "Compliant") + "</th><th>" + T("متعثر", "Stalled") + "</th></tr></thead><tbody>" +
       rows
         .map(
           (r, i) =>
@@ -501,14 +501,13 @@
     const g = ganttHtml(list, today);
     html += section(
       5,
-      T("الخط الزمني للمشاريع", "Project timeline"),
-      g.total ? T("من البداية إلى الانتهاء. ", "Start to finish. ") + g.ext + T(" مشروع مُدد.", " extended.") : "",
-      g.html,
+      T("الجهات الأكثر صرفاً", "Top spending entities"),
+      T("مرتبة حسب إجمالي الصرف.", "Ranked by total spending."),
+      entitiesHtml(list, Qs, idx),
       T(
-        "شريط لكل مشروع من تاريخ البداية إلى تاريخ الانتهاء الأصلي، والجزء المخطط بالبرتقالي هو التمديد حتى تاريخ الانتهاء الحالي. الخط الأسود هو تاريخ اليوم. مرتبة حسب أقرب تاريخ انتهاء، ويظهر أول 10 مشاريع.",
-        "One bar per project from start to the original end date; the striped orange part is the extension to the current end date. The black line is today. Sorted by nearest end date; the first 10 are shown.",
+        "تعرض الجهات الأعلى من حيث إجمالي الصرف على المشاريع، مع عدد المشاريع وانتظام التقارير ونسبة المشاريع المستوفية وعدد المشاريع المتعثرة.",
+        "Shows entities with the highest total project spending, alongside project count, reporting, compliance, and stalled projects.",
       ),
-      '<div class="hm-legend hm-legend-top"><span><i style="background:var(--primary)"></i>' + T("المدة الأصلية", "Original duration") + '</span><span><i class="ext"></i>' + T("تمديد", "Extension") + '</span><span><i style="background:var(--red)"></i>' + T("متعثر", "Stalled") + '</span><span><i style="background:#9fb3bf"></i>' + T("منتهي", "Completed") + "</span></div>",
     );
 
     html += section(
@@ -523,7 +522,7 @@
       );
 
     html += section(
-      7,
+      6,
       T("جديد هذا الشهر", "New this month"),
       esc(monthName) + T(" على مستوى المنصة.", " across the platform."),
       newsHtml(list, today),
