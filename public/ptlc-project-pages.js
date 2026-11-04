@@ -939,6 +939,17 @@
           .icv-project-ratio{display:grid;place-items:center;min-height:130px;text-align:center}
           .icv-project-ratio strong{font-size:30px;color:var(--primary)}
           .icv-project-ratio span{font-size:10px;color:var(--muted)}
+          .icv-project-donut-wrap{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;align-items:center;min-height:160px}
+          .icv-project-donut{width:146px;height:146px;border-radius:50%;display:grid;place-items:center;position:relative}
+          .icv-project-donut:before{content:"";position:absolute;inset:25px;background:#fff;border-radius:50%}
+          .icv-project-donut>div{position:relative;z-index:1;text-align:center;display:grid;gap:3px}
+          .icv-project-donut strong{font-size:17px;color:#17243b}
+          .icv-project-donut span{font-size:9px;color:#74839a}
+          .icv-project-legend-list{display:grid;gap:9px}
+          .icv-project-legend{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:7px;align-items:center;font-size:10px}
+          .icv-project-legend i{width:7px;height:7px;border-radius:50%}
+          .icv-project-legend b{font-size:9px;color:#26364d}
+          @media(max-width:760px){.icv-project-donut-wrap{grid-template-columns:1fr;justify-items:center}.icv-project-legend-list{width:100%}}
           @media(max-width:1100px){.icv-project-body{grid-template-columns:240px minmax(0,1fr)}.icv-project-charts{grid-template-columns:1fr}}
           @media(max-width:760px){.icv-project-body{grid-template-columns:1fr}.icv-project-sidebar{position:static;order:2}.icv-project-main{order:1}.icv-project-sidebar #basic .detail-grid{grid-template-columns:1fr 1fr}.icv-project-bar{grid-template-columns:88px minmax(0,1fr) 65px}}
         `;
@@ -959,18 +970,40 @@
         '<div class="icv-project-bar"><span>' + label + '</span><div class="icv-project-track"><div class="icv-project-fill ' + color + '" style="width:' +
         Math.max(0, Math.min(100, (n(value) / maxValue) * 100)).toFixed(1) +
         '%"></div></div><b>' + money(value) + '</b></div>';
+      // Component values are sourced from the existing approved-report aggregates.
+      // These are displayed as reported category totals; no calculation rules are changed.
+      const localMix = [
+        { label: "القوى العاملة", value: actualOmaniSalary, color: "#087f72" },
+        { label: "المشتريات", value: goodsActual, color: "#4b91cf" },
+        { label: "الخدمات", value: servicesActualTotal, color: "#e6b43d" },
+        { label: "عقود الباطن", value: actualSubcontractsTotal, color: "#16a34a" },
+      ];
+      const mixTotal = localMix.reduce((sum, item) => sum + n(item.value), 0);
+      const mixStops = [];
+      let mixCursor = 0;
+      localMix.forEach((item) => {
+        const share = mixTotal > 0 ? (n(item.value) / mixTotal) * 100 : 0;
+        const next = mixCursor + share;
+        mixStops.push(item.color + " " + mixCursor.toFixed(2) + "% " + next.toFixed(2) + "%");
+        mixCursor = next;
+      });
+      const mixLegend = localMix.map((item) =>
+        '<div class="icv-project-legend"><i style="background:' + item.color + '"></i><span>' + item.label +
+        '</span><b>' + money(item.value) + '</b></div>'
+      ).join("");
       const charts = document.createElement("section");
       charts.className = "icv-project-charts";
       charts.innerHTML =
-        '<div class="icv-project-chart"><h3>مقارنة قيمة المشروع بالصرف والمحتوى المحلي</h3><p>القيم مستخرجة من بيانات المشروع والتقارير المعتمدة.</p><div class="icv-project-bars">' +
+        '<div class="icv-project-chart"><h3>مقارنة قيمة المشروع بالصرف والمحتوى المحلي</h3><p>القيم الفعلية من بيانات المشروع والتقارير المعتمدة.</p><div class="icv-project-bars">' +
         bar("قيمة المشروع", p.total_project_value, "blue") +
         bar("إجمالي الصرف", totalExpenditure, "") +
         bar("المحتوى المحلي", totalLocalContent, "gold") +
-        '</div></div><div class="icv-project-chart"><h3>نسبة المحتوى المحلي</h3><p>المحتوى المحلي من إجمالي الصرف المعتمد.</p><div class="icv-project-ratio"><div><strong>' +
-        pct(totalExpenditure ? (totalLocalContent / totalExpenditure) * 100 : 0) +
-        '</strong><br><span>من إجمالي الصرف</span></div></div></div>';
-      const overview = main.querySelector("#overview");
-      if (overview) main.insertBefore(charts, overview.nextSibling);
+        '</div></div><div class="icv-project-chart"><h3>توزيع مكونات المشروع</h3><p>حسب القيم المسجلة في التقارير المعتمدة.</p><div class="icv-project-donut-wrap"><div class="icv-project-donut" style="background:' +
+        (mixTotal > 0 ? "conic-gradient(" + mixStops.join(",") + ")" : "#e8edf2") +
+        '"><div><strong>' + (mixTotal > 0 ? money(mixTotal) : "—") + '</strong><span>إجمالي المكونات</span></div></div><div class="icv-project-legend-list">' +
+        mixLegend + '</div></div></div>';
+      const extension = main.querySelector("#extension");
+      if (extension) main.insertBefore(charts, extension);
       else main.insertBefore(charts, main.firstChild);
     }
   }
