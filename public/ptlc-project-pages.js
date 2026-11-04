@@ -393,8 +393,9 @@
       totalMoney = true,
       headerExtra = "",
       showSummary = true,
+      sectionId = "",
     ) =>
-      '<section class="section-card comparison-card"><div class="section-card-head"><div><h2>' +
+      '<section' + (sectionId ? ' id="' + sectionId + '"' : '') + ' class="section-card comparison-card"><div class="section-card-head"><div><h2>' +
       title +
       "</h2><p>مقارنة الخطة المعتمدة مع آخر أداء فعلي مسجل</p></div>" +
       headerExtra +
@@ -717,7 +718,7 @@
       pct(n(p.total_project_value) ? (totalLocalContent / n(p.total_project_value)) * 100 : 0) +
       "</b><span>نسبة من قيمة المشروع</span></div></section>" +
       '<div class="comparison-stack">' +
-      '<div class="workforce-layout">' +
+      '<div id="workforce" class="workforce-layout">' +
       '<div class="workforce-main-card">' +
       cmpCard(
         "العمالة والتعمين والرواتب",
@@ -798,6 +799,8 @@
             ? "لا توجد بيانات"
             : goodsStatus + " · الحد " + pct(complianceThresholds.goods)) +
           "</span></div>",
+        true,
+        "purchases",
       ) +
       cmpCard(
         "الخدمات",
@@ -821,6 +824,8 @@
             ? "غير منطبق"
             : servicesStatus + " · الحد " + pct(complianceThresholds.services)) +
           "</span></div>",
+        true,
+        "services",
       ) +
       cmpCard(
         "عقود الباطن",
@@ -844,6 +849,8 @@
             ? "غير منطبق"
             : smeAssignedStatus + " · الحد " + pct(complianceThresholds.sme)) +
           "</span></div>",
+        true,
+        "subcontracts",
       ) +
       "</div>" +
       '<section class="section-card comparison-note"><div class="section-card-head"><div><h2>قراءة المقارنة</h2><p>النسبة توضح مستوى تنفيذ الأداء الفعلي مقارنة بالخطة للفترة الحالية.</p></div><span class="section-tag">' +
