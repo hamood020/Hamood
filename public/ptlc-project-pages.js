@@ -939,17 +939,17 @@
           .icv-project-ratio{display:grid;place-items:center;min-height:130px;text-align:center}
           .icv-project-ratio strong{font-size:30px;color:var(--primary)}
           .icv-project-ratio span{font-size:10px;color:var(--muted)}
-          .icv-project-donut-wrap{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;align-items:center;min-height:160px}
+          .icv-project-donut-wrap{display:grid;grid-template-columns:166px minmax(0,1fr);gap:24px;align-items:center;min-height:178px}
           .icv-project-donut{width:166px;height:166px;border-radius:50%;display:grid;place-items:center;position:relative;flex:none}
           .icv-project-donut:before{content:"";position:absolute;inset:34px;background:#fff;border-radius:50%}
           .icv-project-donut>div{position:relative;z-index:1;text-align:center;display:grid;gap:3px}
-          .icv-project-donut strong{font-size:16px;color:#17243b}
-          .icv-project-donut span{font-size:10px;color:#74839a}
-          .icv-project-donut-label{position:absolute;z-index:2;transform:translate(-50%,-50%);font-size:11px;font-weight:800;color:#fff;text-shadow:0 1px 2px #344054;white-space:nowrap;pointer-events:none}
-          .icv-project-legend-list{display:grid;gap:11px}
-          .icv-project-legend{display:flex;gap:8px;align-items:center;font-size:13px;line-height:1.5;flex-wrap:wrap}
-          .icv-project-legend i{width:9px;height:9px;border-radius:50%;flex:none}
-          .icv-project-legend b{font-size:13px;color:#26364d;font-weight:750}
+          .icv-project-donut strong{font-size:25px;line-height:1.15;color:#17243b}
+          .icv-project-donut span{font-size:11px;color:#74839a}
+          .icv-project-legend-list{display:grid;gap:13px;min-width:0;padding-inline-start:5px}
+          .icv-project-legend{display:grid;grid-template-columns:9px minmax(0,1fr);column-gap:9px;row-gap:2px;align-items:center;font-size:14px;line-height:1.45}
+          .icv-project-legend i{grid-column:1;grid-row:1/3;width:9px;height:9px;border-radius:50%;flex:none}
+          .icv-project-legend span{grid-column:2;grid-row:1;font-size:14px;font-weight:650;color:#26364d;white-space:normal}
+          .icv-project-legend b{grid-column:2;grid-row:2;font-size:14px;color:#26364d;font-weight:750;direction:rtl}
           .icv-project-report-ring{width:142px;height:142px;border-radius:50%;display:grid;place-items:center;margin:8px auto 12px;background:conic-gradient(#0d8b62 var(--report-progress),#e9eef3 0)}
           .icv-project-report-ring:before{content:"";position:absolute;width:108px;height:108px;background:#fff;border-radius:50%}
           .icv-project-report-ring>div{position:relative;z-index:1;text-align:center;display:grid;gap:3px}
@@ -998,20 +998,12 @@
         mixStops.push(item.color + " " + mixCursor.toFixed(2) + "% " + next.toFixed(2) + "%");
         mixCursor = next;
       });
-      let labelCursor = 0;
-      const mixLabels = localMix.map((item) => {
+      const localContentShare = totalExpenditure > 0 ? (n(totalLocalContent) / n(totalExpenditure)) * 100 : 0;
+      const mixLegend = localMix.map((item) => {
         const share = mixTotal > 0 ? (n(item.value) / mixTotal) * 100 : 0;
-        const middle = labelCursor + share / 2;
-        labelCursor += share;
-        const angle = (middle * 3.6 - 90) * Math.PI / 180;
-        const x = 83 + Math.cos(angle) * 57;
-        const y = 83 + Math.sin(angle) * 57;
-        return '<span class="icv-project-donut-label" style="left:' + x.toFixed(1) + 'px;top:' + y.toFixed(1) + 'px">' + share.toFixed(1) + '%</span>';
+        return '<div class="icv-project-legend"><i style="background:' + item.color + '"></i><span>' +
+          item.label + ' (' + share.toFixed(1) + '%)</span><b>' + money(item.value) + ' ر.ع</b></div>';
       }).join("");
-      const mixLegend = localMix.map((item) =>
-        '<div class="icv-project-legend"><i style="background:' + item.color + '"></i><span>' + item.label +
-        '</span><b>' + money(item.value) + ' ر.ع</b></div>'
-      ).join("");
       const reportProgress = reportsTarget > 0 ? Math.max(0, Math.min(100, (reportsReceived / reportsTarget) * 100)) : 0;
       const charts = document.createElement("section");
       charts.className = "icv-project-charts";
@@ -1022,7 +1014,7 @@
         bar("المحتوى المحلي", totalLocalContent, "gold") +
         '</div></div><div class="icv-project-chart"><h3>توزيع مكونات المشروع</h3><p>حسب القيم المسجلة في التقارير المعتمدة.</p><div class="icv-project-donut-wrap"><div class="icv-project-donut" style="background:' +
         (mixTotal > 0 ? "conic-gradient(" + mixStops.join(",") + ")" : "#e8edf2") +
-        '">' + mixLabels + '<div><strong>' + (mixTotal > 0 ? money(mixTotal) : "—") + '</strong><span>إجمالي المكونات</span></div></div><div class="icv-project-legend-list">' +
+        '"><div><strong>' + localContentShare.toFixed(1) + '%</strong><span>إجمالي المحتوى المحلي</span></div></div><div class="icv-project-legend-list">' +
         mixLegend + '</div></div></div><div class="icv-project-chart"><h3>نسبة إنجاز التقارير</h3><p>التقارير المستلمة مقارنة بالتقارير المستهدفة.</p><div class="icv-project-report-ring" style="--report-progress:' + reportProgress.toFixed(1) + '%"><div><strong>' + reportProgress.toFixed(1) + '%</strong><span>نسبة الإنجاز</span></div></div><div class="icv-project-report-stats"><div class="icv-project-report-stat"><b>' + reportsReceived + '</b><span>تقارير مستلمة</span></div><div class="icv-project-report-stat"><b>' + reportsTarget + '</b><span>تقارير مستهدفة</span></div></div></div>';
       const extension = main.querySelector("#extension");
       if (extension) main.insertBefore(charts, extension);
