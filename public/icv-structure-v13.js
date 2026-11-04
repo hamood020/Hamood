@@ -257,11 +257,11 @@
         const pctValue = value == null || value === "" ? null : Number(value);
         const near = status === "غير مستوفي" && pctValue != null && Number.isFinite(pctValue) && pctValue >= threshold * 0.9;
         const state = status === "مستوفي" ? "ok" : near ? "warn" : status === "غير مستوفي" ? "bad" : "na";
-        const word = state === "ok" ? "مستوفي" : state === "warn" ? "قريب" : state === "bad" ? "غير مستوفي" : "—";
-        return '<div class="project-compliance-line"><span class="project-compliance-label">' + label + '</span><span class="project-compliance-state ' + state + '">' + word + "</span></div>";
+        const stateLabel = state === "ok" ? "مستوفي" : state === "warn" ? "قريب من الاستيفاء" : state === "bad" ? "غير مستوفي" : "لا توجد بيانات";
+        return '<div class="project-compliance-line"><span class="project-compliance-label">' + label + '</span><span class="project-compliance-dot ' + state + '" title="' + stateLabel + '" aria-label="' + stateLabel + '"></span></div>';
       };
       document.getElementById("pg").innerHTML =
-        '<style>.project-compliance-cell{min-width:112px;display:grid;gap:3px}.project-compliance-line{display:flex;align-items:center;justify-content:space-between;gap:7px;white-space:nowrap;font-size:9px;line-height:1.45}.project-compliance-label{color:#64748b;font-weight:700}.project-compliance-state{font-size:8px;font-weight:800;border-radius:5px;padding:1px 5px}.project-compliance-state.ok{color:#087443;background:#eaf8f0}.project-compliance-state.bad{color:#b42318;background:#fff0ef}.project-compliance-state.warn{color:#a15c00;background:#fff5dc}.project-compliance-state.na{color:#667085;background:#f2f4f7}</style>' +
+        '<style>.project-compliance-cell{min-width:112px;display:grid;gap:3px}.project-compliance-line{display:flex;align-items:center;justify-content:space-between;gap:7px;white-space:nowrap;font-size:9px;line-height:1.45}.project-compliance-label{color:#64748b;font-weight:700}.project-compliance-dot{display:inline-block;flex:0 0 8px;width:8px;height:8px;border-radius:50%;box-shadow:0 0 0 2px #fff,0 0 0 3px currentColor}.project-compliance-dot.ok{background:#16a34a;color:#16a34a}.project-compliance-dot.bad{background:#dc2626;color:#dc2626}.project-compliance-dot.warn{background:#eab308;color:#eab308}.project-compliance-dot.na{background:#9ca3af;color:#9ca3af}</style>' +
         '<div class="panel"><div class="section-head"><h2>قائمة المشاريع</h2><span class="muted">' +
         x.length +
         ' مشروع</span></div><div class="table-wrap"><table><thead><tr><th>م</th><th>اسم المشروع</th><th>الجهة الحكومية</th><th>رقم المشروع/المناقصة</th><th>الشركة المنفذة</th><th>القيمة</th><th>الإنجاز</th><th>تاريخ انتهاء المشروع</th><th>آخر تقرير</th><th>الاستيفاء</th><th>الحالة</th></tr></thead><tbody>' +
