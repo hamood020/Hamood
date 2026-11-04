@@ -450,7 +450,7 @@
 
     let html =
       '<div class="panel hm-hero"><div class="toolbar"><div><h2>' + T("الصفحة الرئيسية", "Home") + '</h2><div class="muted">' +
-      T("صورة عامة عن المحفظة: أين المشاريع، كيف تسير في الوقت والصرف، وهل التقارير تصل.", "The portfolio at a glance: where projects are, how they track time and spend, and whether reports arrive.") +
+      T("نظرة عامة على المشاريع: مواقعها وحالة تقدمها والإنفاق عليها ومدى انتظام التقارير.", "The portfolio at a glance: where projects are, how they track time and spend, and whether reports arrive.") +
       '</div></div><div class="hm-actions">' +
       (canScope ? '<label class="hm-scope"><input type="checkbox" ' + (window.icvFollowupOnly ? "checked" : "") + ' onchange="icvSetFollowupScope(this.checked)"> ' + T("جهات المتابعة فقط", "My entities only") + "</label>" : "") +
       "" +
@@ -464,7 +464,7 @@
 
     html += section(
       1,
-      T("المحفظة في سطر", "Portfolio in one line"),
+      T("ملخص المشاريع", "Portfolio in one line"),
       "",
       kpis(list, Qs, idx),
       T(
@@ -539,7 +539,7 @@
         T("حسب قيمة المشاريع.", "By project value."),
         companiesHtml(list),
         T(
-          "أكبر 6 شركات حسب مجموع قيمة مشاريعها، مع عدد المشاريع والمستوفي منها. يوضح الشركات التي يؤثر التزامها أكثر على المحفظة.",
+          "أكبر 6 شركات حسب مجموع قيمة مشاريعها، مع عدد المشاريع والمستوفي منها. يوضح الشركات الأكثر تأثيراً في أداء المشاريع.",
           "The 6 largest contractors by total project value, with project count and how many are compliant — the contractors whose compliance matters most to the portfolio.",
         ),
       );
