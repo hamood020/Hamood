@@ -709,7 +709,7 @@
       '<nav class="project-nav"><div class="project-nav-inner"><a href="#overview">نظرة عامة</a><a href="#workforce">العمالة والرواتب</a><a href="#purchases">المشتريات</a><a href="#services">الخدمات</a><a href="#subcontracts">عقود الباطن</a><a href="#basic">البيانات الأساسية</a><a href="#plan">الخطة</a><a href="#reports">التقارير</a><a href="#extension">التمديدات</a></div></nav>' +
       '<section id="overview" class="project-kpis"><div class="project-kpi"><small>إجمالي الصرف</small><b>' +
       money(totalExpenditure) +
-      '</b><span>تراكمي من التقارير</span></div><div class="project-kpi"><small>إجمالي المحتوى المحلي</small><b>' +
+      '</b><span>تراكمي من التقارير</span></div><div class="project-kpi"><small>نسبة المحتوى المحلي</small><b>' +
       money(totalLocalContent) +
       '</b><span>محسوب من التقارير</span></div><div class="project-kpi"><small>المحتوى المحلي / الصرف</small><b>' +
       pct(totalExpenditure ? (totalLocalContent / totalExpenditure) * 100 : 0) +
@@ -944,7 +944,7 @@
           .icv-project-donut:before{content:"";position:absolute;inset:34px;background:#fff;border-radius:50%}
           .icv-project-donut>div{position:relative;z-index:1;text-align:center;display:grid;gap:3px}
           .icv-project-donut strong{font-size:25px;line-height:1.15;color:#17243b}
-          .icv-project-donut span{font-size:11px;color:#74839a}
+          .icv-project-donut span{font-size:9px;line-height:1.25;color:#74839a}
           .icv-project-legend-list{display:grid;gap:13px;min-width:0;padding-inline-start:5px}
           .icv-project-legend{display:grid;grid-template-columns:9px minmax(0,1fr);column-gap:9px;row-gap:2px;align-items:center;font-size:14px;line-height:1.45}
           .icv-project-legend i{grid-column:1;grid-row:1/3;width:9px;height:9px;border-radius:50%;flex:none}
