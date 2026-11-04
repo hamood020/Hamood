@@ -512,29 +512,7 @@
     );
 
     html += section(
-      6,
-      T("انتظام التقارير حسب الجهة", "Reporting by entity"),
-      T("آخر 6 أرباع مكتملة.", "Last 6 completed quarters."),
-      heatHtml(list, Qs, idx),
-      T(
-        "لكل جهة وربع: الرقم = المشاريع التي استُلم تقريرها ÷ المشاريع التي كانت قائمة في ذلك الربع (بدأ قبل نهاية الربع ولم ينتهِ قبل بدايته، وهي نفس قاعدة التنبيهات). يكفي تقرير واحد ناقص ليصبح المربع أحمر، فتظهر الجهات المتأخرة باستمرار كصف أحمر.",
-        "Per entity and quarter: projects whose report was received ÷ projects running in that quarter (started by the quarter end and not ended before it began — the same rule as the notifications). One missing report turns the cell red, so persistently late entities show as a red row.",
-      ),
-    );
-
-    html +=
-      section(
-        7,
-        T("بطاقة أداء الجهات", "Entity scorecard"),
-        T("مرتبة من الأفضل التزاماً.", "Best compliance first."),
-        entitiesHtml(list, Qs, idx),
-        T(
-          "لكل جهة: عدد مشاريعها وقيمتها، ونسبة التقارير المستلمة من المستحقة في آخر 6 أرباع، ونسبة المشاريع المستوفية من التي لها تقارير معتمدة، وعدد المتعثر. الترتيب حسب المستوفي ثم انتظام التقارير.",
-          "Per entity: projects and value, share of due reports received in the last 6 quarters, share of projects with approved reports that are compliant, and stalled projects. Sorted by compliance, then reporting.",
-        ),
-      ) +
-      section(
-        8,
+        6,
         T("أكبر الشركات المنفذة", "Largest contractors"),
         T("حسب قيمة المشاريع.", "By project value."),
         companiesHtml(list),
@@ -545,7 +523,7 @@
       );
 
     html += section(
-      9,
+      7,
       T("جديد هذا الشهر", "New this month"),
       esc(monthName) + T(" على مستوى المنصة.", " across the platform."),
       newsHtml(list, today),
