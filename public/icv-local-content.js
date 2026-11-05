@@ -553,9 +553,16 @@
         av[k] += a[k];
       });
     });
-    const planBody = withPlan.length
+    const planTotal = Object.values(pv).reduce((s, v) => s + v, 0);
+    const actualTotal = Object.values(av).reduce((s, v) => s + v, 0);
+    const planSummary =
+      '<div class="lc-plan-summary">' +
+      '<div><span>' + T("مشاريع لديها خطة", "Projects with a plan") + '</span><b>' + withPlan.length + " / " + list.length + '</b></div>' +
+      '<div><span>' + T("إجمالي قيمة الخطط", "Total planned value") + '</span><b>' + money(planTotal) + " " + cur() + '</b></div>' +
+      '<div><span>' + T("الفعلي حتى الآن", "Actual to date") + '</span><b>' + money(actualTotal) + " " + cur() + '</b></div></div>';
+    const planBody = planSummary + (withPlan.length
       ? '<div class="lc-svg">' + groupedBars(GROUPS.map((g) => ({ label: T(g.ar, g.en), plan: pv[g.key], actual: av[g.key] }))) + '</div><div class="lc-legend"><span><i style="background:#c9d6df"></i>' + T("الخطة", "Plan") + '</span><span><i style="background:var(--primary)"></i>' + T("الفعلي حتى الآن", "Actual to date") + "</span></div>"
-      : '<div class="lc-empty">' + T("لا توجد مشاريع لها خطة محتوى محلي ضمن الفلاتر.", "No projects with a local content plan match the filters.") + "</div>";
+      : '<div class="lc-empty">' + T("لا توجد مشاريع لها خطة محتوى محلي ضمن الفلاتر.", "No projects with a local content plan match the filters.") + "</div>");
     html +=
       '<div class="lc-grid">' +
       section(
@@ -595,7 +602,32 @@
       ),
     );
 
-    // 6. Distribution  +  7. Near threshold
+    // 6. Project ranking: only projects with approved reports and positive spend.
+    const ranked = list
+      .filter((p) => (p.compliance_status || NA) !== NA && num(p.total_spend) > 0)
+      .map((p) => ({
+        p,
+        ratio: (num(p.total_local_content) / num(p.total_spend)) * 100,
+        lc: num(p.total_local_content),
+        spend: num(p.total_spend),
+      }));
+    const rankRows = (items, tone) =>
+      items.length
+        ? '<div class="lc-rank-list">' + items.map((x, i) =>
+            '<div class="lc-rank-item"><span class="lc-rank-no">' + (i + 1) + '</span><div class="lc-rank-meta"><a href="#" class="project-link" data-lc-project="' + esc(x.p.id) + '">' + esc(x.p.project_name || T("مشروع بدون اسم", "Unnamed project")) + '</a><small>' + esc(entityName(x.p)) + '</small><small>' + T("المحتوى المحلي", "Local content") + ': ' + money(x.lc) + ' ' + cur() + ' · ' + T("الصرف", "Spend") + ': ' + money(x.spend) + ' ' + cur() + '</small></div><b class="lc-rank-value ' + tone + '">' + pct(x.ratio) + '</b></div>'
+          ).join("") + '</div>'
+        : '<div class="lc-empty">' + T("لا توجد مشاريع بتقارير معتمدة وصرف فعلي ضمن الفلاتر.", "No projects with approved reports and expenditure match the filters.") + '</div>';
+    const topProjects = ranked.slice().sort((a, b) => b.ratio - a.ratio).slice(0, 5);
+    const bottomProjects = ranked.slice().sort((a, b) => a.ratio - b.ratio).slice(0, 5);
+    html += section(
+      6,
+      T("أفضل المشاريع والأقل أداءً", "Best-performing and lowest-performing projects"),
+      T("ترتيب المشاريع حسب نسبة المحتوى المحلي من الصرف الفعلي.", "Projects ranked by local content as a share of actual expenditure."),
+      '<div class="lc-rank-grid"><div class="lc-rank-panel"><h3>' + T("أفضل 5 مشاريع", "Top 5 projects") + '</h3>' + rankRows(topProjects, "positive") + '</div><div class="lc-rank-panel"><h3>' + T("أقل 5 مشاريع أداءً", "5 lowest-performing projects") + '</h3>' + rankRows(bottomProjects, "negative") + '</div></div>',
+      T("تُستبعد المشاريع التي لا تملك تقارير معتمدة أو لا يوجد لها صرف فعلي. الترتيب وصفي للمقارنة ولا يُعد بديلاً عن مؤشرات الالتزام الأربعة.", "Projects without approved reports or actual expenditure are excluded. This ranking is comparative and does not replace the four compliance criteria."),
+    );
+
+    // 7. Distribution  +  8. Near threshold
     const keyOf = { entity: entityName, company: companyName, sector: sectorName }[state.dist];
     const map = {};
     list.forEach((p) => {
@@ -636,7 +668,7 @@
       : '<div class="lc-empty">' + T("لا توجد مشاريع قريبة من الحد حالياً.", "No projects are close to a threshold right now.") + "</div>";
     html +=
       section(
-        6,
+        7,
         T("التوزيع", "Distribution"),
         T("المحتوى المحلي والالتزام مجمّعاً.", "Local content and compliance, grouped."),
         '<div class="lc-tabs">' + tabs + '</div><div class="table-wrap"><table class="lc-dist-table"><thead><tr><th>' + T("الاسم", "Name") + "</th><th>" + T("المشاريع", "Projects") + "</th><th>" + T("القيمة", "Value") + " (" + cur() + ")</th><th>" + T("المحتوى المحلي", "Local content") + " (" + cur() + ")</th><th>" + T("المحتوى المحلي / الصرف", "LC / spend") + "</th><th>" + T("مستوفي", "Compliant") + "</th><th>" + T("غير مستوفي", "Non-compliant") + "</th></tr></thead><tbody>" + distRows + "</tbody></table></div>",
@@ -646,7 +678,7 @@
         ),
       ) +
       section(
-        7,
+        8,
         T("مشاريع قريبة من الحد", "Projects close to a threshold"),
         T("أسرع مكان للتحسين.", "The quickest wins."),
         nearHtml,
@@ -712,7 +744,7 @@
         ? '<div class="lc-more"><button type="button" class="btn" data-lc-more>' + (state.showAll ? T("إظهار أول 10 فقط", "Show first 10 only") : T("إظهار الكل", "Show all") + " (" + rows.length + ")") + "</button></div>"
         : "";
     html += section(
-      8,
+      9,
       T("المشاريع", "Projects"),
       T("يعرض", "Showing") + " " + shown.length + " " + T("من", "of") + " " + rows.length + " · " + T("اضغط عنوان أي عمود للترتيب.", "Click a column title to sort."),
       '<div class="table-wrap"><table class="lc-table"><thead><tr>' + head + "</tr></thead><tbody>" + body + "</tbody></table></div>" + more,
@@ -890,6 +922,17 @@
       "#page-local-content .lc-chip.ok{background:#e8f6ef;color:var(--green)}#page-local-content .lc-chip.bad{background:#fdeceb;color:var(--red)}#page-local-content .lc-chip.na{background:#f1f3f5;color:#5b6675}" +
       "#page-local-content .lc-counts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}#page-local-content .lc-counts .lc-chip{font-size:12px;padding:5px 12px}" +
       "#page-local-content .lc-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:18px;min-width:0}" +
+      "#page-local-content .lc-plan-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-bottom:10px}" +
+      "#page-local-content .lc-plan-summary>div{display:grid;gap:3px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:var(--surface-2,#f7f9fb);min-width:0}" +
+      "#page-local-content .lc-plan-summary span{font-size:11px;color:var(--muted)}#page-local-content .lc-plan-summary b{font-size:16px;font-weight:850;color:var(--ink);font-variant-numeric:tabular-nums}" +
+      "#page-local-content .lc-rank-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}" +
+      "#page-local-content .lc-rank-panel{border:1px solid var(--line);border-radius:13px;padding:12px;min-width:0;background:var(--surface,#fff)}" +
+      "#page-local-content .lc-rank-panel h3{font-size:13px;margin:0 0 9px}" +
+      "#page-local-content .lc-rank-list{display:grid;gap:7px}" +
+      "#page-local-content .lc-rank-item{display:grid;grid-template-columns:25px minmax(0,1fr) auto;align-items:center;gap:9px;padding:8px;border:1px solid var(--line);border-radius:10px;min-width:0}" +
+      "#page-local-content .lc-rank-no{display:grid;place-items:center;width:24px;height:24px;border-radius:7px;background:var(--soft);color:var(--primary2);font-size:11px;font-weight:900}" +
+      "#page-local-content .lc-rank-meta{display:grid;gap:2px;min-width:0}#page-local-content .lc-rank-meta a{font-size:12px;font-weight:800;overflow-wrap:anywhere}#page-local-content .lc-rank-meta small{font-size:10px;color:var(--muted);overflow-wrap:anywhere}" +
+      "#page-local-content .lc-rank-value{font-size:14px;font-weight:900;direction:ltr;white-space:nowrap}#page-local-content .lc-rank-value.positive{color:var(--green)}#page-local-content .lc-rank-value.negative{color:var(--red)}" +
       "#page-local-content .lc-bars{display:grid;gap:7px}" +
       "#page-local-content .lc-bar-group{font-size:11px;color:var(--muted);font-weight:800;margin-top:6px}" +
       "#page-local-content .lc-bar-row{display:grid;grid-template-columns:150px minmax(0,1fr) 160px;gap:10px;align-items:center;font-size:12px}" +
@@ -926,7 +969,7 @@
       "#page-local-content .lc-empty{color:var(--muted);font-size:12px;padding:10px 0}" +
       "#page-local-content .lc-head .btn{width:auto;white-space:nowrap}" +
       "@media(max-width:1100px){#page-local-content .lc-grid{grid-template-columns:1fr}#page-local-content .lc-criteria{grid-template-columns:repeat(2,minmax(0,1fr))}#page-local-content .lc-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}" +
-      "@media(max-width:700px){#page-local-content .lc-criteria{grid-template-columns:1fr;gap:12px}#page-local-content .lc-visual-card{min-height:270px;padding:13px}#page-local-content .lc-visual-card-head{gap:8px}#page-local-content .lc-visual-card-head h3{font-size:15px}#page-local-content .lc-visual-status{min-width:112px;gap:5px;padding:7px}#page-local-content .lc-visual-status strong{font-size:18px}#page-local-content .lc-visual-card-main{min-height:135px}#page-local-content .lc-kpis{grid-template-columns:1fr 1fr}#page-local-content .lc-kpis .value{font-size:16px}#page-local-content .lc-crit{padding:11px}#page-local-content .lc-crit-top{flex-direction:column;align-items:flex-start}#page-local-content .lc-bar-row{grid-template-columns:96px minmax(0,1fr) 112px;font-size:11px}#page-local-content .lc-filters{grid-template-columns:1fr}}";
+      "@media(max-width:700px){#page-local-content .lc-rank-grid{grid-template-columns:1fr}#page-local-content .lc-plan-summary{grid-template-columns:1fr}#page-local-content .lc-plan-summary b{font-size:15px}#page-local-content .lc-criteria{grid-template-columns:1fr;gap:12px}#page-local-content .lc-visual-card{min-height:270px;padding:13px}#page-local-content .lc-visual-card-head{gap:8px}#page-local-content .lc-visual-card-head h3{font-size:15px}#page-local-content .lc-visual-status{min-width:112px;gap:5px;padding:7px}#page-local-content .lc-visual-status strong{font-size:18px}#page-local-content .lc-visual-card-main{min-height:135px}#page-local-content .lc-kpis{grid-template-columns:1fr 1fr}#page-local-content .lc-kpis .value{font-size:16px}#page-local-content .lc-crit{padding:11px}#page-local-content .lc-crit-top{flex-direction:column;align-items:flex-start}#page-local-content .lc-bar-row{grid-template-columns:96px minmax(0,1fr) 112px;font-size:11px}#page-local-content .lc-filters{grid-template-columns:1fr}}";
     document.head.appendChild(s);
   }
 
