@@ -914,8 +914,7 @@
       pct(n(p.total_project_value) ? (totalLocalContent / n(p.total_project_value)) * 100 : 0) +
       "</b></div></div></section>" +
       "</div>";
-    // Project layout: keep basic information in a compact LEFT sidebar;
-    // the application-wide navigation remains on the RIGHT.
+    // Project content is kept in one main column; the application navigation remains on the RIGHT.
     const shell = root.querySelector(".icv-shell");
     const hero = shell?.querySelector(".project-hero");
     const basic = shell?.querySelector("#basic");
@@ -924,15 +923,13 @@
         const style = document.createElement("style");
         style.id = "icv-project-overview-layout-style";
         style.textContent = `
-          .icv-project-body{display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px;align-items:start;direction:ltr;min-width:0}
-          .icv-project-sidebar,.icv-project-main{direction:rtl;min-width:0;display:grid;gap:14px}
-          .icv-project-sidebar{position:sticky;top:12px}
-          .icv-project-sidebar #basic{padding:15px}
-          .icv-project-sidebar #basic .section-card-head{margin-bottom:11px}
-          .icv-project-sidebar #basic .detail-grid{grid-template-columns:1fr;gap:7px}
-          .icv-project-sidebar #basic .detail-item{padding:8px 10px}
-          .icv-project-sidebar #basic .detail-item small{font-size:9px}
-          .icv-project-sidebar #basic .detail-item b{font-size:10px}
+          .icv-project-body{display:block;min-width:0}
+          .icv-project-sidebar{display:none}
+          .icv-project-main{direction:rtl;min-width:0;display:grid;gap:14px}
+          .icv-project-main #basic{padding:18px}
+          .icv-project-main #basic .section-card-head{margin-bottom:14px}
+          .icv-project-main #basic .detail-grid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+          .icv-project-main #basic .detail-item{padding:12px 14px}
           .icv-project-charts{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,.82fr);gap:12px;align-items:stretch;min-width:0}
           .icv-project-chart{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:clamp(12px,1vw,16px);min-width:0;overflow:hidden}
           .icv-project-chart h3{margin:0 0 4px;font-size:13px}
@@ -969,7 +966,7 @@
           @media(max-width:760px){.icv-project-donut{width:230px;height:230px}.icv-project-donut-wrap{grid-template-columns:1fr;justify-items:center}.icv-project-legend-list{width:100%}}
           @media(max-width:1450px){.icv-project-body{grid-template-columns:250px minmax(0,1fr);gap:12px}.icv-project-charts{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.icv-project-donut-wrap{grid-template-columns:minmax(0,1fr);justify-items:center;gap:8px;min-height:0}.icv-project-donut{width:min(100%,150px)}.icv-project-legend-list{width:100%;padding:0;gap:7px}.icv-project-legend{font-size:12px}.icv-project-chart{padding:11px}.icv-project-bar{grid-template-columns:minmax(58px,.85fr) minmax(30px,1fr) minmax(58px,.7fr);gap:5px;font-size:9px}}@media(min-width:1451px){.icv-project-donut-wrap{grid-template-columns:minmax(0,210px) minmax(0,1fr)}.icv-project-donut{width:min(100%,210px)}}
           @media(max-width:900px){.icv-project-charts{grid-template-columns:minmax(0,1fr)}.icv-project-donut-wrap{grid-template-columns:minmax(0,190px) minmax(0,1fr)}.icv-project-donut{width:min(100%,190px)}}
-          @media(max-width:760px){.icv-project-body{grid-template-columns:1fr}.icv-project-sidebar{position:static;order:2}.icv-project-main{order:1}.icv-project-sidebar #basic .detail-grid{grid-template-columns:1fr 1fr}.icv-project-bar{grid-template-columns:88px minmax(0,1fr) 65px}}
+          @media(max-width:760px){.icv-project-main #basic .detail-grid{grid-template-columns:1fr 1fr}.icv-project-bar{grid-template-columns:88px minmax(0,1fr) 65px}}
         `;
         document.head.appendChild(style);
       }
@@ -981,7 +978,6 @@
       main.className = "icv-project-main";
       shell.insertBefore(body, hero.nextSibling);
       body.append(sidebar, main);
-      sidebar.appendChild(basic);
       while (body.nextSibling) main.appendChild(body.nextSibling);
       shell.querySelectorAll("[data-project-section]").forEach((button) => {
         button.addEventListener("click", (event) => {
@@ -1053,9 +1049,11 @@
       if (extension) {
         main.insertBefore(charts, extension);
         if (compliance) main.insertBefore(compliance, extension);
+        main.insertBefore(basic, extension);
       } else {
         main.appendChild(charts);
         if (compliance) main.appendChild(compliance);
+        main.appendChild(basic);
       }
     }
   }
