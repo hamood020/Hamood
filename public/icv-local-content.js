@@ -339,6 +339,18 @@
     return s + "</svg>";
   }
 
+  // Soft, category-specific background illustrations for the four visual cards.
+  function backgroundIllustration(key) {
+    const common = 'class="lc-bg-illustration" viewBox="0 0 220 180" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+    const drawings = {
+      wages: '<circle cx="110" cy="49" r="24"/><path d="M79 45h62l-7-19H87z"/><path d="M89 78c-26 8-39 27-43 63h128c-4-36-17-55-43-63"/><path d="M83 105l27 22 27-22M110 127v30"/>',
+      goods: '<path d="M35 66 110 27l75 39-75 40z"/><path d="M35 66v76l75 39 75-39V66M110 106v75M73 46l75 39M73 85v36l37 19 37-19V85"/>',
+      subs: '<path d="M27 88l39-30 32 14 14 19-18 15-19-11-20 19-28-26z"/><path d="M193 88l-39-30-32 14-14 19 18 15 19-11 20 19 28-26z"/><path d="M79 95l23 22c6 6 15-3 9-9l-13-13M141 95l-23 22c-6 6-15-3-9-9l13-13M92 124l12 12c6 6 14-2 9-8M111 128l9 9c6 6 14-2 9-8"/>',
+      services: '<circle cx="110" cy="90" r="28"/><circle cx="110" cy="90" r="10"/><path d="M101 20h18l5 18 14 6 16-9 13 13-9 16 6 14 18 5v18l-18 5-6 14 9 16-13 13-16-9-14 6-5 18h-18l-5-18-14-6-16 9-13-13 9-16-6-14-18-5V82l18-5 6-14-9-16 13-13 16 9 14-6z" transform="translate(0 0) scale(.78) translate(31 25)"/>'
+    };
+    return '<svg ' + common + '>' + (drawings[key] || drawings.services) + '</svg>';
+  }
+
   // ---------------------------------------------------------------------------
   // Rendering
   // ---------------------------------------------------------------------------
@@ -447,7 +459,7 @@
         '<text class="lc-arc-unit" x="120" y="160" text-anchor="middle">' + cur() + '</text>' +
         '</svg></div>';
       return '<article class="lc-visual-card lc-visual-' + d.key + '">' +
-        '<div class="lc-visual-watermark" aria-hidden="true">' + icons[d.key] + '</div>' +
+        '<div class="lc-visual-watermark" aria-hidden="true">' + backgroundIllustration(d.key) + '</div>' +
         '<header class="lc-visual-card-head"><div class="lc-visual-title-icon">' + icons[d.key] + '</div><h3>' + d.title + '</h3>' + compliance + '</header>' +
         '<div class="lc-visual-card-main">' + local + '</div>' +
         '<footer class="lc-visual-card-foot"><div><span>' + T("الحد الأدنى", "Minimum") + ' · ' + d.low + '%</span><b>' + money(lowValue) + ' ' + cur() + '</b></div><div><span>' + T("الحد الأعلى", "Maximum") + ' · ' + d.high + '%</span><b>' + money(highValue) + ' ' + cur() + '</b></div><div class="lc-visual-total"><span>' + T("إجمالي المبلغ", "Total amount") + '</span><b>' + money(d.spend) + ' ' + cur() + '</b></div>' +
@@ -807,7 +819,9 @@
       "#page-local-content .lc-visual-card{position:relative;isolation:isolate;overflow:hidden;min-width:0;min-height:350px;border:1px solid var(--line);border-radius:20px;padding:20px;background:linear-gradient(135deg,var(--visual-bg,#eef6ff),#fff 72%);box-shadow:0 8px 24px rgba(15,23,42,.06)}" +
       "#page-local-content .lc-visual-card:before{content:'';position:absolute;inset:0;z-index:-1;background:radial-gradient(circle at 82% 58%,rgba(255,255,255,.1),transparent 42%),linear-gradient(120deg,transparent 30%,rgba(255,255,255,.58))}" +
       "#page-local-content .lc-visual-wages{--visual-bg:#e8f3ff;border-color:#a9c9ed}#page-local-content .lc-visual-goods{--visual-bg:#fff1e4;border-color:#f0c69d}#page-local-content .lc-visual-subs{--visual-bg:#f0edff;border-color:#c9baf3}#page-local-content .lc-visual-services{--visual-bg:#e5f8f1;border-color:#a8dfcb}" +
-      "#page-local-content .lc-visual-watermark{position:absolute;z-index:-1;inset-inline-end:16px;top:78px;font-size:118px;opacity:.075;filter:grayscale(1);pointer-events:none}" +
+      "#page-local-content .lc-visual-watermark{position:absolute;z-index:-1;inset-inline-end:4px;bottom:4px;width:210px;height:180px;display:grid;place-items:center;opacity:.13;pointer-events:none;filter:saturate(.9)}" +
+      "#page-local-content .lc-bg-illustration{width:100%;height:100%;overflow:visible}" +
+      "#page-local-content .lc-visual-wages .lc-visual-watermark{color:#4389ca}#page-local-content .lc-visual-goods .lc-visual-watermark{color:#d98235}#page-local-content .lc-visual-subs .lc-visual-watermark{color:#8672c4}#page-local-content .lc-visual-services .lc-visual-watermark{color:#279c76}" +
       "#page-local-content .lc-visual-card-head{display:flex;align-items:center;gap:12px;min-height:58px}" +
       "#page-local-content .lc-visual-card-head h3{margin:0;font-size:19px;font-weight:850;flex:1}" +
       "#page-local-content .lc-visual-title-icon{font-size:30px;line-height:1}" +
