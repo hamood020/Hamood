@@ -1156,6 +1156,26 @@
       .icv-shell .compliance-card .percent {
         font-size: var(--icv-page-font-size) !important;
       }
+
+      /* Consistent, readable typography across authenticated platform pages. */
+      #app { font-size:15px; line-height:1.65; }
+      #app h1 { font-size:clamp(23px,1.8vw,28px); line-height:1.35; }
+      #app h2 { font-size:clamp(19px,1.45vw,23px); line-height:1.4; }
+      #app h3 { font-size:17px; line-height:1.45; }
+      #app h4 { font-size:15px; line-height:1.5; }
+      #app p, #app label, #app .desc, #app .hint { line-height:1.7; }
+      #app button, #app input, #app select, #app textarea { font-size:14px; }
+      #app table { font-size:13.5px; }
+      #app th { font-size:13.5px; line-height:1.5; }
+      #app td { font-size:13.5px; line-height:1.6; }
+      #app .muted, #app small { line-height:1.6; }
+      @media(max-width:760px) {
+        #app { font-size:14px; }
+        #app h1 { font-size:22px; }
+        #app h2 { font-size:19px; }
+        #app h3 { font-size:16px; }
+        #app table, #app th, #app td { font-size:12.5px; }
+      }
     </style>
   </head>
   <body class="auth-pending">
