@@ -433,7 +433,7 @@
       const needleRightX = 120 + Math.cos(needleAngle - Math.PI / 2) * 3.2;
       const needleRightY = 116 - Math.sin(needleAngle - Math.PI / 2) * 3.2;
       const icons = { wages: "👷", goods: "📦", subs: "🤝", services: "⚙️" };
-      const compliance = '<div class="lc-visual-status"><span class="lc-visual-status-label">' + T("الاستيفاء", "Compliance") + '</span><strong>' + pct(v) + '</strong><span class="lc-visual-status-icon">' + (st === OK ? "✓" : st === BAD ? "×" : "—") + '</span></div>';
+      const compliance = '<div class="lc-visual-status ' + (st === OK ? "is-ok" : st === BAD ? "is-bad" : "is-na") + '"><span class="lc-visual-status-label">' + T("الاستيفاء", "Compliance") + '</span><strong>' + pct(v) + '</strong><span class="lc-visual-status-icon">' + (st === OK ? "✓" : st === BAD ? "×" : "—") + '</span></div>';
       const local = '<div class="lc-visual-gauge"><svg viewBox="0 0 240 176" role="img" aria-label="' + T("مؤشر قيمة المحتوى المحلي", "Local content value gauge") + '">' +
         '<path class="lc-gauge-track" d="M 30 116 A 90 90 0 0 1 210 116" pathLength="100"/>' +
         '<path class="lc-gauge-segment lc-seg-red" d="M 30 116 A 90 90 0 0 1 210 116" pathLength="100" style="stroke-dasharray:18 82;stroke-dashoffset:0"/>' +
@@ -815,6 +815,7 @@
       "#page-local-content .lc-visual-status-label{font-size:12px;color:var(--muted);font-weight:700}" +
       "#page-local-content .lc-visual-status strong{font-size:23px;line-height:1;color:var(--ink);font-weight:900;direction:ltr}" +
       "#page-local-content .lc-visual-status-icon{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#e5f5ec;color:#17834f;font-size:18px;font-weight:900}" +
+      "#page-local-content .lc-visual-status.is-bad .lc-visual-status-icon{background:#fde8e7;color:#d92d20}#page-local-content .lc-visual-status.is-na .lc-visual-status-icon{background:#eef1f5;color:#667085}" +
       "#page-local-content .lc-visual-card-main{display:grid;place-items:center;min-height:190px;padding:8px 0 0}" +
       "#page-local-content .lc-visual-gauge{width:min(100%,310px);margin:0 auto}" +
       "#page-local-content .lc-visual-gauge svg{display:block;width:100%;height:auto;max-height:205px;overflow:visible}" +
@@ -911,7 +912,7 @@
       "#page-local-content .lc-empty{color:var(--muted);font-size:12px;padding:10px 0}" +
       "#page-local-content .lc-head .btn{width:auto;white-space:nowrap}" +
       "@media(max-width:1100px){#page-local-content .lc-grid{grid-template-columns:1fr}#page-local-content .lc-criteria{grid-template-columns:repeat(2,minmax(0,1fr))}#page-local-content .lc-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}" +
-      "@media(max-width:700px){#page-local-content .lc-kpis{grid-template-columns:1fr 1fr}#page-local-content .lc-kpis .value{font-size:16px}#page-local-content .lc-crit{padding:11px}#page-local-content .lc-crit-top{flex-direction:column;align-items:flex-start}#page-local-content .lc-bar-row{grid-template-columns:96px minmax(0,1fr) 112px;font-size:11px}#page-local-content .lc-filters{grid-template-columns:1fr}}";
+      "@media(max-width:700px){#page-local-content .lc-criteria{grid-template-columns:1fr;gap:12px}#page-local-content .lc-visual-card{min-height:300px;padding:14px}#page-local-content .lc-visual-card-head{gap:8px}#page-local-content .lc-visual-card-head h3{font-size:15px}#page-local-content .lc-visual-status{min-width:112px;gap:5px;padding:7px}#page-local-content .lc-visual-status strong{font-size:18px}#page-local-content .lc-visual-card-main{min-height:155px}#page-local-content .lc-kpis{grid-template-columns:1fr 1fr}#page-local-content .lc-kpis .value{font-size:16px}#page-local-content .lc-crit{padding:11px}#page-local-content .lc-crit-top{flex-direction:column;align-items:flex-start}#page-local-content .lc-bar-row{grid-template-columns:96px minmax(0,1fr) 112px;font-size:11px}#page-local-content .lc-filters{grid-template-columns:1fr}}";
     document.head.appendChild(s);
   }
 
