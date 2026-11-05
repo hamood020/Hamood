@@ -440,17 +440,17 @@
       const needleRightX = 120 + Math.cos(needleAngle - Math.PI / 2) * 3.2;
       const needleRightY = 116 - Math.sin(needleAngle - Math.PI / 2) * 3.2;
       const local = '<div class="lc-paired-side lc-local"><div class="lc-paired-label">' + T("المحتوى المحلي", "Local content") + '</div>' +
-        '<div class="lc-local-chart"><svg viewBox="0 0 240 150" role="img" aria-label="' + T("مؤشر قيمة المحتوى المحلي؛ الحد الأدنى يساراً والحد الأعلى يميناً", "Local content gauge; minimum on the left and maximum on the right") + '">' +
+        '<div class="lc-local-chart"><svg viewBox="0 0 240 176" role="img" aria-label="' + T("مؤشر قيمة المحتوى المحلي؛ الحد الأدنى يساراً والحد الأعلى يميناً", "Local content gauge; minimum on the left and maximum on the right") + '">' +
         '<path class="lc-gauge-track" d="M 30 116 A 90 90 0 0 1 210 116" pathLength="100"/>' +
-        '<path class="lc-gauge-segment lc-seg-green" d="M 30 116 A 90 90 0 0 1 210 116" pathLength="100" style="stroke-dasharray:18 82;stroke-dashoffset:0"/>' +
-        '<path class="lc-gauge-segment lc-seg-lime" d="M 30 116 A 90 90 0 0 1 210 116" pathLength="100" style="stroke-dasharray:18 82;stroke-dashoffset:-20"/>' +
+        '<path class="lc-gauge-segment lc-seg-red" d="M 30 116 A 90 90 0 0 1 210 116" pathLength="100" style="stroke-dasharray:18 82;stroke-dashoffset:0"/>' +
+        '<path class="lc-gauge-segment lc-seg-orange" d="M 30 116 A 90 90 0 0 1 210 116" pathLength="100" style="stroke-dasharray:18 82;stroke-dashoffset:-20"/>' +
         '<path class="lc-gauge-segment lc-seg-yellow" d="M 30 116 A 90 90 0 0 1 210 116" pathLength="100" style="stroke-dasharray:18 82;stroke-dashoffset:-40"/>' +
-        '<path class="lc-gauge-segment lc-seg-orange" d="M 30 116 A 90 90 0 0 1 210 116" pathLength="100" style="stroke-dasharray:18 82;stroke-dashoffset:-60"/>' +
-        '<path class="lc-gauge-segment lc-seg-red" d="M 30 116 A 90 90 0 0 1 210 116" pathLength="100" style="stroke-dasharray:18 82;stroke-dashoffset:-80"/>' +
+        '<path class="lc-gauge-segment lc-seg-lime" d="M 30 116 A 90 90 0 0 1 210 116" pathLength="100" style="stroke-dasharray:18 82;stroke-dashoffset:-60"/>' +
+        '<path class="lc-gauge-segment lc-seg-green" d="M 30 116 A 90 90 0 0 1 210 116" pathLength="100" style="stroke-dasharray:18 82;stroke-dashoffset:-80"/>' +
         '<polygon class="lc-gauge-needle" points="' + needleLeftX.toFixed(2) + ',' + needleLeftY.toFixed(2) + ' ' + needleX.toFixed(2) + ',' + needleY.toFixed(2) + ' ' + needleRightX.toFixed(2) + ',' + needleRightY.toFixed(2) + '"/>' +
         '<circle class="lc-gauge-hub-outer" cx="120" cy="116" r="10"/><circle class="lc-gauge-hub-inner" cx="120" cy="116" r="5"/>' +
-        '<text class="lc-arc-number" x="120" y="88" text-anchor="middle">' + money(d.amount) + '</text>' +
-        '<text class="lc-arc-unit" x="120" y="103" text-anchor="middle">' + cur() + '</text>' +
+        '<text class="lc-arc-number" x="120" y="145" text-anchor="middle">' + money(d.amount) + '</text>' +
+        '<text class="lc-arc-unit" x="120" y="160" text-anchor="middle">' + cur() + '</text>' +
         '</svg><div class="lc-arc-limits"><span><b>' + money(lowValue) + '</b><small>' + T("الأدنى", "Minimum") + ' · ' + d.low + '%</small></span><span><b>' + money(highValue) + '</b><small>' + T("الأعلى", "Maximum") + ' · ' + d.high + '%</small></span></div></div>' +
         '<div class="lc-sub">' + T("من إجمالي", "Of total") + ' ' + money(d.spend) + ' ' + cur() + '</div></div>';
       return '<div class="lc-paired-card"><h3>' + d.title + '</h3><div class="lc-paired-content">' + compliance + local + '</div></div>';
@@ -818,11 +818,11 @@
       "#page-local-content .lc-local-chart svg{display:block;width:100%;height:auto;max-height:150px;overflow:visible}" +
       "#page-local-content .lc-gauge-track{fill:none;stroke:#e8edf0;stroke-width:22}" +
       "#page-local-content .lc-gauge-segment{fill:none;stroke-width:22;stroke-linecap:butt}" +
-      "#page-local-content .lc-seg-green{stroke:#82bd16}" +
-      "#page-local-content .lc-seg-lime{stroke:#d4d82c}" +
-      "#page-local-content .lc-seg-yellow{stroke:#ffd33d}" +
-      "#page-local-content .lc-seg-orange{stroke:#f28a24}" +
       "#page-local-content .lc-seg-red{stroke:#df2525}" +
+      "#page-local-content .lc-seg-orange{stroke:#f28a24}" +
+      "#page-local-content .lc-seg-yellow{stroke:#ffd33d}" +
+      "#page-local-content .lc-seg-lime{stroke:#d4d82c}" +
+      "#page-local-content .lc-seg-green{stroke:#82bd16}" +
       "#page-local-content .lc-gauge-needle{fill:#292929;stroke:#292929;stroke-linejoin:round;stroke-width:.5}" +
       "#page-local-content .lc-gauge-hub-outer{fill:#292929}" +
       "#page-local-content .lc-gauge-hub-inner{fill:#fff}" +
