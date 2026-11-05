@@ -434,8 +434,8 @@
       const progress = Math.max(0, Math.min(1, (d.amount - lowValue) / range));
       const local = '<div class="lc-paired-side lc-local"><div class="lc-paired-label">' + T("المحتوى المحلي", "Local content") + '</div>' +
         '<div class="lc-local-chart"><svg viewBox="0 0 240 150" role="img" aria-label="' + T("مقياس قيمة المحتوى المحلي بين الحدين الأدنى والأعلى", "Local content value between minimum and maximum") + '">' +
-        '<path class="lc-arc-bg" d="M 22 126 A 98 98 0 0 1 218 126" pathLength="100"/>' +
-        '<path class="lc-arc-value" d="M 22 126 A 98 98 0 0 1 218 126" pathLength="100" style="stroke-dasharray:' + (progress * 100).toFixed(2) + ' 100"/>' +
+        '<path class="lc-arc-bg" d="M 218 126 A 98 98 0 0 0 22 126" pathLength="100"/>' +
+        '<path class="lc-arc-value" d="M 218 126 A 98 98 0 0 0 22 126" pathLength="100" style="stroke-dasharray:' + (progress * 100).toFixed(2) + ' 100"/>' +
         '<text class="lc-arc-number" x="120" y="83" text-anchor="middle">' + money(d.amount) + '</text>' +
         '<text class="lc-arc-unit" x="120" y="103" text-anchor="middle">' + cur() + '</text>' +
         '<text class="lc-arc-caption" x="120" y="120" text-anchor="middle">' + T("القيمة المحلية الفعلية", "Actual local value") + '</text>' +
@@ -798,18 +798,18 @@
       "#page-local-content .lc-paired-card{border:1px solid var(--line);border-radius:16px;padding:16px;background:var(--surface,white)}" +
       "#page-local-content .lc-paired-card h3{margin:0 0 12px;font-size:15px}" +
       "#page-local-content .lc-paired-content{display:grid;grid-template-columns:1fr 1fr;gap:16px}" +
-      "#page-local-content .lc-paired-side{min-width:0;padding:12px;border-radius:12px;background:var(--surface-2,#f7f9fb)}" +
+      "#page-local-content .lc-paired-side{min-width:0;padding:10px;border-radius:12px;background:var(--surface-2,#f7f9fb)}" +
       "#page-local-content .lc-paired-label{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:6px}" +
       "#page-local-content .lc-coefficients{display:flex;gap:18px;margin-top:10px;font-size:12px;color:var(--muted)}" +
       "#page-local-content .lc-coefficients b{color:var(--ink);margin-inline-start:4px}" +
-      "#page-local-content .lc-local-chart{max-width:360px;margin:0 auto}" +
-      "#page-local-content .lc-local-chart svg{display:block;width:100%;height:auto;overflow:visible}" +
+      "#page-local-content .lc-local-chart{max-width:290px;margin:0 auto}" +
+      "#page-local-content .lc-local-chart svg{display:block;width:100%;height:auto;max-height:142px;overflow:visible}" +
       "#page-local-content .lc-local-chart .lc-arc-bg{fill:none;stroke:#e8e4f0;stroke-width:15;stroke-linecap:round}" +
       "#page-local-content .lc-local-chart .lc-arc-value{fill:none;stroke:#d9a441;stroke-width:15;stroke-linecap:round;transition:stroke-dasharray .25s ease}" +
-      "#page-local-content .lc-arc-number{font-size:27px;font-weight:800;fill:var(--primary2)}" +
+      "#page-local-content .lc-arc-number{font-size:23px;font-weight:800;fill:var(--primary2)}" +
       "#page-local-content .lc-arc-unit{font-size:12px;fill:var(--muted)}" +
-      "#page-local-content .lc-arc-caption{font-size:11px;fill:var(--ink)}" +
-      "#page-local-content .lc-arc-limits{display:flex;justify-content:space-between;gap:12px;margin-top:-2px;font-variant-numeric:tabular-nums}" +
+      "#page-local-content .lc-arc-caption{font-size:10px;fill:var(--ink)}" +
+      "#page-local-content .lc-arc-limits{display:flex;justify-content:space-between;gap:12px;margin-top:-5px;font-variant-numeric:tabular-nums}" +
       "#page-local-content .lc-arc-limits span{display:grid;gap:2px;font-size:12px}" +
       "#page-local-content .lc-arc-limits span:last-child{text-align:end}" +
       "#page-local-content .lc-arc-limits b{color:var(--primary2)}" +
@@ -824,7 +824,7 @@
       "#page-local-content .lc-gauge i.ok,#page-local-content .lc-stack .ok,#page-local-content .lc-legend i.ok{background:var(--green)}" +
       "#page-local-content .lc-gauge i.bad,#page-local-content .lc-stack .bad,#page-local-content .lc-legend i.bad{background:var(--red)}" +
       "#page-local-content .lc-gauge i.na,#page-local-content .lc-stack .na,#page-local-content .lc-legend i.na{background:#94a3b8}" +
-      "#page-local-content .lc-compliance{display:flex;flex-direction:column;justify-content:center;gap:28px;min-height:250px;padding:26px 28px;background:linear-gradient(145deg,var(--surface-2,#f7f9fb),rgba(255,255,255,.82));border:1px solid rgba(148,163,184,.12)}" +
+      "#page-local-content .lc-compliance{display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:205px;padding:18px 20px;background:linear-gradient(145deg,var(--surface-2,#f7f9fb),rgba(255,255,255,.82));border:1px solid rgba(148,163,184,.12)}" +
       "#page-local-content .lc-compliance-top{display:flex;align-items:center;justify-content:space-between;gap:16px}" +
       "#page-local-content .lc-compliance-top>div:first-child{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}" +
       "#page-local-content .lc-compliance .lc-paired-label{font-size:15px;margin:0}" +
