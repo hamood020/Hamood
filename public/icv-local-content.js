@@ -416,18 +416,11 @@
       { key: "subs", title: T("عقود الباطن", "Subcontracts"), compliance: "sme", high: 70, low: 10, amount: COMPONENTS.filter(c => c.group === "subs").reduce((a,c) => a + P.lcComp[c.key], 0), spend: COMPONENTS.filter(c => c.group === "subs").reduce((a,c) => a + P.comp[c.key], 0) },
       { key: "services", title: T("الخدمات", "Services"), compliance: "srv", high: 70, low: 10, amount: COMPONENTS.filter(c => c.group === "services").reduce((a,c) => a + P.lcComp[c.key], 0), spend: COMPONENTS.filter(c => c.group === "services").reduce((a,c) => a + P.comp[c.key], 0) },
     ];
-    const crit = '<div class="lc-criteria lc-paired">' + cardDefs.map(d => {
+    const crit = '<div class="lc-criteria lc-visual-cards">' + cardDefs.map(d => {
       const c = CRITERIA.find(x => x.key === d.compliance);
       const v = c ? P.crit[c.key] : null;
       const threshold = c ? cfg.th[c.key] : null;
       const st = v == null ? NA : v >= threshold ? OK : BAD;
-      const max = 100;
-      const valuePosition = v == null ? 0 : Math.max(0, Math.min(100, v));
-      const thresholdPosition = threshold == null ? 0 : Math.max(0, Math.min(100, threshold));
-      const compliance = '<div class="lc-paired-side lc-compliance"><div class="lc-compliance-top"><div><div class="lc-paired-label">' + T("الاستيفاء", "Compliance") + '</div><div class="lc-crit-val">' + pct(v) + '</div></div>' + statusChip(st) + '</div>' +
-        '<div class="lc-gauge-wrap"><div class="lc-gauge lc-gauge-modern" role="img" aria-label="' + T("نسبة الاستيفاء", "Compliance percentage") + ' ' + pct(v) + '">' +
-        '<i style="width:' + valuePosition + '%"></i><em style="left:' + thresholdPosition + '%"></em></div>' +
-        '<div class="lc-gauge-scale"><span>0%</span><b>' + T("الحد المطلوب", "Required") + ' ' + (threshold == null ? "—" : threshold + "%") + '</b><span>100%</span></div></div></div>';
       const lowValue = d.spend * d.low / 100;
       const highValue = d.spend * d.high / 100;
       const range = Math.max(1, highValue - lowValue);
@@ -439,8 +432,9 @@
       const needleLeftY = 116 - Math.sin(needleAngle + Math.PI / 2) * 3.2;
       const needleRightX = 120 + Math.cos(needleAngle - Math.PI / 2) * 3.2;
       const needleRightY = 116 - Math.sin(needleAngle - Math.PI / 2) * 3.2;
-      const local = '<div class="lc-paired-side lc-local"><div class="lc-paired-label">' + T("المحتوى المحلي", "Local content") + '</div>' +
-        '<div class="lc-local-chart"><svg viewBox="0 0 240 176" role="img" aria-label="' + T("مؤشر قيمة المحتوى المحلي؛ الحد الأدنى يساراً والحد الأعلى يميناً", "Local content gauge; minimum on the left and maximum on the right") + '">' +
+      const icons = { wages: "👷", goods: "📦", subs: "🤝", services: "⚙️" };
+      const compliance = '<div class="lc-visual-status"><span class="lc-visual-status-label">' + T("الاستيفاء", "Compliance") + '</span><strong>' + pct(v) + '</strong><span class="lc-visual-status-icon">' + (st === OK ? "✓" : st === BAD ? "×" : "—") + '</span></div>';
+      const local = '<div class="lc-visual-gauge"><svg viewBox="0 0 240 176" role="img" aria-label="' + T("مؤشر قيمة المحتوى المحلي", "Local content value gauge") + '">' +
         '<path class="lc-gauge-track" d="M 30 116 A 90 90 0 0 1 210 116" pathLength="100"/>' +
         '<path class="lc-gauge-segment lc-seg-red" d="M 30 116 A 90 90 0 0 1 210 116" pathLength="100" style="stroke-dasharray:18 82;stroke-dashoffset:0"/>' +
         '<path class="lc-gauge-segment lc-seg-orange" d="M 30 116 A 90 90 0 0 1 210 116" pathLength="100" style="stroke-dasharray:18 82;stroke-dashoffset:-20"/>' +
@@ -451,9 +445,13 @@
         '<circle class="lc-gauge-hub-outer" cx="120" cy="116" r="10"/><circle class="lc-gauge-hub-inner" cx="120" cy="116" r="5"/>' +
         '<text class="lc-arc-number" x="120" y="145" text-anchor="middle">' + money(d.amount) + '</text>' +
         '<text class="lc-arc-unit" x="120" y="160" text-anchor="middle">' + cur() + '</text>' +
-        '</svg><div class="lc-arc-limits"><span><b>' + money(lowValue) + '</b><small>' + T("الأدنى", "Minimum") + ' · ' + d.low + '%</small></span><span><b>' + money(highValue) + '</b><small>' + T("الأعلى", "Maximum") + ' · ' + d.high + '%</small></span></div></div>' +
-        '<div class="lc-sub">' + T("من إجمالي", "Of total") + ' ' + money(d.spend) + ' ' + cur() + '</div></div>';
-      return '<div class="lc-paired-card"><h3>' + d.title + '</h3><div class="lc-paired-content">' + compliance + local + '</div></div>';
+        '</svg></div>';
+      return '<article class="lc-visual-card lc-visual-' + d.key + '">' +
+        '<div class="lc-visual-watermark" aria-hidden="true">' + icons[d.key] + '</div>' +
+        '<header class="lc-visual-card-head"><div class="lc-visual-title-icon">' + icons[d.key] + '</div><h3>' + d.title + '</h3>' + compliance + '</header>' +
+        '<div class="lc-visual-card-main">' + local + '</div>' +
+        '<footer class="lc-visual-card-foot"><div><span>' + T("الحد الأدنى", "Minimum") + ' · ' + d.low + '%</span><b>' + money(lowValue) + ' ' + cur() + '</b></div><div><span>' + T("الحد الأعلى", "Maximum") + ' · ' + d.high + '%</span><b>' + money(highValue) + ' ' + cur() + '</b></div><div class="lc-visual-total"><span>' + T("إجمالي المبلغ", "Total amount") + '</span><b>' + money(d.spend) + ' ' + cur() + '</b></div>' +
+        '</footer></article>';
     }).join("") + '</div>';
     const counts =
       '<div class="lc-counts">' +
@@ -805,13 +803,28 @@
       "#page-local-content .lc-caption{margin:14px 0 0;padding-top:10px;border-top:1px dashed var(--line);color:var(--muted);font-size:11.5px;line-height:1.8}" +
       "#page-local-content .lc-kpis{margin-bottom:12px}" +
       "#page-local-content .lc-kpis .value{font-size:20px}" +
-      "#page-local-content .lc-criteria{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}" +
-      "#page-local-content .lc-paired{grid-template-columns:1fr;gap:14px}" +
-      "#page-local-content .lc-paired-card{border:1px solid var(--line);border-radius:16px;padding:16px;background:var(--surface,white)}" +
-      "#page-local-content .lc-paired-card h3{margin:0 0 12px;font-size:15px}" +
-      "#page-local-content .lc-paired-content{display:grid;grid-template-columns:1fr 1fr;gap:16px}" +
-      "#page-local-content .lc-paired-side{min-width:0;padding:10px;border-radius:12px;background:var(--surface-2,#f7f9fb)}" +
-      "#page-local-content .lc-paired-label{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:6px}" +
+      "#page-local-content .lc-criteria{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}" +
+      "#page-local-content .lc-visual-card{position:relative;isolation:isolate;overflow:hidden;min-width:0;min-height:350px;border:1px solid var(--line);border-radius:20px;padding:20px;background:linear-gradient(135deg,var(--visual-bg,#eef6ff),#fff 72%);box-shadow:0 8px 24px rgba(15,23,42,.06)}" +
+      "#page-local-content .lc-visual-card:before{content:'';position:absolute;inset:0;z-index:-1;background:radial-gradient(circle at 82% 58%,rgba(255,255,255,.1),transparent 42%),linear-gradient(120deg,transparent 30%,rgba(255,255,255,.58))}" +
+      "#page-local-content .lc-visual-wages{--visual-bg:#e8f3ff;border-color:#a9c9ed}#page-local-content .lc-visual-goods{--visual-bg:#fff1e4;border-color:#f0c69d}#page-local-content .lc-visual-subs{--visual-bg:#f0edff;border-color:#c9baf3}#page-local-content .lc-visual-services{--visual-bg:#e5f8f1;border-color:#a8dfcb}" +
+      "#page-local-content .lc-visual-watermark{position:absolute;z-index:-1;inset-inline-end:16px;top:78px;font-size:118px;opacity:.075;filter:grayscale(1);pointer-events:none}" +
+      "#page-local-content .lc-visual-card-head{display:flex;align-items:center;gap:12px;min-height:58px}" +
+      "#page-local-content .lc-visual-card-head h3{margin:0;font-size:19px;font-weight:850;flex:1}" +
+      "#page-local-content .lc-visual-title-icon{font-size:30px;line-height:1}" +
+      "#page-local-content .lc-visual-status{display:grid;grid-template-columns:auto auto 28px;align-items:center;gap:8px;padding:9px 13px;border-radius:15px;background:rgba(255,255,255,.82);box-shadow:0 5px 16px rgba(15,23,42,.07);min-width:145px}" +
+      "#page-local-content .lc-visual-status-label{font-size:12px;color:var(--muted);font-weight:700}" +
+      "#page-local-content .lc-visual-status strong{font-size:23px;line-height:1;color:var(--ink);font-weight:900;direction:ltr}" +
+      "#page-local-content .lc-visual-status-icon{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#e5f5ec;color:#17834f;font-size:18px;font-weight:900}" +
+      "#page-local-content .lc-visual-card-main{display:grid;place-items:center;min-height:190px;padding:8px 0 0}" +
+      "#page-local-content .lc-visual-gauge{width:min(100%,310px);margin:0 auto}" +
+      "#page-local-content .lc-visual-gauge svg{display:block;width:100%;height:auto;max-height:205px;overflow:visible}" +
+      "#page-local-content .lc-visual-card-foot{display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid rgba(148,163,184,.25);padding-top:14px}" +
+      "#page-local-content .lc-visual-card-foot>div{display:grid;gap:4px;text-align:center}" +
+      "#page-local-content .lc-visual-card-foot span{font-size:12px;color:var(--muted)}" +
+      "#page-local-content .lc-visual-card-foot b{font-size:15px;color:var(--ink);font-weight:850}" +
+      "#page-local-content .lc-visual-total{grid-column:1/-1;border-top:1px dashed rgba(148,163,184,.3);padding-top:9px;margin-top:2px}" +
+      "#page-local-content .lc-coefficients{display:flex;gap:18px;margin-top:10px;font-size:12px;color:var(--muted)}" +
+      "#page-local-content .lc-coefficients b{color:var(--ink);margin-inline-start:4px}" +
       "#page-local-content .lc-coefficients{display:flex;gap:18px;margin-top:10px;font-size:12px;color:var(--muted)}" +
       "#page-local-content .lc-coefficients b{color:var(--ink);margin-inline-start:4px}" +
       "#page-local-content .lc-local-chart{max-width:290px;margin:0 auto}" +
