@@ -1856,6 +1856,35 @@
           }
           const fc = document.getElementById("projectFilterCount");
           if (fc) fc.textContent = x.length + " مشروع";
+          const projectReportCompletion = (project) => {
+            const parseDate = (value) => {
+              if (!value) return null;
+              const date = new Date(String(value).slice(0, 10) + "T00:00:00");
+              return Number.isNaN(date.getTime()) ? null : date;
+            };
+            const start = parseDate(project.start_date);
+            const end = parseDate(project.end_date);
+            if (!start || !end || end < start) return 0;
+            const quarterStart = (year, quarter) => new Date(year, (quarter - 1) * 3, 1);
+            const quarterEnd = (year, quarter) => new Date(year, quarter * 3, 0);
+            const targets = [];
+            for (let year = start.getFullYear(); year <= end.getFullYear(); year++) {
+              for (let quarter = 1; quarter <= 4; quarter++) {
+                const qs = quarterStart(year, quarter);
+                const qe = quarterEnd(year, quarter);
+                if (qs <= end && qe >= start) targets.push(year + "_Q" + quarter);
+              }
+            }
+            if (!targets.length) return 0;
+            const targetSet = new Set(targets);
+            const projectReports = (window.reports || reports || []).filter((report) => report.project_id === project.id);
+            const received = new Set(projectReports.map((report) => {
+              const year = Number(report.annual_period);
+              const quarter = Number(String(report.quarter || "").replace(/\\D/g, ""));
+              return year + "_Q" + quarter;
+            }).filter((key) => targetSet.has(key))).size;
+            return Math.max(0, Math.min(100, (received / targets.length) * 100));
+          };
           const rows = x
             .map(
               (p, idx) =>
@@ -1874,7 +1903,7 @@
                 "</td><td>" +
                 money(p.total_project_value) +
                 "</td><td>" +
-                Number(p.progress_pct || 0).toFixed(1) +
+                projectReportCompletion(p).toFixed(1) +
                 "%</td><td>" +
                 esc(p.project_status || "—") +
                 "</td></tr>",
