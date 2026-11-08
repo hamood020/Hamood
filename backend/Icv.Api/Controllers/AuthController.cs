@@ -2,6 +2,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Icv.Api.Data;
 
 namespace Icv.Api.Controllers;
 
@@ -9,7 +11,8 @@ namespace Icv.Api.Controllers;
 [Route("api/auth")]
 public sealed class AuthController(
     SignInManager<IdentityUser> signIn,
-    UserManager<IdentityUser> users) : ControllerBase
+    UserManager<IdentityUser> users,
+    IcvIdentityDbContext db) : ControllerBase
 {
     public sealed record LoginRequest(string Username, string Password);
     public sealed record ChangePasswordRequest(string CurrentPassword, string NewPassword);
@@ -37,8 +40,15 @@ public sealed class AuthController(
             return Unauthorized(new { error = "تعذر التحقق من الحساب" });
         }
 
-        var roles = await users.GetRolesAsync(user);
-        return Ok(new { id = user.Id, username = user.UserName, roles });
+        if (!Guid.TryParse(user.Id, out var userId)) { await signIn.SignOutAsync(); return Unauthorized(); }
+        var profile = await db.UserProfiles.AsNoTracking().SingleOrDefaultAsync(x => x.Id == userId);
+        var now = DateTimeOffset.UtcNow;
+        if (profile is null || !profile.IsActive || (profile.AccessStartsAt.HasValue && profile.AccessStartsAt > now) || (profile.AccessExpiresAt.HasValue && profile.AccessExpiresAt <= now))
+        {
+            await signIn.SignOutAsync();
+            return Unauthorized(new { error = "الحساب غير نشط أو لم تبدأ صلاحيته أو انتهت" });
+        }
+        return Ok(new { id = user.Id, username = user.UserName, fullName = profile.FullName, role = profile.Role });
     }
 
     [Authorize]
@@ -46,12 +56,15 @@ public sealed class AuthController(
     public async Task<IActionResult> Me()
     {
         var user = await users.GetUserAsync(User);
-        if (user is null) return Unauthorized();
-        return Ok(new {
-            id = user.Id,
-            username = user.UserName,
-            roles = await users.GetRolesAsync(user)
-        });
+        if (user is null || !Guid.TryParse(user.Id, out var userId)) return Unauthorized();
+        var profile = await db.UserProfiles.AsNoTracking().SingleOrDefaultAsync(x => x.Id == userId);
+        var now = DateTimeOffset.UtcNow;
+        if (profile is null || !profile.IsActive || (profile.AccessStartsAt.HasValue && profile.AccessStartsAt > now) || (profile.AccessExpiresAt.HasValue && profile.AccessExpiresAt <= now))
+        {
+            await signIn.SignOutAsync();
+            return Unauthorized(new { error = "الحساب غير نشط أو انتهت صلاحيته" });
+        }
+        return Ok(new { id = user.Id, username = user.UserName, fullName = profile.FullName, role = profile.Role });
     }
 
     [Authorize]
