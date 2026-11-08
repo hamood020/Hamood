@@ -25,13 +25,13 @@ public sealed class WorkspaceController(IcvIdentityDbContext db,UserManager<Iden
  public record NoteInput(Guid? ProjectId,string? EmployeeName,string? Category,string? ActionRequired,DateOnly? DueDate,string? Status,string? Notes,string? Priority);
 
  [HttpGet("entities")]
- public async Task<IActionResult> Entities(){var d=await Active();if(d!=null)return d;return Ok(await db.GovernmentEntities.AsNoTracking().OrderBy(x=>x.Name).Select(x=>new{id=x.Id,name=x.Name,code=x.Code,created_at=x.CreatedAt,contact_points=Write()?x.ContactPoints:"[]"}).ToListAsync());}
+ public async Task<IActionResult> Entities(){var d=await Active();if(d!=null)return d;var show=await Write();var rows=await db.GovernmentEntities.AsNoTracking().OrderBy(x=>x.Name).ToListAsync();return Ok(rows.Select(x=>new{id=x.Id,name=x.Name,code=x.Code,created_at=x.CreatedAt,contact_points=show?x.ContactPoints:"[]"}));}
  [HttpPost("entities")]
  public async Task<IActionResult> AddEntity(EntityInput x){var d=await Active();if(d!=null)return d;if(!await Write())return Forbid();if(string.IsNullOrWhiteSpace(x.Name))return BadRequest();var row=new GovernmentEntity{Id=Guid.NewGuid(),Name=x.Name.Trim(),Code=x.Code,ContactPoints=SafeArray(x.ContactPoints),CreatedAt=DateTimeOffset.UtcNow};db.GovernmentEntities.Add(row);await db.SaveChangesAsync();return Ok(row);}
  [HttpPut("entities/{id:guid}")]
  public async Task<IActionResult> UpdateEntity(Guid id,EntityInput x){var d=await Active();if(d!=null)return d;if(!await Write())return Forbid();var row=await db.GovernmentEntities.FindAsync(id);if(row==null)return NotFound();row.Name=x.Name.Trim();row.Code=x.Code;row.ContactPoints=SafeArray(x.ContactPoints);await db.SaveChangesAsync();return Ok(row);}
  [HttpGet("companies")]
- public async Task<IActionResult> Companies(){var d=await Active();if(d!=null)return d;return Ok(await db.Companies.AsNoTracking().OrderBy(x=>x.Name).Select(x=>new{id=x.Id,name=x.Name,company_type=x.CompanyType,created_at=x.CreatedAt,contact_points=Write()?x.ContactPoints:"[]"}).ToListAsync());}
+ public async Task<IActionResult> Companies(){var d=await Active();if(d!=null)return d;var show=await Write();var rows=await db.Companies.AsNoTracking().OrderBy(x=>x.Name).ToListAsync();return Ok(rows.Select(x=>new{id=x.Id,name=x.Name,company_type=x.CompanyType,created_at=x.CreatedAt,contact_points=show?x.ContactPoints:"[]"}));}
  [HttpPost("companies")]
  public async Task<IActionResult> AddCompany(CompanyInput x){var d=await Active();if(d!=null)return d;if(!await Write())return Forbid();if(string.IsNullOrWhiteSpace(x.Name))return BadRequest();var row=new Company{Id=Guid.NewGuid(),Name=x.Name.Trim(),CompanyType=x.CompanyType,ContactPoints=SafeArray(x.ContactPoints),CreatedAt=DateTimeOffset.UtcNow};db.Companies.Add(row);await db.SaveChangesAsync();return Ok(row);}
  [HttpPut("companies/{id:guid}")]
