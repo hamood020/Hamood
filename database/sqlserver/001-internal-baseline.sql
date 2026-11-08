@@ -60,6 +60,8 @@ CREATE TABLE dbo.projects (
  omanization_status nvarchar(100) NULL, services_status nvarchar(100) NULL, compliance_status nvarchar(100) NULL,
  actual_subcontract_local decimal(18,2) NULL, actual_subcontract_foreign decimal(18,2) NULL, actual_subcontract_sme decimal(18,2) NULL,
  metrics_updated_at datetimeoffset(0) NULL,
+ location nvarchar(max) NOT NULL CONSTRAINT DF_projects_location DEFAULT N'{}',
+ CONSTRAINT CK_projects_location CHECK(ISJSON(location)=1),
  CONSTRAINT FK_projects_entity FOREIGN KEY(government_entity_id) REFERENCES dbo.government_entities(id),
  CONSTRAINT FK_projects_company FOREIGN KEY(implementing_company_id) REFERENCES dbo.companies(id)
 );
