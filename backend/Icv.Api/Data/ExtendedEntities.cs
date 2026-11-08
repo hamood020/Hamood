@@ -48,3 +48,75 @@ public sealed class EmployeeFollowup {
  [Column("created_at")] public DateTimeOffset CreatedAt {get;set;}
  [Column("updated_at")] public DateTimeOffset UpdatedAt {get;set;}
 }
+
+
+[Table("project_baselines")]
+public sealed class ProjectBaseline {
+ [Key,Column("id")] public Guid Id {get;set;}
+ [Column("project_id")] public Guid ProjectId {get;set;}
+ [Column("source_file")] public string? SourceFile {get;set;}
+ [Required,Column("baseline_data")] public string BaselineData {get;set;}="{}";
+ [Column("captured_at")] public DateTimeOffset CapturedAt {get;set;}
+ [Column("created_by")] public Guid? CreatedBy {get;set;}
+}
+[Table("project_end_date_history")]
+public sealed class ProjectEndDateHistory {
+ [Key,Column("id")] public Guid Id {get;set;}
+ [Column("project_id")] public Guid ProjectId {get;set;}
+ [Column("old_end_date")] public DateOnly? OldEndDate {get;set;}
+ [Column("new_end_date")] public DateOnly NewEndDate {get;set;}
+ [Column("changed_by")] public Guid? ChangedBy {get;set;}
+ [Column("changed_at")] public DateTimeOffset ChangedAt {get;set;}
+ [Column("reason")] public string? Reason {get;set;}
+}
+[Table("project_plan_documents")]
+public sealed class ProjectPlanDocument {
+ [Key,Column("id")] public Guid Id {get;set;}
+ [Column("project_id")] public Guid ProjectId {get;set;}
+ [Column("plan_id")] public Guid? PlanId {get;set;}
+ [Required,Column("display_name")] public string DisplayName {get;set;}="";
+ [Required,Column("original_file_name")] public string OriginalFileName {get;set;}="";
+ [Required,Column("storage_path")] public string StoragePath {get;set;}="";
+ [Column("mime_type")] public string? MimeType {get;set;}
+ [Column("file_size")] public long? FileSize {get;set;}
+ [Column("created_by")] public Guid? CreatedBy {get;set;}
+ [Column("created_at")] public DateTimeOffset CreatedAt {get;set;}
+ [Column("updated_at")] public DateTimeOffset UpdatedAt {get;set;}
+}
+[Table("notifications")]
+public sealed class Notification {
+ [Key,Column("id")] public Guid Id {get;set;}
+ [Column("user_id")] public Guid UserId {get;set;}
+ [Required,Column("kind")] public string Kind {get;set;}="";
+ [Required,Column("title")] public string Title {get;set;}="";
+ [Column("body")] public string? Body {get;set;}
+ [Column("project_id")] public Guid? ProjectId {get;set;}
+ [Required,Column("dedupe_key")] public string DedupeKey {get;set;}="";
+ [Column("created_at")] public DateTimeOffset CreatedAt {get;set;}
+ [Column("read_at")] public DateTimeOffset? ReadAt {get;set;}
+}
+[Table("platform_settings")]
+public sealed class PlatformSetting {
+ [Key,Column("id")] public string Id {get;set;}="global";
+ [Required,Column("settings")] public string Settings {get;set;}="{}";
+ [Column("updated_by")] public Guid? UpdatedBy {get;set;}
+ [Column("updated_at")] public DateTimeOffset UpdatedAt {get;set;}
+}
+[Table("user_entity_assignments")]
+public sealed class UserEntityAssignment {
+ [Key,Column("id")] public Guid Id {get;set;}
+ [Column("user_id")] public Guid UserId {get;set;}
+ [Column("government_entity_id")] public Guid GovernmentEntityId {get;set;}
+ [Column("created_at")] public DateTimeOffset CreatedAt {get;set;}
+}
+[Table("user_notification_settings")]
+public sealed class UserNotificationSettings {
+ [Key,Column("user_id")] public Guid UserId {get;set;}
+ [Column("report_due")] public bool ReportDue {get;set;}=true;
+ [Column("project_expiry")] public bool ProjectExpiry {get;set;}=true;
+ [Column("approval")] public bool Approval {get;set;}=true;
+ [Column("delay")] public bool Delay {get;set;}=true;
+ [Column("plan_update")] public bool PlanUpdate {get;set;}=true;
+ [Column("days_before")] public int DaysBefore {get;set;}=10;
+ [Column("updated_at")] public DateTimeOffset UpdatedAt {get;set;}
+}
