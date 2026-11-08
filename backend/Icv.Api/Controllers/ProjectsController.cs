@@ -113,7 +113,7 @@ public sealed class ProjectsController(IcvIdentityDbContext db, UserManager<Iden
         p.ProjectName = input.ProjectName.Trim(); p.TenderType = input.TenderType; p.ProjectStatus = input.ProjectStatus;
         p.Consultant = input.Consultant; p.ImplementingCompanyId = input.ImplementingCompanyId;
         p.WorkSector = input.WorkSector; p.TotalProjectValue = input.TotalProjectValue;
-        p.StartDate = input.StartDate; p.EndDate = input.EndDate; p.Notes = input.Notes; p.UpdatedAt = now;
+        p.StartDate = input.StartDate; p.EndDate = input.EndDate; p.LocalContentPlan = input.LocalContentPlan; p.Notes = input.Notes; p.UpdatedAt = now;
         db.AuditEntries.Add(new AuditEntry { ActorUserId = userId, Operation = "UPDATE", TableName = "projects", RecordId = id.ToString(), OldData = old, NewData = JsonSerializer.Serialize(p), ChangedAt = now });
         await db.SaveChangesAsync();
         return Ok(p);
