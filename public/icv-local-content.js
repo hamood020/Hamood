@@ -122,7 +122,7 @@
   // ---------------------------------------------------------------------------
   // State (filters survive re-renders triggered by other pages)
   // ---------------------------------------------------------------------------
-  const state = { entity: "", sector: "", company: "", status: "", dist: "entity", sortKey: "lc", sortDir: -1, showAll: false };
+  const state = { entity: "", sector: "", company: "", status: "", project: "", dist: "entity", sortKey: "lc", sortDir: -1, showAll: false };
 
   function scopedProjects() {
     const all = window.icvApplyFollowupScope ? window.icvApplyFollowupScope(window.projects || []) : window.projects || [];
@@ -131,7 +131,8 @@
         (!state.entity || String(p.government_entity_id) === state.entity) &&
         (!state.sector || sectorName(p) === state.sector) &&
         (!state.company || String(p.implementing_company_id) === state.company) &&
-        (!state.status || (p.compliance_status || NA) === state.status),
+        (!state.status || (p.compliance_status || NA) === state.status) &&
+        (!state.project || String(p.project_name || "").toLocaleLowerCase().includes(state.project.toLocaleLowerCase())),
     );
   }
 
@@ -400,7 +401,8 @@
       [["", T("الكل", "All")], [OK, statusText(OK)], [BAD, statusText(BAD)], [NA, statusText(NA)]]
         .map((x) => '<option value="' + x[0] + '"' + (x[0] === state.status ? " selected" : "") + ">" + x[1] + "</option>")
         .join("") +
-      "</select></div></div></div>";
+      "</select></div>" +
+      '<div class="field"><label for="lcProject">' + T("اسم المشروع", "Project name") + '</label><input id="lcProject" type="search" value="' + esc(state.project) + '" placeholder="' + T("ابحث باسم المشروع", "Search project name") + '"></div></div></div>';
 
     if (!list.length) {
       root.innerHTML = html + '<div class="panel lc-empty">' + T("لا توجد مشاريع ضمن الفلاتر المختارة.", "No projects match the selected filters.") + "</div>";
