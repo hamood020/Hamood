@@ -2395,7 +2395,7 @@
         for(let r=1;r<=rows.length;r++) for(let col=0;col<headers.length;col++){
           const cell=ws[XLSX.utils.encode_cell({r,c:col})];
           if(!cell) continue;
-          cell.s={font:{name:"Arial",sz:10,color:{rgb:"FF1F2937"}},fill:{patternType:"solid",fgColor:{rgb:r%2?"FFFFFFFF":"FFF4F8F8"}},alignment:{horizontal:"center",vertical:"center",wrapText:true},border};
+          cell.s={font:{name:"Arial",sz:10,color:{rgb:"FF000000"}},fill:{patternType:"solid",fgColor:{rgb:r%2?"FFFFFFFF":"FFF4F8F8"}},alignment:{horizontal:"center",vertical:"center",wrapText:true},border};
           const moneyCols=[8,25,26,27,28,29,30,37,38,39,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,60,61,62];
           const percentCols=[12,23,63,64,65];
           if(moneyCols.includes(col)) cell.z='#,##0.00 "OMR";[Red](#,##0.00 "OMR");-';
