@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using System.Text.Json;
 using Icv.Api.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -76,14 +75,14 @@ public sealed class ProjectsController(IcvIdentityDbContext db, UserManager<Iden
         if (string.IsNullOrWhiteSpace(input.ProjectName)) return BadRequest(new { error = "اسم المشروع مطلوب" });
         if (input.TotalProjectValue < 0 || (input.StartDate.HasValue && input.EndDate.HasValue && input.EndDate < input.StartDate))
             return BadRequest(new { error = "تحقق من قيمة المشروع وتواريخه" });
-        var (profile, userId) = await CurrentProfile();
+        var (_, userId) = await CurrentProfile();
         var now = DateTimeOffset.UtcNow;
         var p = new Project {
             Id = Guid.NewGuid(), SerialNo = input.SerialNo, GovernmentEntityId = input.GovernmentEntityId,
             ProjectName = input.ProjectName.Trim(), TenderType = input.TenderType, ProjectStatus = input.ProjectStatus,
             Consultant = input.Consultant, ImplementingCompanyId = input.ImplementingCompanyId, WorkSector = input.WorkSector,
             TotalProjectValue = input.TotalProjectValue, StartDate = input.StartDate, EndDate = input.EndDate,
-            OriginalEndDate = input.EndDate, Notes = input.Notes, CreatedAt = now, UpdatedAt = now
+            OriginalEndDate = input.EndDate, LocalContentPlan = input.LocalContentPlan, Notes = input.Notes, CreatedAt = now, UpdatedAt = now
         };
         db.Projects.Add(p);
         db.AuditEntries.Add(new AuditEntry { ActorUserId = userId, Operation = "INSERT", TableName = "projects", RecordId = p.Id.ToString(), NewData = JsonSerializer.Serialize(p), ChangedAt = now });
@@ -139,7 +138,7 @@ public sealed class ProjectsController(IcvIdentityDbContext db, UserManager<Iden
         if (duplicate) return Conflict(new { error = "يوجد تقرير مسجل للمشروع والفترة نفسها" });
         var (_, userId) = await CurrentProfile();
         var report = new QuarterlyReport { Id = Guid.NewGuid(), ProjectId = id, Quarter = input.Quarter.Trim(),
-            AnnualPeriod = input.AnnualPeriod, ReportData = input.ReportData.GetRawText(), Status = input.Status ?? "received", SubmittedAt = input.SubmittedAt,
+            AnnualPeriod = input.AnnualPeriod, ReportData = input.ReportData.GetRawText(), Status = "received", SubmittedAt = null,
             Notes = input.Notes, CreatedBy = userId, CreatedAt = DateTimeOffset.UtcNow };
         db.QuarterlyReports.Add(report);
         db.AuditEntries.Add(new AuditEntry { ActorUserId = userId, Operation = "INSERT", TableName = "quarterly_reports",
@@ -164,7 +163,7 @@ public sealed class ProjectsController(IcvIdentityDbContext db, UserManager<Iden
         var (_, userId) = await CurrentProfile(); var old = JsonSerializer.Serialize(report);
         await using var transaction = await db.Database.BeginTransactionAsync();
         report.Quarter = input.Quarter.Trim(); report.AnnualPeriod = input.AnnualPeriod;
-        report.ReportData = input.ReportData.GetRawText(); report.Notes = input.Notes; report.Status = input.Status ?? report.Status; report.SubmittedAt = input.SubmittedAt ?? report.SubmittedAt;
+        report.ReportData = input.ReportData.GetRawText(); report.Notes = input.Notes;
         await db.SaveChangesAsync();
         db.AuditEntries.Add(new AuditEntry { ActorUserId = userId, Operation = "UPDATE", TableName = "quarterly_reports",
             RecordId = report.Id.ToString(), OldData = old, NewData = JsonSerializer.Serialize(report), ChangedAt = DateTimeOffset.UtcNow });
