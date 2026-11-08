@@ -1877,10 +1877,10 @@
             }
             if (!targets.length) return 0;
             const targetSet = new Set(targets);
-            const projectReports = (window.reports || reports || []).filter((report) => report.project_id === project.id);
+            const projectReports = (window.reports || reports || []).filter((report) => String(report.project_id) === String(project.id));
             const received = new Set(projectReports.map((report) => {
               const year = Number(report.annual_period);
-              const quarter = Number(String(report.quarter || "").replace(/\\D/g, ""));
+              const quarter = Number(String(report.quarter || "").replace(/\D/g, ""));
               return year + "_Q" + quarter;
             }).filter((key) => targetSet.has(key))).size;
             return Math.max(0, Math.min(100, (received / targets.length) * 100));
