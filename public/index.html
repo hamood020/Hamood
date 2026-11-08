@@ -2298,6 +2298,7 @@
         const money = v => num(v);
         const rows = (projects || []).map((p, index) => {
           const pid = String(p.id);
+          const projectAllReports = (window.reports || reports || []).filter(r => String(r.project_id) === pid);
           const projectReports = sortReports(approved.filter(r => String(r.project_id) === pid));
           const latest = projectReports[projectReports.length - 1];
           const d = latest?.report_data || {};
@@ -2339,7 +2340,7 @@
           const omaniNow=num(d.omani_total), foreignNow=num(d.foreign_total);
           const omaniPlan=planTotal("omani"), foreignPlan=planTotal("foreign");
           const workforceTarget=omaniPlan+foreignPlan;
-          const reportCount=projectReports.length;
+          const reportCount=projectAllReports.length;
           const spend=num(p.total_spend), localContent=num(p.total_local_content);
           const actualWageLC=actualOmaniSalary*cOmani + actualForeignSalary*cForeign;
           const goodsMadeLC=actualMade*cOmanMade, goodsLocalLC=actualLocal*cLocal, goodsSmeLC=actualSmeGoods*cSme;
@@ -2351,14 +2352,14 @@
           const planGoodsTotal=planMade+planLocal+planImport+planSmeGoods;
           const planServiceTotal=planLocalSvc+planForeignSvc+planSmeSvc;
           const planSubTotal=planLocalSub+planForeignSub+planSmeSub;
-          const targetReports=4;
+          const targetReports=p.target_reports ?? p.reports_targeted ?? "";
           const status=(v)=>v || "غير منطبق";
           return [
             p.serial_no ?? index+1, p.government_entities?.name || "", p.project_name || "",
             p.tender_number || p.tender_no || p.tender_reference || "", p.project_status || "",
             p.consultant || p.consultant_name || "", p.companies?.name || "", p.sector || p.project_sector || "",
             num(p.total_project_value), p.start_date || p.project_start_date || "", p.end_date || p.project_end_date || "",
-            plan ? "نعم" : "لا", num(p.progress_pct), targetReports, Math.max(0,targetReports-reportCount), reportCount, 0,
+            plan ? "نعم" : "لا", num(p.progress_pct), targetReports, p.reports_due ?? p.reports_due_count ?? "", reportCount, p.reports_late ?? p.reports_late_count ?? "",
             p.current_quarter || "", p.annual_update || "", omaniPlan, omaniNow, omaniNow, foreignNow, num(p.omanization_pct),
             foreignPlan, planOmaniSalary, actualOmaniSalary, actualOmaniSalary*cOmani, planForeignSalary, actualForeignSalary, actualForeignSalary*cForeign,
             num(cats[0]?.omani), num(cats[0]?.foreign ?? cats[0]?.non_omani), num(cats[1]?.omani), num(cats[1]?.foreign ?? cats[1]?.non_omani), num(cats[2]?.omani), num(cats[2]?.foreign ?? cats[2]?.non_omani),
