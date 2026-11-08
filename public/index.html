@@ -2390,7 +2390,7 @@
         };
         for(let col=0;col<headers.length;col++){
           const cell=ws[XLSX.utils.encode_cell({r:0,c:col})];
-          cell.s={font:{name:"Arial",sz:11,bold:true,color:{rgb:"FFFFFFFF"}},fill:{patternType:"solid",fgColor:{rgb:groupFill(col+1)}},alignment:{horizontal:"center",vertical:"center",wrapText:true,textRotation:0},border};
+          const headerFill=groupFill(col+1);\n          const headerTextColor=["FFD9EAD3","FF92DEDC","FFE2F0D9","FFFFE5CC"].includes(headerFill)?"FF000000":"FFFFFFFF";\n          cell.s={font:{name:"Arial",sz:11,bold:true,color:{rgb:headerTextColor}},fill:{patternType:"solid",fgColor:{rgb:headerFill}},alignment:{horizontal:"center",vertical:"center",wrapText:true,textRotation:0},border};
         }
         for(let r=1;r<=rows.length;r++) for(let col=0;col<headers.length;col++){
           const cell=ws[XLSX.utils.encode_cell({r,c:col})];
