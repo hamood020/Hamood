@@ -12,6 +12,9 @@ public sealed class UserProfile
     [Column("is_active")] public bool IsActive { get; set; }
     [Column("access_starts_at")] public DateTimeOffset? AccessStartsAt { get; set; }
     [Column("access_expires_at")] public DateTimeOffset? AccessExpiresAt { get; set; }
+    [Column("created_at")] public DateTimeOffset CreatedAt { get; set; }
+    [Column("updated_at")] public DateTimeOffset UpdatedAt { get; set; }
+    [Column("username")] public string? Username { get; set; }
 }
 
 [Table("projects")]
@@ -32,6 +35,7 @@ public sealed class Project
     [Column("original_end_date")] public DateOnly? OriginalEndDate { get; set; }
     [Column("local_content_plan")] public bool? LocalContentPlan { get; set; }
     [Column("notes")] public string? Notes { get; set; }
+    [Required, Column("location")] public string Location { get; set; } = "{}";
     [Column("created_at")] public DateTimeOffset CreatedAt { get; set; }
     [Column("updated_at")] public DateTimeOffset UpdatedAt { get; set; }
 }
