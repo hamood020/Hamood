@@ -47,6 +47,10 @@ public sealed class EmployeeFollowup {
  [Column("created_by")] public Guid? CreatedBy {get;set;}
  [Column("created_at")] public DateTimeOffset CreatedAt {get;set;}
  [Column("updated_at")] public DateTimeOffset UpdatedAt {get;set;}
+ [Column("resolved_at")] public DateTimeOffset? ResolvedAt {get;set;}
+ [Column("resolved_by")] public Guid? ResolvedBy {get;set;}
+ [Column("resolution_note")] public string? ResolutionNote {get;set;}
+ [Column("resolved_by_name")] public string? ResolvedByName {get;set;}
 }
 
 
