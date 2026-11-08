@@ -7,6 +7,11 @@ namespace Icv.Api.Data;
 public sealed class IcvIdentityDbContext(DbContextOptions<IcvIdentityDbContext> options)
     : IdentityDbContext<IdentityUser, IdentityRole, string>(options)
 {
+    public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
+    public DbSet<Project> Projects => Set<Project>();
+    public DbSet<QuarterlyReport> QuarterlyReports => Set<QuarterlyReport>();
+    public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
