@@ -462,7 +462,7 @@
         '<div class="lc-visual-watermark" aria-hidden="true">' + backgroundIllustration(d.key) + '</div>' +
         '<header class="lc-visual-card-head"><div class="lc-visual-title-icon">' + icons[d.key] + '</div><h3>' + d.title + '</h3>' + compliance + '</header>' +
         '<div class="lc-visual-card-main">' + local + '</div>' +
-        '<footer class="lc-visual-card-foot"><div><span>' + T("الحد الأدنى", "Minimum") + ' · ' + d.low + '%</span><b>' + money(lowValue) + ' ' + cur() + '</b></div><div><span>' + T("الحد الأعلى", "Maximum") + ' · ' + d.high + '%</span><b>' + money(highValue) + ' ' + cur() + '</b></div><div class="lc-visual-total"><span>' + T("إجمالي المبلغ", "Total amount") + '</span><b>' + money(d.spend) + ' ' + cur() + '</b></div>' +
+        '<footer class="lc-visual-card-foot"><div><span>' + T("الحد الأعلى", "Maximum") + ' · ' + d.high + '%</span><b>' + money(highValue) + ' ' + cur() + '</b></div><div><span>' + T("الحد الأدنى", "Minimum") + ' · ' + d.low + '%</span><b>' + money(lowValue) + ' ' + cur() + '</b></div><div class="lc-visual-total"><span>' + T("إجمالي المبلغ", "Total amount") + '</span><b>' + money(d.spend) + ' ' + cur() + '</b></div>' +
         '</footer></article>';
     }).join("") + '</div>';
     const counts =
