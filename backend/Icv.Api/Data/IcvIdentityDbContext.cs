@@ -16,7 +16,6 @@ public sealed class IcvIdentityDbContext(DbContextOptions<IcvIdentityDbContext> 
     public DbSet<LocalContentPlan> LocalContentPlans => Set<LocalContentPlan>();
     public DbSet<EmployeeFollowup> EmployeeFollowups => Set<EmployeeFollowup>();
     public DbSet<ProjectBaseline> ProjectBaselines => Set<ProjectBaseline>();
-    public DbSet<ProjectEndDateHistory> ProjectEndDateHistory => Set<ProjectEndDateHistory>();
     public DbSet<ProjectPlanDocument> ProjectPlanDocuments => Set<ProjectPlanDocument>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
