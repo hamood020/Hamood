@@ -43,7 +43,7 @@ public sealed class ProjectsController(IcvIdentityDbContext db, UserManager<Iden
         string? ProjectStatus, string? Consultant, Guid? ImplementingCompanyId, string? WorkSector,
         decimal? TotalProjectValue, DateOnly? StartDate, DateOnly? EndDate, bool? LocalContentPlan, string? Notes);
 
-    public sealed record ReportInput(string Quarter, string? AnnualPeriod, JsonElement ReportData, string? Notes);
+    public sealed record ReportInput(string Quarter, string? AnnualPeriod, JsonElement ReportData, string? Notes, string? Status = null, DateOnly? SubmittedAt = null);
 
     [HttpGet("projects")]
     public async Task<IActionResult> ListProjects([FromQuery] string? search, [FromQuery] string? status,
@@ -139,7 +139,7 @@ public sealed class ProjectsController(IcvIdentityDbContext db, UserManager<Iden
         if (duplicate) return Conflict(new { error = "يوجد تقرير مسجل للمشروع والفترة نفسها" });
         var (_, userId) = await CurrentProfile();
         var report = new QuarterlyReport { Id = Guid.NewGuid(), ProjectId = id, Quarter = input.Quarter.Trim(),
-            AnnualPeriod = input.AnnualPeriod, ReportData = input.ReportData.GetRawText(), Status = "received",
+            AnnualPeriod = input.AnnualPeriod, ReportData = input.ReportData.GetRawText(), Status = input.Status ?? "received", SubmittedAt = input.SubmittedAt,
             Notes = input.Notes, CreatedBy = userId, CreatedAt = DateTimeOffset.UtcNow };
         db.QuarterlyReports.Add(report);
         db.AuditEntries.Add(new AuditEntry { ActorUserId = userId, Operation = "INSERT", TableName = "quarterly_reports",
@@ -163,7 +163,7 @@ public sealed class ProjectsController(IcvIdentityDbContext db, UserManager<Iden
         if (duplicate) return Conflict(new { error = "يوجد تقرير آخر مسجل للفترة نفسها" });
         var (_, userId) = await CurrentProfile(); var old = JsonSerializer.Serialize(report);
         report.Quarter = input.Quarter.Trim(); report.AnnualPeriod = input.AnnualPeriod;
-        report.ReportData = input.ReportData.GetRawText(); report.Notes = input.Notes;
+        report.ReportData = input.ReportData.GetRawText(); report.Notes = input.Notes; report.Status = input.Status ?? report.Status; report.SubmittedAt = input.SubmittedAt ?? report.SubmittedAt;
         await db.SaveChangesAsync();
         db.AuditEntries.Add(new AuditEntry { ActorUserId = userId, Operation = "UPDATE", TableName = "quarterly_reports",
             RecordId = report.Id.ToString(), OldData = old, NewData = JsonSerializer.Serialize(report), ChangedAt = DateTimeOffset.UtcNow });
