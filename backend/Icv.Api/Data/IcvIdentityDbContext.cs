@@ -22,10 +22,69 @@ public sealed class IcvIdentityDbContext(DbContextOptions<IcvIdentityDbContext> 
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
     public DbSet<UserEntityAssignment> UserEntityAssignments => Set<UserEntityAssignment>();
     public DbSet<UserNotificationSettings> UserNotificationSettings => Set<UserNotificationSettings>();
+    public DbSet<ProjectEndDateHistory> ProjectEndDateHistories => Set<ProjectEndDateHistory>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+
+        // Match the SQL Server baseline precision exactly. This prevents EF from
+        // generating incompatible parameter precision or future migrations.
+        var project = builder.Entity<Project>();
+        project.Property(x => x.TotalProjectValue).HasPrecision(18, 2);
+        project.Property(x => x.ProgressPct).HasPrecision(7, 4);
+        project.Property(x => x.AchievedOmani).HasPrecision(12, 4);
+        project.Property(x => x.OmanizationPct).HasPrecision(9, 6);
+        project.Property(x => x.PlanOmaniSalary).HasPrecision(18, 2);
+        project.Property(x => x.ActualOmaniSalary).HasPrecision(18, 2);
+        project.Property(x => x.LocalContentOmani).HasPrecision(18, 2);
+        project.Property(x => x.PlanNonOmaniSalary).HasPrecision(18, 2);
+        project.Property(x => x.ActualNonOmaniSalary).HasPrecision(18, 2);
+        project.Property(x => x.LocalContentNonOmani).HasPrecision(18, 2);
+        project.Property(x => x.PlanMadeInOman).HasPrecision(18, 2);
+        project.Property(x => x.ActualMadeInOman).HasPrecision(18, 2);
+        project.Property(x => x.MandatoryMadeInOman).HasPrecision(18, 2);
+        project.Property(x => x.LocalContentMadeInOman).HasPrecision(18, 2);
+        project.Property(x => x.PlanLocalSupplier).HasPrecision(18, 2);
+        project.Property(x => x.ActualLocalSupplier).HasPrecision(18, 2);
+        project.Property(x => x.LocalContentLocalSupplier).HasPrecision(18, 2);
+        project.Property(x => x.PlanDirectImport).HasPrecision(18, 2);
+        project.Property(x => x.ActualDirectImport).HasPrecision(18, 2);
+        project.Property(x => x.LocalContentDirectImport).HasPrecision(18, 2);
+        project.Property(x => x.PlanSmeSupplier).HasPrecision(18, 2);
+        project.Property(x => x.ActualSmeSupplier).HasPrecision(18, 2);
+        project.Property(x => x.LocalContentSmeSupplier).HasPrecision(18, 2);
+        project.Property(x => x.PlanLocalService).HasPrecision(18, 2);
+        project.Property(x => x.ActualLocalService).HasPrecision(18, 2);
+        project.Property(x => x.LocalContentLocalService).HasPrecision(18, 2);
+        project.Property(x => x.PlanForeignService).HasPrecision(18, 2);
+        project.Property(x => x.ActualForeignService).HasPrecision(18, 2);
+        project.Property(x => x.LocalContentForeignService).HasPrecision(18, 2);
+        project.Property(x => x.PlanSmeService).HasPrecision(18, 2);
+        project.Property(x => x.ActualSmeService).HasPrecision(18, 2);
+        project.Property(x => x.LocalContentSmeService).HasPrecision(18, 2);
+        project.Property(x => x.TotalSpend).HasPrecision(18, 2);
+        project.Property(x => x.TotalLocalContent).HasPrecision(18, 2);
+        project.Property(x => x.LocalContentSpendPct).HasPrecision(9, 6);
+        project.Property(x => x.LocalContentProjectPct).HasPrecision(9, 6);
+        project.Property(x => x.SmePct).HasPrecision(9, 6);
+        project.Property(x => x.GoodsPct).HasPrecision(9, 6);
+        project.Property(x => x.ServicesPct).HasPrecision(9, 6);
+        project.Property(x => x.ActualSubcontractLocal).HasPrecision(18, 2);
+        project.Property(x => x.ActualSubcontractForeign).HasPrecision(18, 2);
+        project.Property(x => x.ActualSubcontractSme).HasPrecision(18, 2);
+
+        // Baseline uses datetimeoffset(0); keep EF's model aligned.
+        foreach (var entityType in builder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties()
+                         .Where(p => p.ClrType == typeof(DateTimeOffset) ||
+                                     p.ClrType == typeof(DateTimeOffset?)))
+            {
+                property.SetColumnType("datetimeoffset(0)");
+            }
+        }
 
         // Explicit names make the SQL Server identity schema predictable for IT deployment.
         builder.Entity<IdentityUser>().ToTable("AspNetUsers");
