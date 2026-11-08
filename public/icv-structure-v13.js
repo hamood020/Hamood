@@ -153,6 +153,33 @@
     const b = document.getElementById("page-projects");
     if (!b) return;
     const a = window.icvApplyFollowupScope(ps()),
+      projectReportCompletion = (project) => {
+        const parseDate = (value) => {
+          if (!value) return null;
+          const d = new Date(String(value).slice(0, 10) + "T00:00:00");
+          return Number.isNaN(d.getTime()) ? null : d;
+        };
+        const start = parseDate(project.start_date), end = parseDate(project.end_date);
+        if (!start || !end || end < start) return 0;
+        const targets = [];
+        for (let year = start.getFullYear(); year <= end.getFullYear(); year++) {
+          for (let q = 1; q <= 4; q++) {
+            const qs = new Date(year, (q - 1) * 3, 1), qe = new Date(year, q * 3, 0);
+            if (qs <= end && qe >= start) targets.push(year + "_Q" + q);
+          }
+        }
+        if (!targets.length) return 0;
+        const targetSet = new Set(targets);
+        const received = new Set((window.reports || [])
+          .filter((report) => String(report.project_id) === String(project.id))
+          .map((report) => {
+            const year = Number(report.annual_period);
+            const quarter = Number(String(report.quarter || "").replace(/\\D/g, ""));
+            return year + "_Q" + quarter;
+          })
+          .filter((key) => targetSet.has(key)));
+        return Math.max(0, Math.min(100, received.size / targets.length * 100));
+      },
       es = [
         ...new Map(a.map((p) => [p.government_entity_id, p.government_entities?.name]).filter((x) => x[0])),
       ],
@@ -284,7 +311,7 @@
               "</td><td>" +
               money(p.total_project_value) +
               "</td><td>" +
-              pct(p.progress_pct) +
+              pct(projectReportCompletion(p)) +
               "</td><td>" +
               date(p.end_date) +
               "</td><td>" +
