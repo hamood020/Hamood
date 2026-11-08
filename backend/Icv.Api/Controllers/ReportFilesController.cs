@@ -102,7 +102,7 @@ public sealed class ReportFilesController(
                 Operation = "ATTACH",
                 TableName = "quarterly_reports",
                 RecordId = report.Id.ToString(),
-                OldData = JsonSerializer.Serialize(new { attachment = "previous" }),
+                OldData = oldData,
                 NewData = JsonSerializer.Serialize(new { attachment_path = values["attachment_path"].GetString(), attachment_name = originalName, attachment_size = file.Length }),
                 ChangedAt = DateTimeOffset.UtcNow
             });
