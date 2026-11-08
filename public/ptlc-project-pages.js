@@ -185,7 +185,7 @@
     window.__icvCurrentProjectId = id;
     let p = (window.projects || []).find((x) => String(x.id) === String(id));
     if (!p) {
-      const prj = await dbx.from("projects").select("*").eq("id", id).maybeSingle();
+      const prj = window.ICV_INTERNAL_API_ENABLED && window.ICVApi ? await window.ICVApi.projects.get(id).then(data => ({data,error:null})).catch(error => ({data:null,error})) : await dbx.from("projects").select("*").eq("id", id).maybeSingle();
       if (prj.error || !prj.data) return;
       p = prj.data;
       window.projects = window.projects || [];
@@ -215,7 +215,7 @@
         .select("*")
         .eq("project_id", id)
         .order("created_at", { ascending: false }),
-      dbx.from("quarterly_reports").select("*").eq("project_id", id).order("annual_period").order("quarter"),
+      window.ICV_INTERNAL_API_ENABLED && window.ICVApi ? window.ICVApi.projects.reports(id).then(data => ({data,error:null})).catch(error => ({data:[],error})) : dbx.from("quarterly_reports").select("*").eq("project_id", id).order("annual_period").order("quarter"),
       dbx
         .from("project_end_date_history")
         .select("*")
@@ -227,6 +227,7 @@
         .eq("project_id", id)
         .order("created_at", { ascending: false }),
     ]);
+    if (rr.error) console.error("Internal reports API:", rr.error);
     const e = er.data || {},
       co = cr.data || {},
       followups = fr.data || [],
