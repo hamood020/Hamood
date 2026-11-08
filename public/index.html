@@ -2744,6 +2744,68 @@
       })();
     </script>
       <script src="icv-idle.js?v=20261020-01"></script>
-      <script src="icv-i18n.js?v=20261020-24"></script>
+      <script src="icv-i18n.js?v=20261108-25"></script>
+      <script>
+        (function () {
+          function arrangeSidebar() {
+            const side = document.querySelector(".side");
+            const nav = side && side.querySelector(".nav");
+            const brand = side && side.querySelector(".brand");
+            if (!side || !nav || !brand) return;
+
+            const appearance = nav.querySelector("[data-theme-settings]");
+            if (appearance && appearance.parentElement !== brand) {
+              brand.appendChild(appearance);
+            }
+
+            const languageSwitch = brand.querySelector(".icv-language-switch");
+            if (languageSwitch) languageSwitch.remove();
+
+            const order = [
+              "userProfileNav",
+              "dashboardNav",
+              "localContentNav",
+              "projectsNav",
+              "entitiesNav",
+              "companiesNav",
+              "auditNav",
+              "userAdminNav",
+              "settingsNav"
+            ];
+            const desired = order.map((id) => {
+              if (id === "dashboardNav") return nav.querySelector('[data-page="dashboard"]');
+              if (id === "projectsNav") return nav.querySelector('[data-page="projects"]');
+              if (id === "entitiesNav") return nav.querySelector('[data-page="entities"]');
+              if (id === "companiesNav") return nav.querySelector('[data-page="companies"]');
+              if (id === "settingsNav") return nav.querySelector('[data-page="settings"]');
+              return document.getElementById(id);
+            }).filter((el) => el && el.parentElement === nav);
+            const extras = Array.from(nav.children).filter((el) => !desired.includes(el));
+            const expected = desired.concat(extras);
+            const current = Array.from(nav.children);
+            if (current.length !== expected.length || current.some((el, i) => el !== expected[i])) {
+              expected.forEach((el) => nav.appendChild(el));
+            }
+          }
+
+          if (!document.getElementById("icv-sidebar-order-style")) {
+            const style = document.createElement("style");
+            style.id = "icv-sidebar-order-style";
+            style.textContent =
+              ".side .brand>.theme-nav-btn{display:flex;width:100%;justify-content:flex-start;align-items:center;margin:5px 0 8px;padding:8px 10px;border:1px solid rgba(255,255,255,.18);border-radius:10px;background:rgba(255,255,255,.07);color:var(--nav-ink);font:700 12px/1.4 inherit;cursor:pointer}" +
+              ".side .brand>.theme-nav-btn:hover,.side .brand>.theme-nav-btn.active{background:var(--nav-hover);color:var(--nav-ink)}" +
+              ".side .brand>.theme-nav-btn .ico{width:20px;text-align:center;font-size:14px}" +
+              ".side .brand .icv-language-switch{display:none!important}";
+            document.head.appendChild(style);
+          }
+
+          arrangeSidebar();
+          const observer = new MutationObserver(arrangeSidebar);
+          const side = document.querySelector(".side");
+          if (side) observer.observe(side, { childList: true, subtree: true });
+          window.addEventListener("load", arrangeSidebar, { once: true });
+          window.icvArrangeSidebar = arrangeSidebar;
+        })();
+      </script>
   </body>
 </html>
