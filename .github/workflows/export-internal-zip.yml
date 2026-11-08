@@ -1,0 +1,41 @@
+name: Build complete internal handover ZIP
+on:
+  push:
+    branches:
+      - internal-sqlserver-port
+    paths:
+      - 'public/**'
+      - 'deployment/internal-port/**'
+      - '.github/workflows/export-internal-zip.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: write
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: internal-sqlserver-port
+      - name: Package complete website and internal migration foundation
+        run: |
+          mkdir -p dist/ICV-Internal-SQLServer
+          cp -a public dist/ICV-Internal-SQLServer/
+          cp -a deployment/internal-port dist/ICV-Internal-SQLServer/
+          cp -a deployment/windows dist/ICV-Internal-SQLServer/ 2>/dev/null || true
+          cp -a docs dist/ICV-Internal-SQLServer/ 2>/dev/null || true
+          cp -a supabase dist/ICV-Internal-SQLServer/ 2>/dev/null || true
+          cat > dist/ICV-Internal-SQLServer/WEBSITE-FILES-INCLUDED.txt <<'EOF'
+          The complete public/ directory from this branch is included without filtering.
+          This includes all HTML, JavaScript, CSS, localization, mapping, vendor and page files.
+          The frontend still requires the API conversion described in the migration status.
+          EOF
+          cd dist
+          zip -qr ICV-Internal-SQLServer-FULL.zip ICV-Internal-SQLServer
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ICV-Internal-SQLServer-FULL
+          path: dist/ICV-Internal-SQLServer-FULL.zip
+          if-no-files-found: error
+          retention-days: 14
