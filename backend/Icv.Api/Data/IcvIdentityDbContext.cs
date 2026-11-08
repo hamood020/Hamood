@@ -76,7 +76,7 @@ public sealed class IcvIdentityDbContext(DbContextOptions<IcvIdentityDbContext> 
         project.Property(x => x.ActualSubcontractSme).HasPrecision(18, 2);
 
         // Baseline uses datetimeoffset(0); keep EF's model aligned.
-        foreach (var entityType in builder.Model.GetEntityTypes())
+        foreach (var entityType in builder.Model.GetEntityTypes().Where(e => !(e.GetTableName()?.StartsWith("AspNet", StringComparison.Ordinal) ?? false)))
         {
             foreach (var property in entityType.GetProperties()
                          .Where(p => p.ClrType == typeof(DateTimeOffset) ||
