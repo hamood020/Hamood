@@ -258,7 +258,5 @@ ALTER TABLE dbo.audit_log ADD CONSTRAINT FK_audit_profile
 ALTER TABLE dbo.user_notification_settings ADD CONSTRAINT CK_notify_days
  CHECK(days_before BETWEEN 0 AND 365);
 ALTER TABLE dbo.project_plan_documents ADD CONSTRAINT UQ_plandocs_storage_path UNIQUE(storage_path);
-ALTER TABLE dbo.notifications ADD CONSTRAINT CK_notifications_body_kind
- CHECK(kind IN(N'report_due',N'delay',N'project_expiry',N'approval',N'plan_update'));
 
 COMMIT TRANSACTION;
