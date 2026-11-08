@@ -107,7 +107,7 @@ public sealed class ProjectsController(IcvIdentityDbContext db, UserManager<Iden
         if (p.EndDate != input.EndDate)
         {
             if (p.OriginalEndDate is null) p.OriginalEndDate = p.EndDate;
-            db.Database.ExecuteSqlInterpolated($"INSERT INTO dbo.project_end_date_history(id,project_id,old_end_date,new_end_date,changed_by,changed_at,reason) VALUES ({Guid.NewGuid()},{p.Id},{p.EndDate},{input.EndDate},{userId},{now},{"تعديل تاريخ نهاية المشروع"})");
+            db.ProjectEndDateHistories.Add(new ProjectEndDateHistory { Id = Guid.NewGuid(), ProjectId = p.Id, OldEndDate = p.EndDate, NewEndDate = input.EndDate.Value, ChangedBy = userId, ChangedAt = now, Reason = "تعديل تاريخ نهاية المشروع" });
         }
         p.SerialNo = input.SerialNo; p.GovernmentEntityId = input.GovernmentEntityId;
         p.ProjectName = input.ProjectName.Trim(); p.TenderType = input.TenderType; p.ProjectStatus = input.ProjectStatus;
