@@ -778,6 +778,7 @@
     on("lcSector", "sector");
     on("lcCompany", "company");
     on("lcStatus", "status");
+    on("lcProject", "project");
     root.querySelectorAll("[data-lc-dist]").forEach((b) => (b.onclick = () => ((state.dist = b.dataset.lcDist), render())));
     root.querySelectorAll("[data-lc-sort]").forEach(
       (th) =>
