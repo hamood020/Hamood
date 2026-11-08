@@ -969,7 +969,16 @@
             u.user_id +
             "','" +
             escA(u.display_name || u.username) +
-            "')\">🏛</button></div></td></tr>"
+            "')\">🏛</button><button class="icon-btn" title="تغيير الرقم السري" onclick="openAdminPasswordReset(' +
+            "'" +
+            u.user_id +
+            "','" +
+            escA(u.display_name || u.username) +
+            "')\">🔑</button><button class="icon-btn" title="حذف المستخدم" style="color:#b91c1c" onclick="deletePlatformUser('" +
+            u.user_id +
+            "','" +
+            escA(u.display_name || u.username) +
+            "')\">🗑</button></div></td></tr>"
           );
         })
         .join("") +
@@ -1105,6 +1114,57 @@
     await window.loadUsersAdmin();
     setTimeout(() => document.getElementById("accessUserModal")?.remove(), 500);
   };
+  window.openAdminPasswordReset = (uid, name) => {
+    if (profile?.role !== "admin") return;
+    document.getElementById("adminPasswordModal")?.remove();
+    const d = document.createElement("div");
+    d.id = "adminPasswordModal";
+    d.className = "modal";
+    d.innerHTML =
+      '<div class="modal-card"><div class="modal-head"><div><h2>تغيير الرقم السري</h2><div class="muted">المستخدم: ' +
+      escA(name) +
+      '</div></div><button class="close" onclick="this.closest(\'.modal\').remove()">×</button></div><div class="field"><label>كلمة المرور الجديدة</label><input id="adminNewPassword" type="password" minlength="8" autocomplete="new-password"></div><div class="field"><label>تأكيد كلمة المرور</label><input id="adminNewPasswordConfirm" type="password" minlength="8" autocomplete="new-password"></div><div id="adminPasswordMsg"></div><div class="modal-foot"><button class="btn primary" onclick="saveAdminPassword(\'' +
+      uid +
+      '\')">حفظ الرقم السري</button><button class="btn" onclick="this.closest(\'.modal\').remove()">إلغاء</button></div></div>';
+    document.body.appendChild(d);
+  };
+  window.saveAdminPassword = async (uid) => {
+    if (profile?.role !== "admin") return;
+    const password = document.getElementById("adminNewPassword")?.value || "";
+    const confirm = document.getElementById("adminNewPasswordConfirm")?.value || "";
+    const msg = document.getElementById("adminPasswordMsg");
+    if (password.length < 8) {
+      msg.innerHTML = '<div class="bad">كلمة المرور يجب ألا تقل عن 8 أحرف.</div>';
+      return;
+    }
+    if (password !== confirm) {
+      msg.innerHTML = '<div class="bad">تأكيد كلمة المرور غير مطابق.</div>';
+      return;
+    }
+    msg.textContent = "جارٍ تغيير الرقم السري...";
+    const r = await client.functions.invoke("manage-platform-user", { body: { action: "reset_password", user_id: uid, password } });
+    if (r.error || r.data?.error) {
+      let message = r.data?.error;
+      if (!message && r.error?.context?.json) message = (await r.error.context.json().catch(() => null))?.error;
+      msg.innerHTML = errorBox(message || r.error);
+      return;
+    }
+    document.getElementById("adminPasswordModal")?.remove();
+    toastA("تم تغيير الرقم السري للمستخدم بنجاح");
+  };
+  window.deletePlatformUser = async (uid, name) => {
+    if (profile?.role !== "admin") return;
+    if (!window.confirm("هل أنت متأكد من حذف المستخدم «" + name + "»؟\nسيتم حذف حساب الدخول وملف المستخدم، ولا يمكن التراجع عن هذه العملية.")) return;
+    const r = await client.functions.invoke("manage-platform-user", { body: { action: "delete", user_id: uid } });
+    if (r.error || r.data?.error) {
+      let message = r.data?.error;
+      if (!message && r.error?.context?.json) message = (await r.error.context.json().catch(() => null))?.error;
+      return errorA(message || r.error);
+    }
+    toastA("تم حذف المستخدم بنجاح");
+    await window.loadUsersAdmin();
+  };
+
   window.openEntityAssignment = async (uid, name) => {
     const [e, a] = await Promise.all([
       client.from("government_entities").select("id,name,code").order("name"),
