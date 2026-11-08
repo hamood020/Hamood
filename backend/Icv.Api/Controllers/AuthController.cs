@@ -83,7 +83,16 @@ public sealed class AuthController(
             return BadRequest(new { error = "يجب ألا تقل كلمة المرور الجديدة عن 12 حرفًا" });
 
         var user = await users.GetUserAsync(User);
-        if (user is null) return Unauthorized();
+        if (user is null || !Guid.TryParse(user.Id, out var userId)) return Unauthorized();
+        var profile = await db.UserProfiles.AsNoTracking().SingleOrDefaultAsync(x => x.Id == userId);
+        var now = DateTimeOffset.UtcNow;
+        if (profile is null || !profile.IsActive ||
+            (profile.AccessStartsAt.HasValue && profile.AccessStartsAt > now) ||
+            (profile.AccessExpiresAt.HasValue && profile.AccessExpiresAt <= now))
+        {
+            await signIn.SignOutAsync();
+            return Unauthorized(new { error = "الحساب غير نشط أو انتهت صلاحيته" });
+        }
 
         var result = await users.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
         if (!result.Succeeded)
