@@ -30,6 +30,7 @@ public sealed class Project
     [Column("start_date")] public DateOnly? StartDate { get; set; }
     [Column("end_date")] public DateOnly? EndDate { get; set; }
     [Column("original_end_date")] public DateOnly? OriginalEndDate { get; set; }
+    [Column("local_content_plan")] public bool? LocalContentPlan { get; set; }
     [Column("notes")] public string? Notes { get; set; }
     [Column("created_at")] public DateTimeOffset CreatedAt { get; set; }
     [Column("updated_at")] public DateTimeOffset UpdatedAt { get; set; }
