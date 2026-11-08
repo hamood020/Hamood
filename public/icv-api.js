@@ -11,7 +11,7 @@
     const r = await fetch(base + "/security/csrf", { credentials: "same-origin", headers: { Accept: "application/json" } });
     if (!r.ok) throw new Error("تعذر تهيئة حماية الطلبات");
     const data = await r.json();
-    csrf = data.requestToken;
+    csrf = data.token;
     return csrf;
   }
   async function request(path, options = {}) {
