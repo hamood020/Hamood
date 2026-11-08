@@ -148,6 +148,29 @@ public sealed class ProjectsController(IcvIdentityDbContext db, UserManager<Iden
         return Created($"/api/reports/{report.Id}", report);
     }
 
+
+    [HttpPut("projects/{projectId:guid}/reports/{reportId:guid}")]
+    public async Task<IActionResult> UpdateReport(Guid projectId, Guid reportId, ReportInput input)
+    {
+        var denied = await RequireActive(); if (denied is not null) return denied;
+        if (!await CanWrite()) return Forbid();
+        var report = await db.QuarterlyReports.SingleOrDefaultAsync(x => x.Id == reportId && x.ProjectId == projectId);
+        if (report is null) return NotFound();
+        if (report.Status == "approved") return Conflict(new { error = "التقرير المعتمد مقفل ولا يمكن تعديله" });
+        if (string.IsNullOrWhiteSpace(input.Quarter) || input.ReportData.ValueKind != JsonValueKind.Object)
+            return BadRequest(new { error = "الفترة وبيانات التقرير بصيغة JSON مطلوبة" });
+        var duplicate = await db.QuarterlyReports.AnyAsync(x => x.Id != reportId && x.ProjectId == projectId && x.Quarter == input.Quarter && x.AnnualPeriod == input.AnnualPeriod);
+        if (duplicate) return Conflict(new { error = "يوجد تقرير آخر مسجل للفترة نفسها" });
+        var (_, userId) = await CurrentProfile(); var old = JsonSerializer.Serialize(report);
+        report.Quarter = input.Quarter.Trim(); report.AnnualPeriod = input.AnnualPeriod;
+        report.ReportData = input.ReportData.GetRawText(); report.Notes = input.Notes;
+        await db.SaveChangesAsync();
+        db.AuditEntries.Add(new AuditEntry { ActorUserId = userId, Operation = "UPDATE", TableName = "quarterly_reports",
+            RecordId = report.Id.ToString(), OldData = old, NewData = JsonSerializer.Serialize(report), ChangedAt = DateTimeOffset.UtcNow });
+        await db.SaveChangesAsync();
+        return Ok(report);
+    }
+
     [HttpPost("reports/{id:guid}/submit")]
     public async Task<IActionResult> SubmitReport(Guid id)
     {
