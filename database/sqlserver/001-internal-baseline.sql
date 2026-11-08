@@ -170,4 +170,95 @@ CREATE TABLE dbo.audit_log (
  CONSTRAINT CK_audit_new_json CHECK(new_data IS NULL OR ISJSON(new_data)=1)
 );
 
+
+/* ASP.NET Core Identity tables. IDs are GUID-formatted strings to match the
+   current IdentityUser<string> implementation. Migration must preserve the
+   GUID text value for each corresponding user_profiles.id. */
+CREATE TABLE dbo.AspNetRoles (
+ Id nvarchar(450) NOT NULL CONSTRAINT PK_AspNetRoles PRIMARY KEY,
+ Name nvarchar(256) NULL, NormalizedName nvarchar(256) NULL,
+ CONCURRENCYSTAMP nvarchar(max) NULL
+);
+CREATE UNIQUE INDEX RoleNameIndex ON dbo.AspNetRoles(NormalizedName) WHERE NormalizedName IS NOT NULL;
+CREATE TABLE dbo.AspNetUsers (
+ Id nvarchar(450) NOT NULL CONSTRAINT PK_AspNetUsers PRIMARY KEY,
+ UserName nvarchar(256) NULL, NormalizedUserName nvarchar(256) NULL,
+ Email nvarchar(256) NULL, NormalizedEmail nvarchar(256) NULL,
+ EmailConfirmed bit NOT NULL, PasswordHash nvarchar(max) NULL,
+ SecurityStamp nvarchar(max) NULL, ConcurrencyStamp nvarchar(max) NULL,
+ PhoneNumber nvarchar(max) NULL, PhoneNumberConfirmed bit NOT NULL,
+ TwoFactorEnabled bit NOT NULL, LockoutEnd datetimeoffset(7) NULL,
+ LockoutEnabled bit NOT NULL, AccessFailedCount int NOT NULL
+);
+CREATE INDEX EmailIndex ON dbo.AspNetUsers(NormalizedEmail);
+CREATE UNIQUE INDEX UserNameIndex ON dbo.AspNetUsers(NormalizedUserName) WHERE NormalizedUserName IS NOT NULL;
+CREATE TABLE dbo.AspNetUserClaims (
+ Id int IDENTITY(1,1) NOT NULL CONSTRAINT PK_AspNetUserClaims PRIMARY KEY,
+ UserId nvarchar(450) NOT NULL, ClaimType nvarchar(max) NULL, ClaimValue nvarchar(max) NULL,
+ CONSTRAINT FK_AspNetUserClaims_AspNetUsers FOREIGN KEY(UserId) REFERENCES dbo.AspNetUsers(Id) ON DELETE CASCADE
+);
+CREATE INDEX IX_AspNetUserClaims_UserId ON dbo.AspNetUserClaims(UserId);
+CREATE TABLE dbo.AspNetRoleClaims (
+ Id int IDENTITY(1,1) NOT NULL CONSTRAINT PK_AspNetRoleClaims PRIMARY KEY,
+ RoleId nvarchar(450) NOT NULL, ClaimType nvarchar(max) NULL, ClaimValue nvarchar(max) NULL,
+ CONSTRAINT FK_AspNetRoleClaims_AspNetRoles FOREIGN KEY(RoleId) REFERENCES dbo.AspNetRoles(Id) ON DELETE CASCADE
+);
+CREATE INDEX IX_AspNetRoleClaims_RoleId ON dbo.AspNetRoleClaims(RoleId);
+CREATE TABLE dbo.AspNetUserLogins (
+ LoginProvider nvarchar(450) NOT NULL, ProviderKey nvarchar(450) NOT NULL,
+ ProviderDisplayName nvarchar(max) NULL, UserId nvarchar(450) NOT NULL,
+ CONSTRAINT PK_AspNetUserLogins PRIMARY KEY(LoginProvider,ProviderKey),
+ CONSTRAINT FK_AspNetUserLogins_AspNetUsers FOREIGN KEY(UserId) REFERENCES dbo.AspNetUsers(Id) ON DELETE CASCADE
+);
+CREATE INDEX IX_AspNetUserLogins_UserId ON dbo.AspNetUserLogins(UserId);
+CREATE TABLE dbo.AspNetUserRoles (
+ UserId nvarchar(450) NOT NULL, RoleId nvarchar(450) NOT NULL,
+ CONSTRAINT PK_AspNetUserRoles PRIMARY KEY(UserId,RoleId),
+ CONSTRAINT FK_AspNetUserRoles_AspNetUsers FOREIGN KEY(UserId) REFERENCES dbo.AspNetUsers(Id) ON DELETE CASCADE,
+ CONSTRAINT FK_AspNetUserRoles_AspNetRoles FOREIGN KEY(RoleId) REFERENCES dbo.AspNetRoles(Id) ON DELETE CASCADE
+);
+CREATE INDEX IX_AspNetUserRoles_RoleId ON dbo.AspNetUserRoles(RoleId);
+CREATE TABLE dbo.AspNetUserTokens (
+ UserId nvarchar(450) NOT NULL, LoginProvider nvarchar(450) NOT NULL,
+ Name nvarchar(450) NOT NULL, Value nvarchar(max) NULL,
+ CONSTRAINT PK_AspNetUserTokens PRIMARY KEY(UserId,LoginProvider,Name),
+ CONSTRAINT FK_AspNetUserTokens_AspNetUsers FOREIGN KEY(UserId) REFERENCES dbo.AspNetUsers(Id) ON DELETE CASCADE
+);
+
+/* Referential integrity for profile-backed user references. Auth identities
+   are represented by the same GUID in user_profiles; passwords are migrated
+   separately through a supported reset/provisioning flow. */
+ALTER TABLE dbo.user_entity_assignments ADD CONSTRAINT FK_assignments_profile
+ FOREIGN KEY(user_id) REFERENCES dbo.user_profiles(id) ON DELETE CASCADE;
+ALTER TABLE dbo.user_notification_settings ADD CONSTRAINT FK_notify_profile
+ FOREIGN KEY(user_id) REFERENCES dbo.user_profiles(id) ON DELETE CASCADE;
+ALTER TABLE dbo.notifications ADD CONSTRAINT FK_notifications_profile
+ FOREIGN KEY(user_id) REFERENCES dbo.user_profiles(id) ON DELETE CASCADE;
+ALTER TABLE dbo.local_content_plans ADD CONSTRAINT FK_plans_creator_profile
+ FOREIGN KEY(created_by) REFERENCES dbo.user_profiles(id);
+ALTER TABLE dbo.project_baselines ADD CONSTRAINT FK_baselines_creator_profile
+ FOREIGN KEY(created_by) REFERENCES dbo.user_profiles(id);
+ALTER TABLE dbo.quarterly_reports ADD CONSTRAINT FK_reports_creator_profile
+ FOREIGN KEY(created_by) REFERENCES dbo.user_profiles(id);
+ALTER TABLE dbo.project_plan_documents ADD CONSTRAINT FK_plandocs_creator_profile
+ FOREIGN KEY(created_by) REFERENCES dbo.user_profiles(id);
+ALTER TABLE dbo.employee_followups ADD CONSTRAINT FK_followups_assigned_profile
+ FOREIGN KEY(assigned_to) REFERENCES dbo.user_profiles(id);
+ALTER TABLE dbo.employee_followups ADD CONSTRAINT FK_followups_creator_profile
+ FOREIGN KEY(created_by) REFERENCES dbo.user_profiles(id);
+ALTER TABLE dbo.employee_followups ADD CONSTRAINT FK_followups_resolved_profile
+ FOREIGN KEY(resolved_by) REFERENCES dbo.user_profiles(id);
+ALTER TABLE dbo.project_end_date_history ADD CONSTRAINT FK_endhistory_profile
+ FOREIGN KEY(changed_by) REFERENCES dbo.user_profiles(id);
+ALTER TABLE dbo.platform_settings ADD CONSTRAINT FK_settings_profile
+ FOREIGN KEY(updated_by) REFERENCES dbo.user_profiles(id);
+ALTER TABLE dbo.audit_log ADD CONSTRAINT FK_audit_profile
+ FOREIGN KEY(actor_user_id) REFERENCES dbo.user_profiles(id);
+
+ALTER TABLE dbo.user_notification_settings ADD CONSTRAINT CK_notify_days
+ CHECK(days_before BETWEEN 0 AND 365);
+ALTER TABLE dbo.project_plan_documents ADD CONSTRAINT UQ_plandocs_storage_path UNIQUE(storage_path);
+ALTER TABLE dbo.notifications ADD CONSTRAINT CK_notifications_body_kind
+ CHECK(kind IN(N'report_due',N'delay',N'project_expiry',N'approval',N'plan_update'));
+
 COMMIT TRANSACTION;
