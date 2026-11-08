@@ -35,6 +35,23 @@
     return payload;
   }
   const id = value => encodeURIComponent(String(value));
+  const projectRow = x => x && ({
+    ...x, serial_no:x.serialNo, government_entity_id:x.governmentEntityId,
+    project_name:x.projectName, tender_type:x.tenderType, project_status:x.projectStatus,
+    consultant:x.consultant, implementing_company_id:x.implementingCompanyId,
+    work_sector:x.workSector, total_project_value:x.totalProjectValue,
+    start_date:x.startDate, end_date:x.endDate, original_end_date:x.originalEndDate,
+    local_content_plan:x.localContentPlan, created_at:x.createdAt, updated_at:x.updatedAt,
+    total_spend:x.totalSpend, total_local_content:x.totalLocalContent, sme_pct:x.smePct,
+    goods_pct:x.goodsPct, services_pct:x.servicesPct, omanization_pct:x.omanizationPct,
+    omanization_status:x.omanizationStatus, made_in_oman_status:x.madeInOmanStatus,
+    services_status:x.servicesStatus, sme_10_status:x.sme10Status, compliance_status:x.complianceStatus
+  });
+  const reportRow = x => x && ({
+    ...x, project_id:x.projectId, annual_period:x.annualPeriod, source_file:x.sourceFile,
+    report_data:typeof x.reportData === "string" ? JSON.parse(x.reportData) : x.reportData,
+    submitted_at:x.submittedAt, reviewed_at:x.reviewedAt, created_at:x.createdAt, created_by:x.createdBy
+  });
   window.ICVApi = Object.freeze({
     auth: {
       login: (username, password) => request("/auth/login", { method: "POST", body: { username, password } }),
@@ -43,12 +60,12 @@
       changePassword: (currentPassword, newPassword) => request("/auth/change-password", { method: "POST", body: { currentPassword, newPassword } })
     },
     projects: {
-      list: params => request("/projects" + (params ? "?" + new URLSearchParams(params) : "")),
-      get: projectId => request("/projects/" + id(projectId)),
-      create: data => request("/projects", { method: "POST", body: data }),
-      update: (projectId, data) => request("/projects/" + id(projectId), { method: "PUT", body: data }),
-      reports: projectId => request("/projects/" + id(projectId) + "/reports"),
-      createReport: (projectId, data) => request("/projects/" + id(projectId) + "/reports", { method: "POST", body: data })
+      list: async params => { const x=await request("/projects" + (params ? "?" + new URLSearchParams(params) : "")); return {...x,items:(x.items||[]).map(projectRow)}; },
+      get: async projectId => projectRow(await request("/projects/" + id(projectId))),
+      create: async data => projectRow(await request("/projects", { method: "POST", body: data })),
+      update: async (projectId, data) => projectRow(await request("/projects/" + id(projectId), { method: "PUT", body: data })),
+      reports: async projectId => (await request("/projects/" + id(projectId) + "/reports")).map(reportRow),
+      createReport: async (projectId, data) => reportRow(await request("/projects/" + id(projectId) + "/reports", { method: "POST", body: data }))
     },
     reports: {
       submit: reportId => request("/reports/" + id(reportId) + "/submit", { method: "POST" }),
