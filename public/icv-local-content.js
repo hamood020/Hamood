@@ -591,21 +591,6 @@
       ) +
       "</div>";
 
-    // 5. Trend
-    const tr = trend(list, cfg);
-    html += section(
-      5,
-      T("الاتجاه عبر الأرباع", "Quarterly trend"),
-      T("المحتوى المحلي المتراكم ونسبته من الصرف.", "Cumulative local content and its share of spend."),
-      tr.length
-        ? '<div class="lc-svg">' + trendChart(tr) + '</div><div class="lc-legend"><span><i style="background:#c9d6df"></i>' + T("المحتوى المحلي المتراكم", "Cumulative local content") + " (" + cur() + ')</span><span><i style="background:#d9a441"></i>' + T("المحتوى المحلي / الصرف", "Local content / spend") + " (%)</span></div>"
-        : '<div class="lc-empty">' + T("لا توجد تقارير معتمدة ضمن الفلاتر.", "No approved reports match the filters.") + "</div>",
-      T(
-        "الأعمدة: المحتوى المحلي المتراكم لكل المشاريع المعروضة في نهاية كل ربع (المحور الأيسر). الخط: نسبة المحتوى المحلي من الصرف المتراكم (المحور الأيمن). يُحسب من التقارير المعتمدة بنفس قواعد قاعدة البيانات، وآخر نقطة تساوي إجمالي الصفحة. الزمن من اليسار إلى اليمين.",
-        "Bars: cumulative local content of the listed projects at the end of each quarter (left axis). Line: local content as a share of cumulative spend (right axis). Calculated from approved reports with the database rules; the last point equals the page total. Time runs left to right.",
-      ),
-    );
-
     // 6. Project ranking: only projects with approved reports and positive spend.
     const ranked = list
       .filter((p) => (p.compliance_status || NA) !== NA && num(p.total_spend) > 0)
@@ -624,33 +609,14 @@
     const topProjects = ranked.slice().sort((a, b) => b.ratio - a.ratio).slice(0, 5);
     const bottomProjects = ranked.slice().sort((a, b) => a.ratio - b.ratio).slice(0, 5);
     html += section(
-      6,
+      5,
       T("أفضل المشاريع والأقل أداءً", "Best-performing and lowest-performing projects"),
       T("ترتيب المشاريع حسب نسبة المحتوى المحلي من الصرف الفعلي.", "Projects ranked by local content as a share of actual expenditure."),
       '<div class="lc-rank-grid"><div class="lc-rank-panel"><h3>' + T("أفضل 5 مشاريع", "Top 5 projects") + '</h3>' + rankRows(topProjects, "positive") + '</div><div class="lc-rank-panel"><h3>' + T("أقل 5 مشاريع أداءً", "5 lowest-performing projects") + '</h3>' + rankRows(bottomProjects, "negative") + '</div></div>',
       T("تُستبعد المشاريع التي لا تملك تقارير معتمدة أو لا يوجد لها صرف فعلي. الترتيب وصفي للمقارنة ولا يُعد بديلاً عن مؤشرات الالتزام الأربعة.", "Projects without approved reports or actual expenditure are excluded. This ranking is comparative and does not replace the four compliance criteria."),
     );
 
-    // 7. Distribution  +  8. Near threshold
-    const keyOf = { entity: entityName, company: companyName, sector: sectorName }[state.dist];
-    const map = {};
-    list.forEach((p) => {
-      const k = keyOf(p);
-      const r = (map[k] = map[k] || { n: k, count: 0, value: 0, lc: 0, spend: 0, ok: 0, bad: 0 });
-      r.count++;
-      r.value += num(p.total_project_value);
-      r.lc += num(p.total_local_content);
-      r.spend += num(p.total_spend);
-      if (p.compliance_status === OK) r.ok++;
-      if (p.compliance_status === BAD) r.bad++;
-    });
-    const distRows = Object.values(map)
-      .sort((a, b) => b.lc - a.lc)
-      .map((r) => "<tr><td>" + esc(r.n) + '</td><td class="lc-n">' + r.count + '</td><td class="lc-n">' + money(r.value) + '</td><td class="lc-n">' + money(r.lc) + '</td><td class="lc-n">' + pct(r.spend ? (r.lc / r.spend) * 100 : null) + '</td><td class="lc-n ok">' + r.ok + '</td><td class="lc-n bad">' + r.bad + "</td></tr>")
-      .join("");
-    const tabs = [["entity", T("حسب الجهة", "By entity")], ["company", T("حسب الشركة", "By company")], ["sector", T("حسب القطاع", "By sector")]]
-      .map((t) => '<button type="button" class="btn' + (state.dist === t[0] ? " primary" : "") + '" data-lc-dist="' + t[0] + '">' + t[1] + "</button>")
-      .join("");
+    // Projects close to a threshold
     const near = [];
     list.forEach((p) =>
       CRITERIA.forEach((c) => {
@@ -671,18 +637,8 @@
         "</div>"
       : '<div class="lc-empty">' + T("لا توجد مشاريع قريبة من الحد حالياً.", "No projects are close to a threshold right now.") + "</div>";
     html +=
-      section(
-        7,
-        T("التوزيع", "Distribution"),
-        T("المحتوى المحلي والالتزام مجمّعاً.", "Local content and compliance, grouped."),
-        '<div class="lc-tabs">' + tabs + '</div><div class="table-wrap"><table class="lc-dist-table"><thead><tr><th>' + T("الاسم", "Name") + "</th><th>" + T("المشاريع", "Projects") + "</th><th>" + T("القيمة", "Value") + " (" + cur() + ")</th><th>" + T("المحتوى المحلي", "Local content") + " (" + cur() + ")</th><th>" + T("المحتوى المحلي / الصرف", "LC / spend") + "</th><th>" + T("مستوفي", "Compliant") + "</th><th>" + T("غير مستوفي", "Non-compliant") + "</th></tr></thead><tbody>" + distRows + "</tbody></table></div>",
-        T(
-          "يجمع المشاريع المعروضة حسب الجهة أو الشركة المنفذة أو القطاع، مرتبة من الأعلى محتوى محلياً. المشاريع بلا تقارير معتمدة تدخل في العدد والقيمة فقط.",
-          "Groups the listed projects by entity, implementing company or sector, highest local content first. Projects without approved reports count only in projects and value.",
-        ),
-      ) +
-      section(
-        8,
+            section(
+        6,
         T("مشاريع قريبة من الحد", "Projects close to a threshold"),
         T("أسرع مكان للتحسين.", "The quickest wins."),
         nearHtml,
@@ -748,7 +704,7 @@
         ? '<div class="lc-more"><button type="button" class="btn" data-lc-more>' + (state.showAll ? T("إظهار أول 10 فقط", "Show first 10 only") : T("إظهار الكل", "Show all") + " (" + rows.length + ")") + "</button></div>"
         : "";
     html += section(
-      9,
+      7,
       T("المشاريع", "Projects"),
       T("يعرض", "Showing") + " " + shown.length + " " + T("من", "of") + " " + rows.length + " · " + T("اضغط عنوان أي عمود للترتيب.", "Click a column title to sort."),
       '<div class="table-wrap"><table class="lc-table"><thead><tr>' + head + "</tr></thead><tbody>" + body + "</tbody></table></div>" + more,
