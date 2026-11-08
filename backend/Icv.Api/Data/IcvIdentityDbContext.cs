@@ -11,6 +11,10 @@ public sealed class IcvIdentityDbContext(DbContextOptions<IcvIdentityDbContext> 
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<QuarterlyReport> QuarterlyReports => Set<QuarterlyReport>();
     public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
+    public DbSet<GovernmentEntity> GovernmentEntities => Set<GovernmentEntity>();
+    public DbSet<Company> Companies => Set<Company>();
+    public DbSet<LocalContentPlan> LocalContentPlans => Set<LocalContentPlan>();
+    public DbSet<EmployeeFollowup> EmployeeFollowups => Set<EmployeeFollowup>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
