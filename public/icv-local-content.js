@@ -402,7 +402,9 @@
         .map((x) => '<option value="' + x[0] + '"' + (x[0] === state.status ? " selected" : "") + ">" + x[1] + "</option>")
         .join("") +
       "</select></div>" +
-      '<div class="field"><label for="lcProject">' + T("اسم المشروع", "Project name") + '</label><input id="lcProject" type="search" value="' + esc(state.project) + '" placeholder="' + T("ابحث باسم المشروع", "Search project name") + '"></div></div></div>';
+      '<div class="field"><label for="lcProject">' + T("اسم المشروع", "Project name") + '</label><input id="lcProject" type="search" list="lcProjectNames" value="' + esc(state.project) + '" placeholder="' + T("اكتب اسم المشروع واختر من النتائج", "Type a project name and choose a result") + '"><datalist id="lcProjectNames">' +
+      [...new Set(all.map(p => String(p.project_name || "").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ar")).map(name => '<option value="' + esc(name) + '"></option>').join("") +
+      '</datalist></div></div></div>';
 
     if (!list.length) {
       root.innerHTML = html + '<div class="panel lc-empty">' + T("لا توجد مشاريع ضمن الفلاتر المختارة.", "No projects match the selected filters.") + "</div>";
