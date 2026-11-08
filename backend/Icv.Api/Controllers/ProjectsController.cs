@@ -104,7 +104,7 @@ public sealed class ProjectsController(IcvIdentityDbContext db, UserManager<Iden
         var old = JsonSerializer.Serialize(p);
         var (profile, userId) = await CurrentProfile();
         var now = DateTimeOffset.UtcNow;
-        if (p.EndDate != input.EndDate)
+        if (p.EndDate != input.EndDate && input.EndDate.HasValue)
         {
             if (p.OriginalEndDate is null) p.OriginalEndDate = p.EndDate;
             db.ProjectEndDateHistories.Add(new ProjectEndDateHistory { Id = Guid.NewGuid(), ProjectId = p.Id, OldEndDate = p.EndDate, NewEndDate = input.EndDate.Value, ChangedBy = userId, ChangedAt = now, Reason = "تعديل تاريخ نهاية المشروع" });
