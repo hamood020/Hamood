@@ -162,12 +162,14 @@ public sealed class ProjectsController(IcvIdentityDbContext db, UserManager<Iden
         var duplicate = await db.QuarterlyReports.AnyAsync(x => x.Id != reportId && x.ProjectId == projectId && x.Quarter == input.Quarter && x.AnnualPeriod == input.AnnualPeriod);
         if (duplicate) return Conflict(new { error = "يوجد تقرير آخر مسجل للفترة نفسها" });
         var (_, userId) = await CurrentProfile(); var old = JsonSerializer.Serialize(report);
+        await using var transaction = await db.Database.BeginTransactionAsync();
         report.Quarter = input.Quarter.Trim(); report.AnnualPeriod = input.AnnualPeriod;
         report.ReportData = input.ReportData.GetRawText(); report.Notes = input.Notes; report.Status = input.Status ?? report.Status; report.SubmittedAt = input.SubmittedAt ?? report.SubmittedAt;
         await db.SaveChangesAsync();
         db.AuditEntries.Add(new AuditEntry { ActorUserId = userId, Operation = "UPDATE", TableName = "quarterly_reports",
             RecordId = report.Id.ToString(), OldData = old, NewData = JsonSerializer.Serialize(report), ChangedAt = DateTimeOffset.UtcNow });
         await db.SaveChangesAsync();
+        await transaction.CommitAsync();
         return Ok(report);
     }
 
