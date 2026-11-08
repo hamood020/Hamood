@@ -2278,24 +2278,130 @@
           "</tbody></table></div></div>";
       }
       function exportProjects() {
-        const rows = projects.map((p) => ({
-          م: p.serial_no,
-          "الجهة الحكومية": p.government_entities?.name,
-          "اسم المشروع": p.project_name,
-          "حالة المشروع": p.project_status,
-          "قيمة المشروع الاجمالي": p.total_project_value,
-          "نسبة الانجاز": p.progress_pct,
-          "إجمالي الصرف": p.total_spend,
-          "إجمالي المحتوى المحلي": p.total_local_content,
-          "نسبة المحتوى المحلي إلى إجمالي الصرف": p.local_content_spend_pct,
-          "نسبة المحتوى المحلي إلى قيمة المشروع": p.local_content_project_pct,
-          "نسبة SME": p.sme_pct,
-          الملاحظات: p.notes,
-        }));
-        const ws = XLSX.utils.json_to_sheet(rows),
-          wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "المشاريع");
-        XLSX.writeFile(wb, "ICV-New-Projects.xlsx");
+        const headers = [
+          "م","الجهة الحكومية","اسم المشروع","رقم/نوع  المناقصة ","حالة المشروع","الاستشاري","الجهة المنفذة","قطاع العمل","قيمة المشروع الاجمالي","تاريخ البدء","تاريخ الانتهاء","خطة المحتوى المحلي","نسبة الانجاز","عدد التقارير المستهدفة","عدد التقارير المستحقة","عدد التقارير المستلمة","عدد التقارير المتأخرة","تحديث الربع سنوي","التحديث السنوي","عدد العمانيين المستهدف","عدد العمانيين حاليا","عدد العمانيين المحقق","عدد غير العمانيين","نسبة التعمين","إجمالي المستهدف حسب الخطة لغير العمانيين","تكلفة الرواتب في الخطة (العمانيين)","تكلفة الرواتب في المشروع (العمانيين)","المحتوى المحلي (العمانيين)","تكلفة الرواتب في الخطة (الأجانب)","تكلفة الرواتب في المشروع (الأجانب)","المحتوى المحلي (الأجانب)","الفئة الاولى (العمانيين)","الفئة الاولى (الأجانب)","الفئة الثانية (العمانيين)","الفئة الثانية (الأجانب)","الفئة الثالثة (العمانيين)","الفئة الثالثة (الأجانب)","التكلفة في الخطة (صنع في عمان)","التكلفة في المشروع (صنع في عمان)","التكلفة من القائمة الإلزامية في المشروع (صنع في عمان)","حالة الإستيفاء","المحتوى المحلي (صنع في عمان)","التكلفة في الخطة (مورد محلي)","التكلفة في المشروع (مورد محلي)","المحتوى المحلي (مورد محلي)","التكلفة في الخطة (استيراد مباشر)","التكلفة في المشروع (استيراد مباشر)","المحتوى المحلي (استيراد مباشر)","التكلفة في الخطة (مورد المؤسسات الصغيرة و المتوسطة)","التكلفة في المشروع (مورد المؤسسات الصغيرة و المتوسطة)","المحتوى المحلي (مورد المؤسسات الصغيرة و المتوسطة)","التكلفة في الخطة (خدمة مزود محلي)","تكلفة الشركات المحلية(خدمة مزود محلي)","المحتوى المحلي(خدمة مزود محلي)","التكلفة في الخطة (خدمة مزود أجنبي)","تكلفة الشركات الاجنبية (خدمة مزود أجنبي)","المحتوى المحلي (خدمة مزود أجنبي)","التكلفة في الخطة (خدمة مزود من المؤسسات الصغيرة و المتوسطة)","تكلفة (خدمة مزود من المؤسسات الصغيرة و المتوسطة)","حالة الإستيفاء بال10% للSMEs","المحتوى المحلي(خدمة مزود من المؤسسات الصغيرة و المتوسطة)","اجمالي الصرف في المشروع","اجمالي المحتوى المحلي في المشروع","نسبة المحتوى المحلي إلى إجمالي الصرف","نسبة المحتوى المحلي إلى قيمة المشروع","نسبة SME   ","الملاحظات"
+        ];
+        const num = v => Number(v || 0);
+        const sum = (a, key) => (a || []).reduce((n, x) => n + num(x?.[key]), 0);
+        const approved = (window.reports || reports || []).filter(r => String(r.status || "").trim() === "معتمد");
+        const sortReports = rows => [...rows].sort((a,b) =>
+          (Number(a.annual_period || 0) * 10 + (Number(String(a.quarter || "").replace(/\D/g,"")) || 0)) -
+          (Number(b.annual_period || 0) * 10 + (Number(String(b.quarter || "").replace(/\D/g,"")) || 0)) ||
+          String(a.created_at || "").localeCompare(String(b.created_at || ""))
+        );
+        const cfg = window.__icvCalculationSettings || {};
+        const coef = cfg.coefficients || {};
+        const cOmani = num(coef.omaniSalary ?? 0.8), cForeign = num(coef.foreignSalary ?? 0.2);
+        const cOmanMade = num(coef.madeInOman ?? 0.7), cLocal = num(coef.localSupplier ?? 0.18);
+        const cSme = num(coef.smeService ?? coef.smePurchase ?? 0.18);
+        const pct = v => num(v) > 1 ? num(v) : num(v) * 100;
+        const money = v => num(v);
+        const rows = (projects || []).map((p, index) => {
+          const pid = String(p.id);
+          const projectReports = sortReports(approved.filter(r => String(r.project_id) === pid));
+          const latest = projectReports[projectReports.length - 1];
+          const d = latest?.report_data || {};
+          const projectPlans = (window.plans || plans || []).filter(x => String(x.project_id) === pid);
+          const plan = projectPlans.find(x => ["معتمد","معتمدة"].includes(String(x.status || "").trim())) || projectPlans[0];
+          const pd = plan?.plan_data || {};
+          const wf = pd.workforce || {};
+          const cats = Array.isArray(wf.categories) ? wf.categories : [];
+          const actualCats = Array.isArray(d.workforce_categories) ? d.workforce_categories : [];
+          const planSalary = wf.salaries || {};
+          const planOmaniSalary = Object.values(planSalary).reduce((a,x)=>a+num(x?.omani_salary),0);
+          const planForeignSalary = Object.values(planSalary).reduce((a,x)=>a+num(x?.foreign_salary),0);
+          let actualOmaniSalary = 0, actualForeignSalary = 0;
+          projectReports.forEach(r => {
+            const rd = r.report_data || {};
+            if (String(rd.salary_input_type || "رواتب الربع").includes("تراكمية")) {
+              actualOmaniSalary = num(rd.omani_salary); actualForeignSalary = num(rd.foreign_salary);
+            } else {
+              actualOmaniSalary += num(rd.omani_salary); actualForeignSalary += num(rd.foreign_salary);
+            }
+          });
+          const planTotal = (type) => cats.reduce((a,x)=>a+num(x?.[type] ?? x?.[type === "foreign" ? "non_omani" : type]),0);
+          const planPurchases = pd.purchases || [], planServices = pd.services || [], planSubs = pd.subcontracts || [];
+          const planSum = (arr, typeField, type) => (arr || []).filter(x => !type || (x.supply_type || x.supplier_type) === type).reduce((a,x)=>a+num(x.value),0);
+          const planMade=planSum(planPurchases,"supply_type","صنع في عمان"), planLocal=planSum(planPurchases,"supply_type","مورد محلي"), planImport=planSum(planPurchases,"supply_type","استيراد مباشر"), planSmeGoods=planSum(planPurchases,"supply_type","مورد المؤسسات الصغيرة والمتوسطة");
+          const planLocalSvc=planSum(planServices,"supplier_type","مزود محلي"), planForeignSvc=planSum(planServices,"supplier_type","مزود أجنبي"), planSmeSvc=planSum(planServices,"supplier_type","مؤسسة صغيرة ومتوسطة");
+          const planLocalSub=planSum(planSubs,"supplier_type","مزود محلي"), planForeignSub=planSum(planSubs,"supplier_type","مزود أجنبي"), planSmeSub=planSum(planSubs,"supplier_type","مؤسسة صغيرة ومتوسطة");
+          const fin = {purchases:{made_in_oman:0,local_supplier:0,direct_import:0,sme_purchase:0},services:{local_service:0,foreign_service:0,sme_service:0},subcontracts:{local:0,foreign:0,sme:0}};
+          projectReports.forEach(r=>{
+            const rd=r.report_data||{}, cumulative=String(rd.report_type||"ربعي منفصل").includes("تراكمي");
+            const groups={purchases:rd.purchases||{},services:rd.services||{},subcontracts:rd.subcontracts||{}};
+            Object.keys(fin).forEach(g=>Object.keys(fin[g]).forEach(k=>{
+              const val=num(groups[g][k]); fin[g][k]=cumulative?val:fin[g][k]+val;
+            }));
+          });
+          const actualMade=fin.purchases.made_in_oman, actualLocal=fin.purchases.local_supplier, actualImport=fin.purchases.direct_import, actualSmeGoods=fin.purchases.sme_purchase;
+          const actualLocalSvc=fin.services.local_service, actualForeignSvc=fin.services.foreign_service, actualSmeSvc=fin.services.sme_service;
+          const actualLocalSub=fin.subcontracts.local, actualForeignSub=fin.subcontracts.foreign, actualSmeSub=fin.subcontracts.sme;
+          const omaniNow=num(d.omani_total), foreignNow=num(d.foreign_total);
+          const omaniPlan=planTotal("omani"), foreignPlan=planTotal("foreign");
+          const workforceTarget=omaniPlan+foreignPlan;
+          const reportCount=projectReports.length;
+          const spend=num(p.total_spend), localContent=num(p.total_local_content);
+          const actualWageLC=actualOmaniSalary*cOmani + actualForeignSalary*cForeign;
+          const goodsMadeLC=actualMade*cOmanMade, goodsLocalLC=actualLocal*cLocal, goodsSmeLC=actualSmeGoods*cSme;
+          const servicesLocalLC=actualLocalSvc*cLocal, servicesSmeLC=actualSmeSvc*cSme;
+          const subLocalLC=actualLocalSub*cLocal, subSmeLC=actualSmeSub*cSme;
+          const totalPurchases=actualMade+actualLocal+actualImport+actualSmeGoods;
+          const totalServices=actualLocalSvc+actualForeignSvc+actualSmeSvc;
+          const totalSub=actualLocalSub+actualForeignSub+actualSmeSub;
+          const planGoodsTotal=planMade+planLocal+planImport+planSmeGoods;
+          const planServiceTotal=planLocalSvc+planForeignSvc+planSmeSvc;
+          const planSubTotal=planLocalSub+planForeignSub+planSmeSub;
+          const targetReports=4;
+          const status=(v)=>v || "غير منطبق";
+          return [
+            p.serial_no ?? index+1, p.government_entities?.name || "", p.project_name || "",
+            p.tender_number || p.tender_no || p.tender_reference || "", p.project_status || "",
+            p.consultant || p.consultant_name || "", p.companies?.name || "", p.sector || p.project_sector || "",
+            num(p.total_project_value), p.start_date || p.project_start_date || "", p.end_date || p.project_end_date || "",
+            plan ? "نعم" : "لا", num(p.progress_pct), targetReports, Math.max(0,targetReports-reportCount), reportCount, 0,
+            p.current_quarter || "", p.annual_update || "", omaniPlan, omaniNow, omaniNow, foreignNow, num(p.omanization_pct),
+            foreignPlan, planOmaniSalary, actualOmaniSalary, actualOmaniSalary*cOmani, planForeignSalary, actualForeignSalary, actualForeignSalary*cForeign,
+            num(cats[0]?.omani), num(cats[0]?.foreign ?? cats[0]?.non_omani), num(cats[1]?.omani), num(cats[1]?.foreign ?? cats[1]?.non_omani), num(cats[2]?.omani), num(cats[2]?.foreign ?? cats[2]?.non_omani),
+            planMade, actualMade, num(d.purchases?.mandatory_made_in_oman), status(p.made_in_oman_status), goodsMadeLC,
+            planLocal, actualLocal, goodsLocalLC, planImport, actualImport, 0, planSmeGoods, actualSmeGoods, goodsSmeLC,
+            planLocalSvc, actualLocalSvc, servicesLocalLC, planForeignSvc, actualForeignSvc, 0, planSmeSvc, actualSmeSvc, status(p.sme_10_status), servicesSmeLC,
+            spend, localContent, num(p.local_content_spend_pct), num(p.local_content_project_pct), num(p.sme_pct), p.notes || ""
+          ];
+        });
+        const aoa=[headers,...rows];
+        const ws=XLSX.utils.aoa_to_sheet(aoa);
+        const widths=[8.2,34.5,109.8,17.2,13.2,51.2,60.2,11.8,23.1,16,13,19.4,21.5,19.4,21.1,19.2,17.8,15.8,21.8,13,19.4,20.8,17.2,27.7,27.7,29.4,27.7,13,13,13,13,13,13,13,13,13,13,27.5,28.8,31.9,27.7,13,13,13,13,13,13,30.8,30.9,27.7,13,34,30.3,27.7,13,13,13,13,13,13,13,13,13,28.3,27.2,27.3,27.5];
+        ws["!cols"]=widths.map(w=>({wch:w}));
+        ws["!rows"]=[{hpt:30.5},...rows.map(()=>({hpt:26}))];
+        ws["!views"]=[{rightToLeft:true, state:"frozen", xSplit:3, ySplit:1, showGridLines:false}];
+        const border={top:{style:"thin",color:{rgb:"FFD7E1E8"}},bottom:{style:"thin",color:{rgb:"FFD7E1E8"}},left:{style:"thin",color:{rgb:"FFD7E1E8"}},right:{style:"thin",color:{rgb:"FFD7E1E8"}}};
+        const groupFill=(col)=>{
+          if(col<=12 || col>=62) return "FF2E9694";
+          if(col<=17) return "FFD9EAD3";
+          if(col<=19) return "FF92DEDC";
+          if(col<=22) return "FF18799C";
+          if(col<=24) return "FFE2F0D9";
+          if(col<=25) return "FFD9EAD3";
+          if(col<=31) return "FFE2F0D9";
+          if(col<=37) return "FFD9EAD3";
+          if(col<=50) return "FFE2F0D9";
+          return "FFFFE5CC";
+        };
+        for(let col=0;col<headers.length;col++){
+          const cell=ws[XLSX.utils.encode_cell({r:0,c:col})];
+          cell.s={font:{name:"Arial",sz:11,bold:true,color:{rgb:"FFFFFFFF"}},fill:{patternType:"solid",fgColor:{rgb:groupFill(col+1)}},alignment:{horizontal:"center",vertical:"center",wrapText:true,textRotation:0},border};
+        }
+        for(let r=1;r<=rows.length;r++) for(let col=0;col<headers.length;col++){
+          const cell=ws[XLSX.utils.encode_cell({r,c:col})];
+          if(!cell) continue;
+          cell.s={font:{name:"Arial",sz:10,color:{rgb:"FF1F2937"}},fill:{patternType:"solid",fgColor:{rgb:r%2?"FFFFFFFF":"FFF4F8F8"}},alignment:{horizontal:"center",vertical:"center",wrapText:true},border};
+          if([8,25,26,27,28,29,37,38,39,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,60,61].includes(col)) cell.z='#,##0.00;[Red](#,##0.00);-';
+        }
+        ws["!autofilter"]={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:rows.length,c:headers.length-1}})};
+        const wb=XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb,ws,"المشاريع الإنمائية");
+        wb.Workbook={Views:[{RTL:true}]};
+        XLSX.writeFile(wb,"ملف_متابعة_المشاريع.xlsx",{cellStyles:true});
       }
       function closeModal() {
         modal.classList.add("hidden");
