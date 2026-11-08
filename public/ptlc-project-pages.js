@@ -183,7 +183,7 @@
     ensureProjectReferenceVisual();
     pid = id;
     window.__icvCurrentProjectId = id;
-    let p = (window.projects || []).find((x) => String(x.id) === String(id));
+    let p = window.ICV_INTERNAL_API_ENABLED && window.ICVApi ? await window.ICVApi.projects.get(id).catch(() => null) : (window.projects || []).find((x) => String(x.id) === String(id));
     if (!p) {
       const prj = window.ICV_INTERNAL_API_ENABLED && window.ICVApi ? await window.ICVApi.projects.get(id).then(data => ({data,error:null})).catch(error => ({data:null,error})) : await dbx.from("projects").select("*").eq("id", id).maybeSingle();
       if (prj.error || !prj.data) return;
