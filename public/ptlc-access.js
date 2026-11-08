@@ -969,16 +969,15 @@
             u.user_id +
             "','" +
             escA(u.display_name || u.username) +
-            "')\">🏛</button><button class="icon-btn" title="تغيير الرقم السري" onclick="openAdminPasswordReset(' +
-            "'" +
+            "')\">🏛</button><button class='icon-btn' title='تغيير الرقم السري' onclick='openAdminPasswordReset(\""+
             u.user_id +
-            "','" +
+            "\",\""+
             escA(u.display_name || u.username) +
-            "')\">🔑</button><button class="icon-btn" title="حذف المستخدم" style="color:#b91c1c" onclick="deletePlatformUser('" +
+            "\")'>🔑</button><button class='icon-btn' title='حذف المستخدم' style='color:#b91c1c' onclick='deletePlatformUser(\""+
             u.user_id +
-            "','" +
+            "\",\""+
             escA(u.display_name || u.username) +
-            "')\">🗑</button></div></td></tr>"
+            "\")'>🗑</button></div></td></tr>"
           );
         })
         .join("") +
