@@ -15,8 +15,6 @@
   const CHECK_EVERY_MS = 20 * 1000;
   const KEY_LAST = "icv-last-activity";
   const KEY_FLAG = "icv-idle-logout";
-  const URL = "https://bmwtrnosqosbkezdswcx.supabase.co";
-  const KEY = "sb_publishable_Ge88ZuNnqW89l0SMfw_mvQ_nY2BzpPr";
 
   const isEn = () => {
     try {
@@ -46,8 +44,6 @@
     },
   };
 
-  if (!window.supabase?.createClient) return;
-  const client = window.supabase.createClient(URL, KEY);
 
   let lastSaved = 0;
   let memoryLast = Date.now();
@@ -80,8 +76,8 @@
 
   async function signedIn() {
     try {
-      const { data } = await client.auth.getSession();
-      return !!data?.session;
+      const response = await fetch("/api/auth/me", { credentials: "same-origin", headers: { Accept: "application/json" } });
+      return response.ok;
     } catch (e) {
       return false;
     }
@@ -92,7 +88,7 @@
     loggingOut = true;
     store.set(KEY_FLAG, "1");
     try {
-      await client.auth.signOut({ scope: "local" });
+      await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin", headers: { Accept: "application/json" } });
     } catch (e) {}
     const onIndex = /(^|\/)(index\.html)?$/.test(location.pathname);
     if (onIndex) location.reload();
