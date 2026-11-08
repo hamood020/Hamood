@@ -36,3 +36,14 @@
 6. استكمال تحويل الواجهة تدريجيًا ثم اختبار قبول شامل.
 
 لا تفعّل `ICV_INTERNAL_API_ENABLED` ولا تنقل بيانات فعلية ولا تدمج الفرع قبل اجتياز الاختبارات وموافقة المستخدم.
+
+
+## Follow-up remediation pass
+
+- Report creation now always starts in `received`; client-supplied status and submitted date are not accepted as workflow transitions.
+- Report editing no longer changes report status or submitted date. Status changes remain limited to the submit and approve endpoints; approved reports remain locked.
+- Project creation now persists the optional `local_content_plan` flag.
+- Report attachment endpoint now allows only PDF, XLS, XLSX, DOC, and DOCX extensions, checks the corresponding file signature, enforces the 20 MB limit, generates server-side filenames, validates the final storage path, and removes a newly written file if the database save fails.
+- Attachment changes are written to the audit log. Downloads remain authenticated, use attachment metadata from the report, validate the expected project/report folder, and return private no-store responses.
+- File signature checks are a first-pass format validation, not malware scanning. Before production deployment, add institution-approved antivirus/content scanning and confirm NTFS ACLs restrict the storage root to the API service account and authorized administrators.
+- These changes have not yet been compiled or integration-tested on the user's machine. Do not enable frontend API mode or deploy.
