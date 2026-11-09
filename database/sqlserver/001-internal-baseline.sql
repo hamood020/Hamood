@@ -125,7 +125,7 @@ CREATE TABLE dbo.employee_followups (
  created_by uniqueidentifier NULL, resolved_at datetimeoffset(0) NULL, resolved_by uniqueidentifier NULL,
  resolution_note nvarchar(max) NULL, resolved_by_name nvarchar(300) NULL,
  CONSTRAINT FK_followups_project FOREIGN KEY(project_id) REFERENCES dbo.projects(id) ON DELETE CASCADE,
- CONSTRAINT CK_followups_status CHECK(status IN(N'open',N'closed')),
+ CONSTRAINT CK_followups_status CHECK(status IN(N'open',N'in_progress',N'closed')),
  CONSTRAINT CK_followups_priority CHECK(priority IN(N'منخفضة',N'متوسطة',N'عالية',N'عاجلة'))
 );
 CREATE TABLE dbo.notifications (
