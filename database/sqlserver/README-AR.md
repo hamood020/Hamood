@@ -6,7 +6,7 @@ This migration is a SQL Server translation of the checked-in PostgreSQL referenc
 1. Create an empty database such as `ICV_Internal_Staging`.
 2. Take a backup (even for staging) and verify the connection string points only to that database.
 3. Execute `database/sqlserver/001-internal-baseline.sql` using SQL Server Management Studio.
-4. Run the ASP.NET Core API with a protected `ConnectionStrings__IcvSqlServer` secret.
+4. For an existing staging database created from the earlier baseline, execute `database/sqlserver/002-followups-in-progress.sql` to align follow-up statuses with the API. Do not rerun the baseline on an existing database.\n5. Run the ASP.NET Core API with a protected `ConnectionStrings__IcvSqlServer` secret.
 5. Create initial Identity accounts through a controlled admin provisioning process; do not migrate Supabase password hashes or keys.
 
 ## Important compatibility notes
