@@ -44,18 +44,22 @@ public sealed class UsersController(
     public async Task<IActionResult> List()
     {
         if (await CurrentAdminId() is null) return Forbid();
-        var rows = await (from p in db.UserProfiles.AsNoTracking()
-                          join u in db.Users.AsNoTracking()
-                              on p.Id.ToString() equals u.Id
-                          orderby p.FullName
-                          select new
-                          {
-                              id = p.Id, username = u.UserName, fullName = p.FullName,
-                              role = p.Role, isActive = p.IsActive,
-                              accessStartsAt = p.AccessStartsAt,
-                              accessExpiresAt = p.AccessExpiresAt,
-                              createdAt = p.CreatedAt, updatedAt = p.UpdatedAt
-                          }).ToListAsync();
+        var profiles = await db.UserProfiles.AsNoTracking()
+            .OrderBy(x => x.FullName).ToListAsync();
+        var identities = await users.Users.AsNoTracking()
+            .ToDictionaryAsync(x => x.Id, x => x.UserName);
+        var rows = profiles.Select(p => new
+        {
+            id = p.Id,
+            username = identities.GetValueOrDefault(p.Id.ToString()),
+            fullName = p.FullName,
+            role = p.Role,
+            isActive = p.IsActive,
+            accessStartsAt = p.AccessStartsAt,
+            accessExpiresAt = p.AccessExpiresAt,
+            createdAt = p.CreatedAt,
+            updatedAt = p.UpdatedAt
+        });
         return Ok(rows);
     }
 
@@ -121,16 +125,20 @@ public sealed class UsersController(
         var user = await users.FindByIdAsync(id.ToString());
         if (profile is null || user is null) return NotFound();
 
-        if (id == actorId && (!request.IsActive || request.Role != "admin"))
-            return Conflict(new { error = "لا يمكنك تعطيل حسابك أو إزالة صلاحية المدير من حسابك الحالي" });
+        var now = DateTimeOffset.UtcNow;
+        if (id == actorId &&
+            (!request.IsActive || request.Role != "admin" ||
+             (request.AccessStartsAt.HasValue && request.AccessStartsAt > now) ||
+             (request.AccessExpiresAt.HasValue && request.AccessExpiresAt <= now)))
+            return Conflict(new { error = "لا يمكنك تعطيل حسابك أو إزالة صلاحية المدير أو إنهاء صلاحية حسابك الحالي" });
 
         if (profile.Role == "admin" && profile.IsActive &&
             (!request.IsActive || request.Role != "admin"))
         {
             var activeAdmins = await db.UserProfiles.CountAsync(x =>
                 x.Role == "admin" && x.IsActive && x.Id != id &&
-                (!x.AccessStartsAt.HasValue || x.AccessStartsAt <= DateTimeOffset.UtcNow) &&
-                (!x.AccessExpiresAt.HasValue || x.AccessExpiresAt > DateTimeOffset.UtcNow));
+                (!x.AccessStartsAt.HasValue || x.AccessStartsAt <= now) &&
+                (!x.AccessExpiresAt.HasValue || x.AccessExpiresAt > now));
             if (activeAdmins == 0)
                 return Conflict(new { error = "لا يمكن تعطيل أو تخفيض صلاحية آخر مدير نشط" });
         }
