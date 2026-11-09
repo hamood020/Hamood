@@ -47,3 +47,11 @@
 - Attachment changes are written to the audit log. Downloads remain authenticated, use attachment metadata from the report, validate the expected project/report folder, and return private no-store responses.
 - File signature checks are a first-pass format validation, not malware scanning. Before production deployment, add institution-approved antivirus/content scanning and confirm NTFS ACLs restrict the storage root to the API service account and authorized administrators.
 - These changes have not yet been compiled or integration-tested on the user's machine. Do not enable frontend API mode or deploy.
+
+
+## دفعة متابعة — إدارة المستخدمين وتوافق حالة المتابعة
+- راجعت واجهة إدارة المستخدمين الموجودة في `UsersController`، وحسّنت تحميل قائمة المستخدمين لتجنب ربط GUID بالنص داخل استعلام SQL قد لا يُترجم بصورة موثوقة.
+- منعت المدير من إنهاء صلاحية حسابه الحالي أو تعطيله أو سحب دوره الإداري عن نفسه، مع الحفاظ على حماية آخر مدير نشط.
+- أضفت ترحيلًا مستقلًا `002-followups-in-progress.sql` لتوسيع قيد حالة المتابعة في SQL Server ليقبل `open`, `in_progress`, و`closed` بما يتوافق مع تحقق API. تم تحديث baseline كذلك للمخازن الجديدة.
+- قاعدة الاختبار الحالية تحتاج تنفيذ ملف الترحيل رقم 002 مرة واحدة في SSMS؛ لا تعِد تنفيذ 001.
+- لم يتم تشغيل Build بعد هذه التغييرات من هنا. يلزم تنفيذ Build وعمليات اختبار إدارة المستخدمين وحالات المتابعة من Visual Studio على جهازك.
